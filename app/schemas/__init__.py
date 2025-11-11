@@ -10,6 +10,14 @@ from app.schemas.user import (
     LoginRequest
 )
 from app.schemas.token import Token, TokenData
+from app.schemas.ticket import (
+    TicketBase,
+    TicketCreate,
+    TicketUpdate,
+    TicketStatusUpdate,
+    TicketResponse,
+    TicketListResponse
+)
 
 __all__ = [
     "UserBase",
@@ -20,4 +28,10 @@ __all__ = [
     "LoginRequest",
     "Token",
     "TokenData",
+    "TicketBase",
+    "TicketCreate",
+    "TicketUpdate",
+    "TicketStatusUpdate",
+    "TicketResponse",
+    "TicketListResponse",
 ]

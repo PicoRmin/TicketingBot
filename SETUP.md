@@ -6,10 +6,10 @@
 
 #### ۱. ایجاد Virtual Environment
 ```bash
-python -m venv venv
+python -m venv .venv
 
 # Windows
-venv\Scripts\activate
+.venv\Scripts\activate
 
 # Linux/Mac
 source venv/bin/activate
@@ -24,12 +24,30 @@ pip install -r requirements.txt
 ```bash
 # کپی کردن فایل نمونه
 copy env.example .env
-
-# سپس فایل .env را ویرایش کنید و مقادیر را تنظیم کنید
-# به خصوص:
-# - SECRET_KEY: یک کلید امنیتی تصادفی
-# - TELEGRAM_BOT_TOKEN: توکن ربات تلگرام (اگر دارید)
 ```
+
+**سپس فایل `.env` را ویرایش کنید:**
+
+##### الف) تولید SECRET_KEY
+برای تولید یک کلید امنیتی تصادفی، از اسکریپت استفاده کنید:
+```bash
+python scripts/generate_secret_key.py
+```
+این اسکریپت یک کلید امنیتی تصادفی تولید می‌کند. آن را کپی کرده و در فایل `.env` در قسمت `SECRET_KEY` قرار دهید.
+
+**یا به صورت دستی:**
+در فایل `.env` مقدار `SECRET_KEY` را با یک رشته تصادفی قوی جایگزین کنید (حداقل 32 کاراکتر).
+
+##### ب) دریافت TELEGRAM_BOT_TOKEN
+برای دریافت توکن ربات تلگرام:
+1. در تلگرام به `@BotFather` بروید
+2. دستور `/newbot` را ارسال کنید
+3. نام و username ربات را انتخاب کنید
+4. توکن دریافتی را در فایل `.env` در قسمت `TELEGRAM_BOT_TOKEN` قرار دهید
+
+📖 **راهنمای کامل**: فایل `TELEGRAM_BOT_SETUP.md` را مطالعه کنید.
+
+**نکته**: برای شروع می‌توانید `TELEGRAM_BOT_TOKEN` را خالی بگذارید و بعداً تنظیم کنید.
 
 #### ۴. تست اجرای Application
 ```bash

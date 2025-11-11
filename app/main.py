@@ -3,6 +3,7 @@ Main FastAPI application
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.middlewares.i18n import I18nMiddleware
 from app.config import settings
 import logging
 from pathlib import Path
@@ -36,6 +37,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# i18n middleware - makes request.state.lang available
+app.add_middleware(I18nMiddleware)
 
 
 @app.on_event("startup")
@@ -93,10 +97,13 @@ async def health_check():
 
 # Import and include routers
 from app.api import auth, tickets, files
+from app.api import branches, comments
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["Tickets"])
 app.include_router(files.router, prefix="/api/files", tags=["Files"])
+app.include_router(branches.router, prefix="/api/branches", tags=["Branches"])
+app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
 
 if __name__ == "__main__":
     import uvicorn

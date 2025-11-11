@@ -1,7 +1,7 @@
 """
 Ticket API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.database import get_db
@@ -25,6 +25,8 @@ from app.services.ticket_service import (
     get_all_tickets,
     can_user_access_ticket,
 )
+from app.i18n.translator import translate
+from app.i18n.fastapi_utils import resolve_lang
 
 router = APIRouter()
 
@@ -52,6 +54,7 @@ async def create_new_ticket(
 
 @router.get("", response_model=TicketListResponse)
 async def get_tickets(
+    request: Request,
     page: int = Query(1, ge=1, description="شماره صفحه"),
     page_size: int = Query(10, ge=1, le=100, description="تعداد آیتم در هر صفحه"),
     status: Optional[TicketStatus] = Query(None, description="فیلتر بر اساس وضعیت"),
@@ -103,6 +106,7 @@ async def get_tickets(
 
 @router.get("/{ticket_id}", response_model=TicketResponse)
 async def get_ticket_by_id(
+    request: Request,
     ticket_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -124,16 +128,17 @@ async def get_ticket_by_id(
     ticket = get_ticket(db, ticket_id)
     
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     # Check access
     if not can_user_access_ticket(current_user, ticket):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     return ticket
@@ -141,6 +146,7 @@ async def get_ticket_by_id(
 
 @router.get("/number/{ticket_number}", response_model=TicketResponse)
 async def get_ticket_by_ticket_number(
+    request: Request,
     ticket_number: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -162,16 +168,17 @@ async def get_ticket_by_ticket_number(
     ticket = get_ticket_by_number(db, ticket_number)
     
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     # Check access
     if not can_user_access_ticket(current_user, ticket):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     return ticket
@@ -179,6 +186,7 @@ async def get_ticket_by_ticket_number(
 
 @router.put("/{ticket_id}", response_model=TicketResponse)
 async def update_ticket_by_id(
+    request: Request,
     ticket_id: int,
     ticket_data: TicketUpdate,
     db: Session = Depends(get_db),
@@ -202,23 +210,24 @@ async def update_ticket_by_id(
     ticket = get_ticket(db, ticket_id)
     
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     # Check access
     if not can_user_access_ticket(current_user, ticket):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     # Only admin can change status
     if ticket_data.status is not None and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only admin can change ticket status"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     updated_ticket = update_ticket(db, ticket, ticket_data)
@@ -227,6 +236,7 @@ async def update_ticket_by_id(
 
 @router.patch("/{ticket_id}/status", response_model=TicketResponse)
 async def update_ticket_status_by_id(
+    request: Request,
     ticket_id: int,
     status_data: TicketStatusUpdate,
     db: Session = Depends(get_db),
@@ -250,9 +260,10 @@ async def update_ticket_status_by_id(
     ticket = get_ticket(db, ticket_id)
     
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     updated_ticket = update_ticket_status(db, ticket, status_data.status)
@@ -261,6 +272,7 @@ async def update_ticket_status_by_id(
 
 @router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_ticket_by_id(
+    request: Request,
     ticket_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
@@ -281,15 +293,16 @@ async def delete_ticket_by_id(
     ticket = get_ticket(db, ticket_id)
     
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     success = delete_ticket(db, ticket)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete ticket"
+            detail=translate("common.error", resolve_lang(request, current_user))
         )
 

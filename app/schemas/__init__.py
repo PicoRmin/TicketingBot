@@ -19,6 +19,8 @@ from app.schemas.ticket import (
     TicketListResponse
 )
 from app.schemas.file import FileResponse, FileUploadResponse
+from app.schemas.branch import BranchCreate, BranchUpdate, BranchResponse
+from app.schemas.comment import CommentCreate, CommentResponse
 
 __all__ = [
     "UserBase",
@@ -37,4 +39,9 @@ __all__ = [
     "TicketListResponse",
     "FileResponse",
     "FileUploadResponse",
+    "BranchCreate",
+    "BranchUpdate",
+    "BranchResponse",
+    "CommentCreate",
+    "CommentResponse",
 ]

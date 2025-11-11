@@ -1,0 +1,32 @@
+{
+  "common": {
+    "ok": "انجام شد",
+    "error": "خطای غیرمنتظره رخ داد",
+    "forbidden": "دسترسی غیرمجاز",
+    "not_found": "یافت نشد",
+    "bad_request": "درخواست نامعتبر"
+  },
+  "auth": {
+    "login_success": "ورود با موفقیت انجام شد",
+    "login_failed": "نام کاربری یا رمز عبور نادرست است",
+    "inactive_user": "کاربر غیر فعال است"
+  },
+  "tickets": {
+    "created": "تیکت با موفقیت ایجاد شد",
+    "not_found": "تیکت یافت نشد",
+    "updated": "تیکت با موفقیت به‌روزرسانی شد",
+    "deleted": "تیکت حذف شد"
+  },
+  "files": {
+    "uploaded": "فایل با موفقیت آپلود شد",
+    "too_large": "حجم فایل بیش از حد مجاز است",
+    "type_not_allowed": "نوع فایل مجاز نیست",
+    "not_found": "فایل یافت نشد",
+    "missing_on_server": "فایل روی سرور یافت نشد"
+  },
+  "validation": {
+    "required_field": "فیلد الزامی است: {field}",
+    "invalid_credentials": "اعتبارسنجی ناموفق"
+  }
+}
+

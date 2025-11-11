@@ -1,0 +1,32 @@
+{
+  "common": {
+    "ok": "Done",
+    "error": "An unexpected error occurred",
+    "forbidden": "Forbidden",
+    "not_found": "Not found",
+    "bad_request": "Bad request"
+  },
+  "auth": {
+    "login_success": "Logged in successfully",
+    "login_failed": "Invalid username or password",
+    "inactive_user": "User is inactive"
+  },
+  "tickets": {
+    "created": "Ticket created successfully",
+    "not_found": "Ticket not found",
+    "updated": "Ticket updated successfully",
+    "deleted": "Ticket deleted"
+  },
+  "files": {
+    "uploaded": "File uploaded successfully",
+    "too_large": "File size exceeds the allowed limit",
+    "type_not_allowed": "File type not allowed",
+    "not_found": "File not found",
+    "missing_on_server": "File not found on server"
+  },
+  "validation": {
+    "required_field": "Field is required: {field}",
+    "invalid_credentials": "Invalid credentials"
+  }
+}
+

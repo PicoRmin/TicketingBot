@@ -1,7 +1,7 @@
 """
 File API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Request
 from fastapi.responses import FileResponse as FastAPIFileResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -21,12 +21,15 @@ from app.services.file_service import (
     can_user_access_attachment,
 )
 from app.services.ticket_service import get_ticket, can_user_access_ticket
+from app.i18n.translator import translate
+from app.i18n.fastapi_utils import resolve_lang
 
 router = APIRouter()
 
 
 @router.post("/upload", response_model=FileUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_file(
+    request: Request,
     ticket_id: int = Query(..., description="شناسه تیکت"),
     file: UploadFile = File(..., description="فایل برای آپلود"),
     db: Session = Depends(get_db),
@@ -50,16 +53,17 @@ async def upload_file(
     # Check if ticket exists
     ticket = get_ticket(db, ticket_id)
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     # Check access to ticket
     if not can_user_access_ticket(current_user, ticket):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions to access this ticket"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     # Validate file
@@ -93,19 +97,20 @@ async def upload_file(
             file_size=attachment.file_size,
             file_type=attachment.file_type,
             ticket_id=attachment.ticket_id,
-            message="File uploaded successfully"
+            message=translate("files.uploaded", resolve_lang(request, current_user))
         )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload file: {str(e)}"
+            detail=translate("common.error", resolve_lang(request, current_user))
         )
 
 
 @router.get("/{file_id}", response_class=FastAPIFileResponse)
 async def download_file(
+    request: Request,
     file_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -126,31 +131,33 @@ async def download_file(
     """
     attachment = get_attachment(db, file_id)
     if not attachment:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found"
+            detail=translate("files.not_found", lang)
         )
     
     # Get ticket to check access
     ticket = get_ticket(db, attachment.ticket_id)
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     # Check access
     if not can_user_access_attachment(current_user, attachment, ticket):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions to access this file"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     # Check if file exists
     if not os.path.exists(attachment.file_path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found on server"
+            detail=translate("files.missing_on_server", resolve_lang(request, current_user))
         )
     
     return FastAPIFileResponse(
@@ -162,6 +169,7 @@ async def download_file(
 
 @router.get("/ticket/{ticket_id}/list", response_model=List[FileResponse])
 async def get_ticket_files(
+    request: Request,
     ticket_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -183,16 +191,17 @@ async def get_ticket_files(
     # Check if ticket exists
     ticket = get_ticket(db, ticket_id)
     if not ticket:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found"
+            detail=translate("tickets.not_found", lang)
         )
     
     # Check access
     if not can_user_access_ticket(current_user, ticket):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions to access this ticket"
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
     attachments = get_ticket_attachments(db, ticket_id)
@@ -201,6 +210,7 @@ async def get_ticket_files(
 
 @router.delete("/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_file(
+    request: Request,
     file_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
@@ -218,6 +228,7 @@ async def delete_file(
     """
     attachment = get_attachment(db, file_id)
     if not attachment:
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File not found"
@@ -227,6 +238,6 @@ async def delete_file(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete file"
+            detail=translate("common.error", resolve_lang(request, current_user))
         )
 

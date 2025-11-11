@@ -243,6 +243,21 @@ class APIClient:
             except Exception:
                 error_detail = response.text
             
+            # Parse validation errors for better user feedback
+            error_message = None
+            if response.status_code == 422:
+                try:
+                    error_data = response.json()
+                    if isinstance(error_data, dict) and "detail" in error_data:
+                        details = error_data["detail"]
+                        if isinstance(details, list) and len(details) > 0:
+                            first_error = details[0]
+                            field = first_error.get("loc", [])[-1] if first_error.get("loc") else "field"
+                            msg = first_error.get("msg", "Validation error")
+                            error_message = f"{field}: {msg}"
+                except Exception:
+                    pass
+            
             logger.error(
                 f"Failed to create ticket: status={response.status_code}, "
                 f"detail={error_detail}, title={title[:50]}, category={category.value}"

@@ -66,6 +66,7 @@ export default function Branches() {
   const cancelEdit = () => {
     setEditingId(null);
     setForm({ name: "", name_en: "", code: "", address: "", phone: "", is_active: true });
+    setError(null);
   };
 
   const submit = async () => {
@@ -98,6 +99,7 @@ export default function Branches() {
       }
       setForm({ name: "", name_en: "", code: "", address: "", phone: "", is_active: true });
       await load();
+      setError(null);
     } catch (e: any) {
       setError(e?.message || (editingId ? "خطا در ویرایش شعبه" : "خطا در ثبت شعبه"));
     } finally {
@@ -105,65 +107,196 @@ export default function Branches() {
     }
   };
 
+  if (!isAuthenticated()) {
+    return null;
+  }
+
   return (
-    <div>
-      <h1>شعب</h1>
-      {loading && <div>در حال بارگذاری...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
-      <div style={{ display: "grid", gap: 8, maxWidth: 480, marginBottom: 16 }}>
-        <input placeholder="نام" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input placeholder="نام انگلیسی" value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} />
-        <input placeholder="کد" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-        <input placeholder="آدرس" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-        <input placeholder="تلفن" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-        <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-          فعال
-        </label>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={submit} disabled={loading}>
-            {editingId ? "ذخیره تغییرات" : "افزودن شعبه"}
-          </button>
+    <div className="fade-in">
+      <h1 style={{ margin: "0 0 24px 0", fontSize: 32, fontWeight: 700 }}>🏢 مدیریت شعب</h1>
+
+      {loading && !items.length && (
+        <div style={{ textAlign: "center", padding: 40 }}>
+          <div className="loading" style={{ margin: "0 auto" }}></div>
+          <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>در حال بارگذاری...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className={`alert ${error.includes("خطا") ? "error" : "info"} fade-in`}>
+          {error}
+        </div>
+      )}
+
+      {/* Form Card */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-header">
+          <h2 className="card-title">
+            {editingId ? "✏️ ویرایش شعبه" : "➕ افزودن شعبه جدید"}
+          </h2>
           {editingId && (
-            <button onClick={cancelEdit} disabled={loading} style={{ backgroundColor: "#ccc" }}>
-              لغو
+            <button onClick={cancelEdit} className="secondary" style={{ padding: "6px 12px" }}>
+              ❌ لغو
             </button>
           )}
         </div>
+        <div className="grid grid-cols-2" style={{ gap: 16 }}>
+          <div>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+              نام شعبه <span style={{ color: "var(--error)" }}>*</span>
+            </label>
+            <input
+              placeholder="مثال: دفتر مرکزی"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+              نام انگلیسی (اختیاری)
+            </label>
+            <input
+              placeholder="Example: Main Office"
+              value={form.name_en}
+              onChange={(e) => setForm({ ...form, name_en: e.target.value })}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+              کد شعبه <span style={{ color: "var(--error)" }}>*</span>
+            </label>
+            <input
+              placeholder="مثال: MAIN-001"
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+              شماره تلفن (اختیاری)
+            </label>
+            <input
+              placeholder="021-12345678"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+              آدرس (اختیاری)
+            </label>
+            <textarea
+              placeholder="آدرس کامل شعبه..."
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              rows={2}
+              style={{ resize: "vertical" }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              />
+              <span style={{ fontSize: 14 }}>✅ شعبه فعال است</span>
+            </label>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end" }}>
+            <button onClick={submit} disabled={loading} style={{ minWidth: 150 }}>
+              {loading ? (
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <span className="loading"></span>
+                  {editingId ? "در حال ذخیره..." : "در حال ثبت..."}
+                </span>
+              ) : (
+                editingId ? "💾 ذخیره تغییرات" : "➕ افزودن شعبه"
+              )}
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="table-wrap">
-        <table border={1} cellPadding={6} style={{ width: "100%" }}>
-          <thead>
-            <tr>
-              <th>نام</th>
-              <th>کد</th>
-              <th>فعال</th>
-              <th>تلفن</th>
-              <th>آدرس</th>
-              <th>تاریخ ایجاد</th>
-              <th>عملیات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((b) => (
-              <tr key={b.id}>
-                <td>{b.name}</td>
-                <td>{b.code}</td>
-                <td>{b.is_active ? "بله" : "خیر"}</td>
-                <td>{b.phone || ""}</td>
-                <td>{b.address || ""}</td>
-                <td>{b.created_at?.slice(0, 10) || ""}</td>
-                <td>
-                  <button onClick={() => startEdit(b)} disabled={loading} style={{ padding: "4px 8px" }}>
-                    ویرایش
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      {/* Branches List */}
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">📋 لیست شعب ({items.length})</h2>
+        </div>
+        {items.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 60, color: "var(--fg-secondary)" }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>🏢</div>
+            <h3 style={{ margin: "0 0 8px 0" }}>هیچ شعبه‌ای ثبت نشده است</h3>
+            <p style={{ margin: 0 }}>برای شروع، شعبه اول را اضافه کنید.</p>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>نام</th>
+                  <th>کد</th>
+                  <th>وضعیت</th>
+                  <th>تلفن</th>
+                  <th>آدرس</th>
+                  <th>تاریخ ایجاد</th>
+                  <th>عملیات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((b) => (
+                  <tr key={b.id}>
+                    <td style={{ fontWeight: 500 }}>
+                      {b.name}
+                      {b.name_en && (
+                        <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginTop: 4 }}>
+                          {b.name_en}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <code style={{ 
+                        background: "var(--bg-secondary)", 
+                        padding: "4px 8px", 
+                        borderRadius: "4px",
+                        fontSize: 12
+                      }}>
+                        {b.code}
+                      </code>
+                    </td>
+                    <td>
+                      {b.is_active ? (
+                        <span className="badge resolved">✅ فعال</span>
+                      ) : (
+                        <span className="badge closed">❌ غیرفعال</span>
+                      )}
+                    </td>
+                    <td style={{ color: "var(--fg-secondary)" }}>{b.phone || "-"}</td>
+                    <td style={{ color: "var(--fg-secondary)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {b.address || "-"}
+                    </td>
+                    <td style={{ color: "var(--fg-secondary)", fontSize: 13 }}>
+                      {b.created_at ? new Date(b.created_at).toLocaleDateString("fa-IR") : "-"}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => startEdit(b)}
+                        disabled={loading}
+                        className="secondary"
+                        style={{ padding: "6px 12px", fontSize: 13 }}
+                      >
+                        ✏️ ویرایش
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

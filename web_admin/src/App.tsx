@@ -27,30 +27,42 @@ export default function App() {
 
   return (
     <div className="container">
-      <header style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <nav style={{ display: "flex", gap: 12 }}>
-          <Link to="/">داشبورد</Link>
-          <Link to="/tickets">تیکت‌ها</Link>
-          <Link to="/branches">شعب</Link>
+      <header>
+        <nav>
+          <Link to="/">📊 داشبورد</Link>
+          <Link to="/tickets">🎫 تیکت‌ها</Link>
+          <Link to="/branches">🏢 شعب</Link>
         </nav>
-        <div>
-          <button onClick={() => setDark((d) => !d)} style={{ marginInlineEnd: 12 }}>
-            {dark ? "Light" : "Dark"}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button 
+            onClick={() => setDark((d) => !d)} 
+            className="secondary"
+            style={{ padding: "8px 16px", fontSize: 14 }}
+          >
+            {dark ? "☀️ روشن" : "🌙 تاریک"}
           </button>
           {token ? (
-            <button onClick={handleLogout}>خروج</button>
+            <button onClick={handleLogout} className="danger" style={{ padding: "8px 16px", fontSize: 14 }}>
+              🚪 خروج
+            </button>
           ) : (
-            <Link to="/login">ورود</Link>
+            <Link to="/login">
+              <button className="secondary" style={{ padding: "8px 16px", fontSize: 14 }}>
+                🔐 ورود
+              </button>
+            </Link>
           )}
         </div>
       </header>
       <main>
         <Outlet />
       </main>
-      <footer style={{ marginTop: 24, fontSize: 12, color: "var(--muted)" }}>
-        Iranmehr Ticketing Admin
+      <footer>
+        <div>سیستم تیکتینگ ایرانمهر © 2025</div>
+        <div style={{ marginTop: 4, fontSize: 11 }}>
+          نسخه 0.1.0 | توسعه یافته با ❤️
+        </div>
       </footer>
     </div>
   );
 }
-

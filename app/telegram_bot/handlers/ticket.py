@@ -109,7 +109,16 @@ async def ticket_description(update, context: ContextTypes.DEFAULT_TYPE):
     user_id = get_user_id(update)
     language = sessions.get_language(user_id)
     data = context.user_data.setdefault("ticket_flow", {})
-    data["description"] = update.message.text.strip()
+    description = update.message.text.strip()
+    
+    # Validate description length (minimum 10 characters)
+    if len(description) < 10:
+        await update.message.reply_text(
+            get_message("description_too_short", language).format(min_length=10)
+        )
+        return TicketState.DESCRIPTION
+    
+    data["description"] = description
     token = sessions.get_token(user_id)
 
     if not token:
@@ -212,9 +221,17 @@ async def ticket_category(update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if not ticket:
+        # Try to get more specific error message
+        error_msg = get_message("ticket_created_error", language)
+        
+        # Check if description is too short
+        description = data.get("description", "")
+        if len(description) < 10:
+            error_msg = get_message("description_too_short", language).format(min_length=10)
+        
         await context.bot.send_message(
             chat_id=get_chat_id(update),
-            text=get_message("ticket_created_error", language),
+            text=error_msg,
         )
         context.user_data.pop("ticket_flow", None)
         await send_main_menu(update, context)

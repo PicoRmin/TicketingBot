@@ -66,6 +66,9 @@ MESSAGES_FA: Dict[str, str] = {
     "ticket_created_error": "❌ خطا در ایجاد تیکت\n\n"
                             "لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.",
     
+    "description_too_short": "⚠️ توضیحات تیکت باید حداقل {min_length} کاراکتر باشد.\n\n"
+                             "لطفاً توضیحات کامل‌تری وارد کنید:",
+    
     "my_tickets_empty": "📭 شما هیچ تیکتی ندارید.\n\n"
                         "برای ایجاد تیکت جدید از دستور /newticket استفاده کنید.",
     
@@ -179,6 +182,9 @@ MESSAGES_EN: Dict[str, str] = {
     
     "ticket_created_error": "❌ Error creating ticket\n\n"
                             "Please try again or contact support.",
+    
+    "description_too_short": "⚠️ Ticket description must be at least {min_length} characters.\n\n"
+                             "Please enter a more detailed description:",
     
     "my_tickets_empty": "📭 You have no tickets.\n\n"
                         "Use /newticket to create a new ticket.",

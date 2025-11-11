@@ -50,7 +50,13 @@ copy .env.example .env
 ### 5. راه‌اندازی Database
 ```bash
 # ایجاد جداول
-python -c "from app.database import engine, Base; from app.models import user, ticket; Base.metadata.create_all(bind=engine)"
+python scripts/init_db.py
+
+# ایجاد کاربر ادمین
+python scripts/create_admin.py
+
+# تست مدل‌ها (اختیاری)
+python scripts/test_models.py
 ```
 
 ### 6. اجرای Application

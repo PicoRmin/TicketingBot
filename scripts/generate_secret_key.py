@@ -1,6 +1,7 @@
 """
 Script to generate a secure random secret key
 """
+import sys
 import secrets
 
 

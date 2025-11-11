@@ -19,6 +19,7 @@ from telegram.ext import (
 from app.core.enums import Language, TicketCategory
 from app.telegram_bot import sessions
 from app.telegram_bot.callbacks import (
+    CALLBACK_BRANCH_PREFIX,
     CALLBACK_CATEGORY_PREFIX,
     CALLBACK_MY_TICKETS,
     CALLBACK_NEW_TICKET,
@@ -26,7 +27,7 @@ from app.telegram_bot.callbacks import (
 )
 from app.telegram_bot.handlers.common import cancel_command, require_token, send_main_menu
 from app.telegram_bot.i18n import get_category_name, get_message, get_status_name
-from app.telegram_bot.keyboards import category_keyboard, skip_attachments_keyboard
+from app.telegram_bot.keyboards import branch_keyboard, category_keyboard, skip_attachments_keyboard
 from app.telegram_bot.runtime import api_client
 from app.telegram_bot.states import TicketState
 from app.telegram_bot.utils import get_chat_id, get_user_id
@@ -104,13 +105,72 @@ async def ticket_title(update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def ticket_description(update, context: ContextTypes.DEFAULT_TYPE):
-    """Collect ticket description and prompt for category."""
+    """Collect ticket description and prompt for branch selection."""
     user_id = get_user_id(update)
     language = sessions.get_language(user_id)
-    context.user_data.setdefault("ticket_flow", {})["description"] = update.message.text.strip()
+    data = context.user_data.setdefault("ticket_flow", {})
+    data["description"] = update.message.text.strip()
+    token = sessions.get_token(user_id)
+
+    if not token:
+        await update.message.reply_text(get_message("login_required", language))
+        return ConversationHandler.END
+
+    # Fetch branches
+    branches = await api_client.get_branches(token)
+    if not branches:
+        # If no branches, skip to category
+        await update.message.reply_text(
+            get_message("new_ticket_description", language),
+            reply_markup=category_keyboard(language),
+        )
+        return TicketState.CATEGORY
+
+    # Store branches for later use
+    data["branches"] = branches
 
     await update.message.reply_text(
         get_message("new_ticket_description", language),
+        reply_markup=branch_keyboard(branches, language),
+    )
+    return TicketState.BRANCH
+
+
+async def ticket_branch(update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle branch selection and prompt for category."""
+    query = update.callback_query
+    await query.answer()
+    user_id = get_user_id(update)
+    language = sessions.get_language(user_id)
+    data: Dict[str, Any] = context.user_data.setdefault("ticket_flow", {})
+
+    branch_value = query.data.replace(CALLBACK_BRANCH_PREFIX, "")
+    
+    if branch_value == "skip":
+        data["branch_id"] = None
+        branch_name = get_message("branch_skip", language)
+    else:
+        try:
+            branch_id = int(branch_value)
+            data["branch_id"] = branch_id
+            # Get branch name from stored branches list
+            branches = data.get("branches", [])
+            branch = next((b for b in branches if b.get("id") == branch_id), None)
+            branch_name = branch.get("name", f"Branch {branch_id}") if branch else f"Branch {branch_id}"
+        except ValueError:
+            await query.edit_message_text(get_message("invalid_input", language))
+            return ConversationHandler.END
+
+    await query.edit_message_text(
+        get_message("new_ticket_branch", language).format(branch_name=branch_name)
+    )
+    
+    # Get proper message for category prompt
+    category_prompt = "لطفاً دسته‌بندی تیکت را انتخاب کنید:" if language == Language.FA else "Please select the ticket category:"
+    
+    await context.bot.send_message(
+        chat_id=get_chat_id(update),
+        text=category_prompt,
         reply_markup=category_keyboard(language),
     )
     return TicketState.CATEGORY
@@ -148,6 +208,7 @@ async def ticket_category(update, context: ContextTypes.DEFAULT_TYPE):
         title=data.get("title", ""),
         description=data.get("description", ""),
         category=category,
+        branch_id=data.get("branch_id"),
     )
 
     if not ticket:
@@ -281,6 +342,9 @@ def get_handlers():
             TicketState.DESCRIPTION: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, ticket_description)
             ],
+            TicketState.BRANCH: [
+                CallbackQueryHandler(ticket_branch, pattern=f"^{CALLBACK_BRANCH_PREFIX}")
+            ],
             TicketState.CATEGORY: [
                 CallbackQueryHandler(ticket_category, pattern=f"^{CALLBACK_CATEGORY_PREFIX}")
             ],
@@ -296,6 +360,7 @@ def get_handlers():
             CommandHandler("skip", skip_attachments_command),
         ],
         allow_reentry=True,
+        per_message=False,  # Set to False when using MessageHandler in states
     )
 
     my_tickets_handlers = [

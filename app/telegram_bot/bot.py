@@ -1,6 +1,7 @@
 """
 Telegram Bot main module
 """
+
 import logging
 from typing import Optional
 
@@ -61,27 +62,46 @@ bot: Optional[Application] = None
 
 
 async def start_bot():
-    """Start the Telegram bot"""
+    """Start the Telegram bot without blocking the event loop"""
     global bot
     if bot is None:
         bot = create_bot()
+
+    if bot.running:
+        logger.info("Telegram Bot is already running")
+        return
 
     logger.info("Starting Telegram Bot...")
     await bot.initialize()
     await bot.start()
     await bot.updater.start_polling()
     logger.info("Telegram Bot started and polling for updates")
-    # Keep the application running to process updates
-    await bot.updater.idle()
 
 
 async def stop_bot():
     """Stop the Telegram bot"""
     global bot
-    if bot:
-        logger.info("Stopping Telegram Bot...")
-        await bot.updater.stop()
-        await bot.stop()
+    if not bot:
+        return
+
+    logger.info("Stopping Telegram Bot...")
+    try:
+        # Only stop updater if it's running
+        if bot.updater and bot.updater.running:
+            await bot.updater.stop()
+    except Exception as e:
+        logger.warning(f"Error stopping updater: {e}")
+    
+    try:
+        if bot.running:
+            await bot.stop()
+    except Exception as e:
+        logger.warning(f"Error stopping bot: {e}")
+    
+    try:
         await bot.shutdown()
-        logger.info("Telegram Bot stopped")
+    except Exception as e:
+        logger.warning(f"Error shutting down bot: {e}")
+    
+    logger.info("Telegram Bot stopped")
 

@@ -12,6 +12,7 @@ class LoginState(Enum):
 class TicketState(Enum):
     TITLE = auto()
     DESCRIPTION = auto()
+    BRANCH = auto()
     CATEGORY = auto()
     ATTACHMENTS = auto()
 

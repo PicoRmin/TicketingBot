@@ -48,6 +48,22 @@ export async function apiPatch(path: string, body: any) {
   return res.json();
 }
 
+export async function apiPut(path: string, body: any) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {})
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const data = await safeJson(res);
+    throw new Error(data?.detail || res.statusText);
+  }
+  return res.json();
+}
+
 export async function apiUploadFile(path: string, formData: FormData) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",

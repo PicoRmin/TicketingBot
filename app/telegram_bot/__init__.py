@@ -1,6 +1,9 @@
 """
-Telegram Bot module
-"""
-from app.telegram_bot.bot import bot, start_bot, stop_bot
+Telegram Bot package.
 
-__all__ = ["bot", "start_bot", "stop_bot"]
+Note:
+- Avoid importing submodules (e.g., bot) here to prevent double-import
+  when running `python -m app.telegram_bot.bot`.
+"""
+
+__all__ = []

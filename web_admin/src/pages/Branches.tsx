@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiGet, apiPost, isAuthenticated } from "../services/api";
+import { apiGet, apiPost, apiPut, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 type Branch = {
@@ -18,6 +18,7 @@ export default function Branches() {
   const [items, setItems] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     name_en: "",
@@ -50,6 +51,23 @@ export default function Branches() {
     load();
   }, []);
 
+  const startEdit = (branch: Branch) => {
+    setEditingId(branch.id);
+    setForm({
+      name: branch.name,
+      name_en: branch.name_en || "",
+      code: branch.code,
+      address: branch.address || "",
+      phone: branch.phone || "",
+      is_active: branch.is_active
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm({ name: "", name_en: "", code: "", address: "", phone: "", is_active: true });
+  };
+
   const submit = async () => {
     if (!form.name || !form.code) {
       setError("نام و کد شعبه الزامی است");
@@ -58,18 +76,30 @@ export default function Branches() {
     setLoading(true);
     setError(null);
     try {
-      await apiPost("/api/branches", {
-        name: form.name,
-        name_en: form.name_en || undefined,
-        code: form.code,
-        address: form.address || undefined,
-        phone: form.phone || undefined,
-        is_active: form.is_active
-      });
+      if (editingId) {
+        await apiPut(`/api/branches/${editingId}`, {
+          name: form.name,
+          name_en: form.name_en || undefined,
+          code: form.code,
+          address: form.address || undefined,
+          phone: form.phone || undefined,
+          is_active: form.is_active
+        });
+        setEditingId(null);
+      } else {
+        await apiPost("/api/branches", {
+          name: form.name,
+          name_en: form.name_en || undefined,
+          code: form.code,
+          address: form.address || undefined,
+          phone: form.phone || undefined,
+          is_active: form.is_active
+        });
+      }
       setForm({ name: "", name_en: "", code: "", address: "", phone: "", is_active: true });
       await load();
     } catch (e: any) {
-      setError(e?.message || "خطا در ثبت شعبه");
+      setError(e?.message || (editingId ? "خطا در ویرایش شعبه" : "خطا در ثبت شعبه"));
     } finally {
       setLoading(false);
     }
@@ -90,7 +120,16 @@ export default function Branches() {
           <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
           فعال
         </label>
-        <button onClick={submit} disabled={loading}>افزودن شعبه</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={submit} disabled={loading}>
+            {editingId ? "ذخیره تغییرات" : "افزودن شعبه"}
+          </button>
+          {editingId && (
+            <button onClick={cancelEdit} disabled={loading} style={{ backgroundColor: "#ccc" }}>
+              لغو
+            </button>
+          )}
+        </div>
       </div>
       <div className="table-wrap">
         <table border={1} cellPadding={6} style={{ width: "100%" }}>
@@ -102,6 +141,7 @@ export default function Branches() {
               <th>تلفن</th>
               <th>آدرس</th>
               <th>تاریخ ایجاد</th>
+              <th>عملیات</th>
             </tr>
           </thead>
           <tbody>
@@ -113,6 +153,11 @@ export default function Branches() {
                 <td>{b.phone || ""}</td>
                 <td>{b.address || ""}</td>
                 <td>{b.created_at?.slice(0, 10) || ""}</td>
+                <td>
+                  <button onClick={() => startEdit(b)} disabled={loading} style={{ padding: "4px 8px" }}>
+                    ویرایش
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

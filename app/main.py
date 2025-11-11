@@ -29,6 +29,8 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+app.state.telegram_bot_started = False
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -54,10 +56,13 @@ async def startup_event():
         try:
             from app.telegram_bot.bot import start_bot
             await start_bot()
+            app.state.telegram_bot_started = True
             logger.info("Telegram Bot started successfully")
         except Exception as e:
+            app.state.telegram_bot_started = False
             logger.error(f"Failed to start Telegram Bot: {e}")
     else:
+        app.state.telegram_bot_started = False
         logger.warning("TELEGRAM_BOT_TOKEN not set, skipping Telegram Bot startup")
 
 
@@ -67,7 +72,7 @@ async def shutdown_event():
     logger.info("Shutting down application")
     
     # Stop Telegram Bot if it was started
-    if settings.TELEGRAM_BOT_TOKEN:
+    if settings.TELEGRAM_BOT_TOKEN and getattr(app.state, "telegram_bot_started", False):
         try:
             from app.telegram_bot.bot import stop_bot
             await stop_bot()

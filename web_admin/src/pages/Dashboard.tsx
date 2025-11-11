@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiGet, API_BASE_URL } from "../services/api";
+import { useNavigate } from "react-router-dom";
+import { apiGet, API_BASE_URL, isAuthenticated } from "../services/api";
 import {
   BarChart,
   Bar,
@@ -13,6 +14,7 @@ import {
 } from "recharts";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [overview, setOverview] = useState<any | null>(null);
   const [byStatus, setByStatus] = useState<Record<string, number>>({});
   const [byDate, setByDate] = useState<{ date: string; count: number }[]>([]);
@@ -21,10 +23,22 @@ export default function Dashboard() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [responseHours, setResponseHours] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+  }, [navigate]);
 
   const loadReports = async () => {
+    if (!isAuthenticated()) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
       const ov = await apiGet("/api/reports/overview");
       const bs = await apiGet("/api/reports/by-status");
       const df = new URLSearchParams();
@@ -39,12 +53,17 @@ export default function Dashboard() {
       setByBranch(bb.map((x: any) => ({ branch_name: x.branch_name, count: x.count })));
       setResponseHours(rt?.average_response_time_hours ?? null);
     } catch (e: any) {
+      console.error("Dashboard error:", e);
       setError(e?.message || "خطا در دریافت گزارش‌ها");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadReports();
+    if (isAuthenticated()) {
+      loadReports();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -53,10 +72,15 @@ export default function Dashboard() {
     [byStatus]
   );
 
+  if (!isAuthenticated()) {
+    return null;
+  }
+
   return (
     <div>
       <h1>داشبورد</h1>
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {loading && <div>در حال بارگذاری...</div>}
+      {error && <div style={{ color: "red", padding: 12, marginBottom: 16 }}>{error}</div>}
 
       <section>
         <h2>نمای کلی</h2>

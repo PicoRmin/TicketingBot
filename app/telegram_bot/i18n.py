@@ -47,7 +47,12 @@ MESSAGES_FA: Dict[str, str] = {
                         "لطفاً توضیحات تیکت را وارد کنید:",
     
     "new_ticket_description": "✅ توضیحات دریافت شد\n\n"
-                              "لطفاً دسته‌بندی تیکت را انتخاب کنید:",
+                              "لطفاً شعبه را انتخاب کنید:",
+    
+    "new_ticket_branch": "✅ شعبه انتخاب شد: {branch_name}\n\n"
+                         "لطفاً دسته‌بندی تیکت را انتخاب کنید:",
+    
+    "branch_skip": "⏩ بدون شعبه",
     
     "new_ticket_category": "✅ دسته‌بندی انتخاب شد: {category}\n\n"
                            "در حال ایجاد تیکت...",
@@ -156,7 +161,12 @@ MESSAGES_EN: Dict[str, str] = {
                         "Please enter the ticket description:",
     
     "new_ticket_description": "✅ Description received\n\n"
-                             "Please select the ticket category:",
+                             "Please select the branch:",
+    
+    "new_ticket_branch": "✅ Branch selected: {branch_name}\n\n"
+                        "Please select the ticket category:",
+    
+    "branch_skip": "⏩ No branch",
     
     "new_ticket_category": "✅ Category selected: {category}\n\n"
                           "Creating ticket...",

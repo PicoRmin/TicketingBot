@@ -49,6 +49,9 @@ async def create_new_ticket(
         TicketResponse: Created ticket
     """
     ticket = create_ticket(db, ticket_data, current_user.id)
+    # Ensure user relationship is loaded for response
+    if not ticket.user:
+        ticket.user = current_user
     return ticket
 
 

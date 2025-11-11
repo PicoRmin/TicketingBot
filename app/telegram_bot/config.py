@@ -9,5 +9,5 @@ WEBHOOK_URL = getattr(settings, "TELEGRAM_WEBHOOK_URL", None)
 WEBHOOK_SECRET = getattr(settings, "TELEGRAM_WEBHOOK_SECRET", None)
 
 # API settings
-API_BASE_URL = getattr(settings, "API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = getattr(settings, "API_BASE_URL", "http://127.0.0.1:8000")
 

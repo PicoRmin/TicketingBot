@@ -80,6 +80,7 @@ def get_handler():
         },
         fallbacks=[CommandHandler("cancel", cancel_command)],
         allow_reentry=True,
+        per_message=False,  # Must be False when using MessageHandler
     )
 
 

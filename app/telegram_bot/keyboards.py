@@ -3,12 +3,13 @@ Inline keyboards used by the Telegram bot.
 """
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import Any, Dict, Iterable, List
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from app.core.enums import Language, TicketCategory
 from app.telegram_bot.callbacks import (
+    CALLBACK_BRANCH_PREFIX,
     CALLBACK_CATEGORY_PREFIX,
     CALLBACK_HELP,
     CALLBACK_LANGUAGE,
@@ -93,6 +94,27 @@ def language_keyboard(language: Language) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 
+def branch_keyboard(branches: List[Dict[str, Any]], language: Language) -> InlineKeyboardMarkup:
+    """Return a keyboard for selecting branches."""
+    buttons = [
+        [
+            _button(
+                branch.get("name", f"Branch {branch.get('id')}"),
+                f"{CALLBACK_BRANCH_PREFIX}{branch.get('id')}",
+            )
+        ]
+        for branch in branches
+    ]
+    # Add skip option
+    buttons.append([
+        _button(
+            get_message("branch_skip", language),
+            f"{CALLBACK_BRANCH_PREFIX}skip",
+        )
+    ])
+    return InlineKeyboardMarkup(buttons)
+
+
 def skip_attachments_keyboard(language: Language) -> InlineKeyboardMarkup:
     """Keyboard for skipping attachment upload."""
     return InlineKeyboardMarkup(
@@ -110,6 +132,7 @@ def skip_attachments_keyboard(language: Language) -> InlineKeyboardMarkup:
 __all__ = [
     "main_menu_keyboard",
     "category_keyboard",
+    "branch_keyboard",
     "language_keyboard",
     "skip_attachments_keyboard",
 ]

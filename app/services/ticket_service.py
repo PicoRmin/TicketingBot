@@ -58,7 +58,8 @@ def create_ticket(
         description=ticket_data.description,
         category=ticket_data.category,
         status=TicketStatus.PENDING,
-        user_id=user_id
+        user_id=user_id,
+        branch_id=ticket_data.branch_id
     )
     
     db.add(ticket)
@@ -144,6 +145,11 @@ def update_ticket_status(
         Ticket: Updated ticket
     """
     ticket.status = new_status
+    # update timestamps for status transitions
+    if new_status == TicketStatus.RESOLVED and ticket.resolved_at is None:
+        ticket.resolved_at = datetime.utcnow()
+    if new_status == TicketStatus.CLOSED and ticket.closed_at is None:
+        ticket.closed_at = datetime.utcnow()
     db.commit()
     db.refresh(ticket)
     
@@ -191,7 +197,8 @@ def get_all_tickets(
     limit: int = 100,
     status: Optional[TicketStatus] = None,
     category: Optional[TicketCategory] = None,
-    user_id: Optional[int] = None
+    user_id: Optional[int] = None,
+    branch_id: Optional[int] = None
 ) -> Tuple[List[Ticket], int]:
     """
     Get all tickets (for admin) with filters
@@ -215,6 +222,8 @@ def get_all_tickets(
         query = query.filter(Ticket.category == category)
     if user_id:
         query = query.filter(Ticket.user_id == user_id)
+    if branch_id:
+        query = query.filter(Ticket.branch_id == branch_id)
     
     total = query.count()
     tickets = query.order_by(Ticket.created_at.desc()).offset(skip).limit(limit).all()

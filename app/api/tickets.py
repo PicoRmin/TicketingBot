@@ -59,6 +59,7 @@ async def get_tickets(
     page_size: int = Query(10, ge=1, le=100, description="تعداد آیتم در هر صفحه"),
     status: Optional[TicketStatus] = Query(None, description="فیلتر بر اساس وضعیت"),
     category: Optional[TicketCategory] = Query(None, description="فیلتر بر اساس دسته‌بندی"),
+    branch_id: Optional[int] = Query(None, description="فیلتر بر اساس شعبه (فقط ادمین)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -81,7 +82,7 @@ async def get_tickets(
     # Admin can see all tickets, users can only see their own
     if current_user.role == UserRole.ADMIN:
         tickets, total = get_all_tickets(
-            db, skip=skip, limit=page_size, status=status, category=category
+            db, skip=skip, limit=page_size, status=status, category=category, branch_id=branch_id
         )
     else:
         tickets, total = get_user_tickets(

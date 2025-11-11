@@ -188,18 +188,19 @@
 - [x] Responsive Design
 - [x] Dark Mode (اختیاری)
 
-### فاز ۹: سیستم گزارش‌گیری / Phase 9: Reporting System
-**مدت زمان تخمینی: ۴-۵ روز**
+### فاز ۹: سیستم گزارش‌گیری / Phase 9: Reporting System ✅
+**مدت زمان تخمینی: ۴-۵ روز** | **وضعیت: تکمیل شده (MVP)**
 
-- [ ] ایجاد API endpoints برای گزارش‌ها:
-  - گزارش تعداد تیکت‌ها بر اساس وضعیت
-  - گزارش تیکت‌ها بر اساس تاریخ
-  - گزارش تیکت‌ها بر اساس شعبه
-  - گزارش زمان پاسخ‌دهی
-  - گزارش میزان تأخیر
-- [ ] ایجاد Dashboard برای نمایش گزارش‌ها
-- [ ] امکان Export گزارش به Excel/PDF
-- [ ] ایجاد Graph و Chart برای تجسم داده‌ها
+- [x] ایجاد API endpoints برای گزارش‌ها:
+  - [x] گزارش تعداد تیکت‌ها بر اساس وضعیت
+  - [x] گزارش تیکت‌ها بر اساس تاریخ
+  - [x] گزارش تیکت‌ها بر اساس شعبه (با نام و کد شعب)
+  - [x] گزارش زمان پاسخ‌دهی (بر اساس resolved_at)
+  - [ ] گزارش میزان تأخیر
+- [x] ایجاد Dashboard برای نمایش گزارش‌ها (نمودار وضعیت/تاریخ/شعب)
+- [x] امکان Export گزارش به CSV (MVP)
+- [x] امکان Export گزارش به Excel (XLSX) (MVP)
+- [x] ایجاد نمایش جدولی برای گزارش‌ها (MVP)
 - [ ] امکان ارسال گزارش از طریق تلگرام
 - [ ] امکان ارسال گزارش از طریق ایمیل
 
@@ -534,7 +535,8 @@ imehrTicketing/
 - `GET /api/reports/by-date` - گزارش بر اساس تاریخ
 - `GET /api/reports/by-branch` - گزارش بر اساس شعبه
 - `GET /api/reports/response-time` - گزارش زمان پاسخ‌دهی
-- `POST /api/reports/export` - Export گزارش
+- `GET /api/reports/export?kind=...` - Export CSV (overview|by-status|by-date|by-branch)
+- `GET /api/reports/export.xlsx?kind=...` - Export Excel (overview|by-status|by-date|by-branch)
 
 ---
 
@@ -841,6 +843,6 @@ imehrTicketing/
 
 ---
 
-**آخرین به‌روزرسانی / Last Updated**: 2024-11-10
+**آخرین به‌روزرسانی / Last Updated**: 2025-11-11
 **نسخه / Version**: 1.0.0
 

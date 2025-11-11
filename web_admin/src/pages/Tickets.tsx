@@ -29,6 +29,9 @@ export default function Tickets() {
   const [status, setStatus] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [query, setQuery] = useState<string>("");
+  const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [branchId, setBranchId] = useState<string>("");
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -46,6 +49,7 @@ export default function Tickets() {
         params.set("page_size", "10");
         if (status) params.set("status", status);
         if (category) params.set("category", category);
+        if (branchId) params.set("branch_id", branchId);
         const res = await apiGet(`/api/tickets?${params.toString()}`);
         // جستجوی ساده سمت کلاینت بر اساس عنوان در صورت تعیین query
         if (query) {
@@ -61,7 +65,21 @@ export default function Tickets() {
       }
     };
     load();
-  }, [page, status, category, query]);
+  }, [page, status, category, branchId, query]);
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const me = await apiGet(`/api/auth/me`);
+        setIsAdmin(me?.role === "admin");
+        const b = await apiGet(`/api/branches`);
+        setBranches(b.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
+      } catch {
+        // ignore for non-admin or error
+      }
+    };
+    loadBranches();
+  }, []);
 
   return (
     <div>
@@ -92,6 +110,19 @@ export default function Tickets() {
             <option value="other">سایر</option>
           </select>
         </label>
+        {isAdmin && branches.length > 0 && (
+          <label>
+            شعبه:
+            <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+              <option value="">همه</option>
+              {branches.map((b) => (
+                <option key={b.id} value={String(b.id)}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {loading && <div>در حال بارگذاری...</div>}
       {error && <div style={{ color: "red" }}>{error}</div>}

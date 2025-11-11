@@ -17,7 +17,7 @@ class TicketBase(BaseModel):
 
 class TicketCreate(TicketBase):
     """Schema for creating a ticket"""
-    pass
+    branch_id: Optional[int] = Field(None, description="شناسه شعبه")
 
 
 class TicketUpdate(BaseModel):
@@ -39,8 +39,11 @@ class TicketResponse(TicketBase):
     ticket_number: str
     status: TicketStatus
     user_id: int
+    branch_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
+    resolved_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
     user: Optional[UserResponse] = None
     
     class Config:

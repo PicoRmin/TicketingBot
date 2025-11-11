@@ -19,8 +19,11 @@ class Ticket(Base):
     category = Column(Enum(TicketCategory), nullable=False)
     status = Column(Enum(TicketStatus), default=TicketStatus.PENDING, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
     
     # Relationships
     user = relationship("User", back_populates="tickets")
@@ -32,6 +35,7 @@ class Ticket(Base):
         Index('idx_ticket_category', 'category'),
         Index('idx_ticket_created_at', 'created_at'),
         Index('idx_ticket_user_status', 'user_id', 'status'),
+        Index('idx_ticket_branch', 'branch_id'),
     )
     
     def __repr__(self):

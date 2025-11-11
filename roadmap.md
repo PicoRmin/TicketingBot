@@ -107,19 +107,20 @@
 - [x] ایجاد Seed Data برای تست
 - [x] ایجاد Indexes برای بهینه‌سازی
 
-### فاز ۳: سیستم احراز هویت / Phase 3: Authentication System
-**مدت زمان تخمینی: ۳-۴ روز**
+### فاز ۳: سیستم احراز هویت / Phase 3: Authentication System ✅
+**مدت زمان تخمینی: ۳-۴ روز** | **وضعیت: تکمیل شده (MVP)**
 
-- [ ] پیاده‌سازی JWT Token Authentication
-- [ ] ایجاد سیستم نقش‌ها (RBAC):
-  - Central Admin
-  - Branch Admin
-  - Report Manager
-  - User (Staff)
-- [ ] ایجاد Middleware برای بررسی دسترسی
-- [ ] پیاده‌سازی Login/Logout endpoints
-- [ ] ایجاد سیستم Refresh Token
-- [ ] امن‌سازی رمزگذاری توکن‌ها
+- [x] پیاده‌سازی JWT Token Authentication
+- [x] ایجاد سیستم نقش‌ها (RBAC):
+  - [x] Admin
+  - [x] User (Staff)
+  - [ ] Central Admin - برای نسخه‌های بعدی
+  - [ ] Branch Admin - برای نسخه‌های بعدی
+  - [ ] Report Manager - برای نسخه‌های بعدی
+- [x] ایجاد Dependencies برای بررسی دسترسی
+- [x] پیاده‌سازی Login endpoints
+- [ ] ایجاد سیستم Refresh Token - برای نسخه‌های بعدی
+- [x] امن‌سازی رمزگذاری توکن‌ها
 
 ### فاز ۴: API Core - مدیریت تیکت‌ها / Phase 4: Core API - Ticket Management
 **مدت زمان تخمینی: ۵-۷ روز**

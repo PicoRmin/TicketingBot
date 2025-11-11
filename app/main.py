@@ -31,7 +31,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,10 +71,10 @@ async def health_check():
     }
 
 
-# Import and include routers (will be added in later phases)
-# from app.api import auth, tickets
-# app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-# app.include_router(tickets.router, prefix="/api/tickets", tags=["Tickets"])
+# Import and include routers
+from app.api import auth
+
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 
 if __name__ == "__main__":
     import uvicorn

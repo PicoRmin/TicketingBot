@@ -9,36 +9,32 @@ from app.config import settings
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a password against a hash
+    Verify a password against a hash using bcrypt
     
     Args:
         plain_password: The plain text password
-        hashed_password: The hashed password
+        hashed_password: The hashed password (bcrypt format)
         
     Returns:
         bool: True if password matches, False otherwise
     """
     try:
-        # If hash doesn't start with $2b$, it might be from passlib, try passlib first
-        if not hashed_password.startswith("$2b$") and not hashed_password.startswith("$2a$"):
-            from passlib.context import CryptContext
-            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-            return pwd_context.verify(plain_password, hashed_password)
-        else:
-            # Direct bcrypt verification
-            return bcrypt.checkpw(
-                plain_password.encode('utf-8'),
-                hashed_password.encode('utf-8')
-            )
-    except Exception:
-        # Fallback to direct bcrypt
-        try:
-            return bcrypt.checkpw(
-                plain_password.encode('utf-8'),
-                hashed_password.encode('utf-8')
-            )
-        except Exception:
-            return False
+        # Ensure inputs are strings
+        if not isinstance(plain_password, str):
+            plain_password = str(plain_password)
+        if not isinstance(hashed_password, str):
+            hashed_password = str(hashed_password)
+        
+        # Encode to bytes
+        password_bytes = plain_password.encode('utf-8')
+        hash_bytes = hashed_password.encode('utf-8')
+        
+        # Verify using bcrypt
+        return bcrypt.checkpw(password_bytes, hash_bytes)
+    except Exception as e:
+        # Log error in production (optional)
+        # logger.error(f"Password verification error: {e}")
+        return False
 
 
 def get_password_hash(password: str) -> str:

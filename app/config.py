@@ -31,8 +31,13 @@ class Settings(BaseSettings):
     # Telegram Bot
     TELEGRAM_BOT_TOKEN: str = ""
     
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+    # CORS - Can be set as comma-separated string in .env file
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:8000"
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Parse CORS_ORIGINS string to list"""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
     
     # Logging
     LOG_LEVEL: str = "INFO"

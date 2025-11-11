@@ -1,6 +1,6 @@
 """
 API routes
 """
-from app.api import auth, tickets
+from app.api import auth, tickets, files
 
-__all__ = ["auth", "tickets"]
+__all__ = ["auth", "tickets", "files"]

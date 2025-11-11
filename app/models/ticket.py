@@ -24,6 +24,7 @@ class Ticket(Base):
     
     # Relationships
     user = relationship("User", back_populates="tickets")
+    attachments = relationship("Attachment", back_populates="ticket", cascade="all, delete-orphan")
     
     # Indexes for better performance
     __table_args__ = (

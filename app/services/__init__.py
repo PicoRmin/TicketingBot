@@ -13,8 +13,19 @@ from app.services.ticket_service import (
     delete_ticket,
     can_user_access_ticket,
 )
+from app.services.file_service import (
+    validate_file,
+    save_file,
+    create_attachment,
+    get_attachment,
+    get_ticket_attachments,
+    delete_attachment_file,
+    delete_attachment,
+    can_user_access_attachment,
+)
 
 __all__ = [
+    # Ticket services
     "generate_ticket_number",
     "create_ticket",
     "get_ticket",
@@ -25,4 +36,13 @@ __all__ = [
     "get_all_tickets",
     "delete_ticket",
     "can_user_access_ticket",
+    # File services
+    "validate_file",
+    "save_file",
+    "create_attachment",
+    "get_attachment",
+    "get_ticket_attachments",
+    "delete_attachment_file",
+    "delete_attachment",
+    "can_user_access_attachment",
 ]

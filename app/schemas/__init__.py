@@ -18,6 +18,7 @@ from app.schemas.ticket import (
     TicketResponse,
     TicketListResponse
 )
+from app.schemas.file import FileResponse, FileUploadResponse
 
 __all__ = [
     "UserBase",
@@ -34,4 +35,6 @@ __all__ = [
     "TicketStatusUpdate",
     "TicketResponse",
     "TicketListResponse",
+    "FileResponse",
+    "FileUploadResponse",
 ]

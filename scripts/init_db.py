@@ -10,7 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from app.database import engine, Base
 # Import all models to ensure they are registered with Base
-from app.models import User, Ticket  # noqa
+from app.models import User, Ticket, Attachment  # noqa
 import logging
 
 logging.basicConfig(level=logging.INFO)

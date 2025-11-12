@@ -33,6 +33,7 @@ router = APIRouter()
 
 @router.post("", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_ticket(
+    request: Request,
     ticket_data: TicketCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -41,6 +42,7 @@ async def create_new_ticket(
     Create a new ticket
     
     Args:
+        request: FastAPI request object
         ticket_data: Ticket creation data
         db: Database session
         current_user: Current authenticated user
@@ -48,11 +50,47 @@ async def create_new_ticket(
     Returns:
         TicketResponse: Created ticket
     """
-    ticket = create_ticket(db, ticket_data, current_user.id)
-    # Ensure user relationship is loaded for response
-    if not ticket.user:
-        ticket.user = current_user
-    return ticket
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"Creating ticket: title={ticket_data.title[:50]}, category={ticket_data.category}, branch_id={ticket_data.branch_id}, user_id={current_user.id}")
+        
+        # Create ticket
+        ticket = create_ticket(db, ticket_data, current_user.id)
+        logger.debug(f"Ticket created: id={ticket.id}, ticket_number={ticket.ticket_number}")
+        
+        # Reload ticket with user relationship using joinedload to ensure proper serialization
+        from sqlalchemy.orm import joinedload
+        ticket_id = ticket.id  # Store ID before reload
+        db.refresh(ticket)  # Refresh to ensure we have latest data
+        
+        # Reload with user relationship
+        ticket_with_user = db.query(Ticket).options(joinedload(Ticket.user)).filter(Ticket.id == ticket_id).first()
+        
+        if ticket_with_user:
+            ticket = ticket_with_user
+            # Ensure user is set
+            if not ticket.user:
+                logger.warning(f"User relationship not loaded for ticket {ticket.id}, setting manually")
+                ticket.user = current_user
+        else:
+            logger.error(f"Ticket {ticket_id} not found after creation!")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate("ticket.creation_failed", resolve_lang(request, current_user))
+            )
+        
+        logger.info(f"Ticket created successfully: id={ticket.id}, ticket_number={ticket.ticket_number}, user={ticket.user.username if ticket.user else 'None'}")
+        return ticket
+    except Exception as e:
+        logger.exception(f"Error creating ticket: {e}", exc_info=True)
+        lang = resolve_lang(request, current_user)
+        error_detail = translate("ticket.creation_failed", lang) or f"خطا در ایجاد تیکت: {str(e)}"
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_detail
+        )
 
 
 @router.get("", response_model=TicketListResponse)

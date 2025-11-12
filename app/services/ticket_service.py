@@ -50,23 +50,56 @@ def create_ticket(
     Returns:
         Ticket: Created ticket
     """
-    ticket_number = generate_ticket_number(db)
+    import logging
+    from app.models import Branch
     
-    ticket = Ticket(
-        ticket_number=ticket_number,
-        title=ticket_data.title,
-        description=ticket_data.description,
-        category=ticket_data.category,
-        status=TicketStatus.PENDING,
-        user_id=user_id,
-        branch_id=ticket_data.branch_id
-    )
+    logger = logging.getLogger(__name__)
     
-    db.add(ticket)
-    db.commit()
-    db.refresh(ticket)
-    
-    return ticket
+    try:
+        ticket_number = generate_ticket_number(db)
+        logger.debug(f"Generated ticket number: {ticket_number}")
+        
+        # Validate branch_id if provided
+        branch_id = ticket_data.branch_id
+        logger.debug(f"Original branch_id: {branch_id}")
+        
+        if branch_id is not None and branch_id <= 0:
+            logger.debug(f"branch_id {branch_id} is <= 0, setting to None")
+            branch_id = None
+        elif branch_id is not None:
+            # Check if branch exists
+            branch = db.query(Branch).filter(Branch.id == branch_id).first()
+            if not branch:
+                logger.warning(f"Branch with id {branch_id} not found, setting to None")
+                branch_id = None
+            else:
+                logger.debug(f"Branch found: {branch.name}")
+        
+        logger.debug(f"Final branch_id: {branch_id}")
+        
+        ticket = Ticket(
+            ticket_number=ticket_number,
+            title=ticket_data.title,
+            description=ticket_data.description,
+            category=ticket_data.category,
+            status=TicketStatus.PENDING,
+            user_id=user_id,
+            branch_id=branch_id
+        )
+        
+        logger.debug(f"Creating ticket: {ticket}")
+        db.add(ticket)
+        db.commit()
+        logger.debug("Ticket committed to database")
+        
+        db.refresh(ticket)
+        logger.debug(f"Ticket refreshed: id={ticket.id}, ticket_number={ticket.ticket_number}")
+        
+        return ticket
+    except Exception as e:
+        logger.exception(f"Error in create_ticket: {e}")
+        db.rollback()
+        raise
 
 
 def get_ticket(db: Session, ticket_id: int) -> Optional[Ticket]:

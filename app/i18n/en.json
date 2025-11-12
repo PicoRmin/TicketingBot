@@ -17,6 +17,9 @@
     "updated": "Ticket updated successfully",
     "deleted": "Ticket deleted"
   },
+  "ticket": {
+    "creation_failed": "Failed to create ticket"
+  },
   "files": {
     "uploaded": "File uploaded successfully",
     "too_large": "File size exceeds the allowed limit",

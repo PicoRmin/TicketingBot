@@ -32,12 +32,15 @@ app = FastAPI(
 app.state.telegram_bot_started = False
 
 # Configure CORS
+cors_origins = settings.cors_origins_list
+logger.info(f"CORS allowed origins: {cors_origins}")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # i18n middleware - makes request.state.lang available

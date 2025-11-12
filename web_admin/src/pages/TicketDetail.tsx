@@ -10,6 +10,7 @@ type Ticket = {
   description: string;
   status: string;
   category: string;
+  branch_id?: number | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -57,6 +58,7 @@ export default function TicketDetail() {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
+  const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -65,17 +67,29 @@ export default function TicketDetail() {
   }, []);
 
   useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const b = await apiGet(`/api/branches`) as any[];
+        setBranches(b.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
+      } catch {
+        // ignore
+      }
+    };
+    loadBranches();
+  }, []);
+
+  useEffect(() => {
     const load = async () => {
       if (!id) return;
       setLoading(true);
       setError(null);
       try {
-        const t = await apiGet(`/api/tickets/${id}`);
+        const t = await apiGet(`/api/tickets/${id}`) as Ticket;
         setTicket(t);
         setNewStatus(t.status);
-        const list = await apiGet(`/api/files/ticket/${id}/list`);
+        const list = await apiGet(`/api/files/ticket/${id}/list`) as Attachment[];
         setAttachments(list);
-        const commentsList = await apiGet(`/api/comments/ticket/${id}`);
+        const commentsList = await apiGet(`/api/comments/ticket/${id}`) as any[];
         setComments(commentsList);
       } catch (e: any) {
         setError(e?.message || "خطا در دریافت تیکت");
@@ -91,7 +105,7 @@ export default function TicketDetail() {
     setUpdating(true);
     setError(null);
     try {
-      const updated = await apiPatch(`/api/tickets/${id}/status`, { status: newStatus });
+      const updated = await apiPatch(`/api/tickets/${id}/status`, { status: newStatus }) as Ticket;
       setTicket(updated);
       setError(null);
     } catch (e: any) {
@@ -108,7 +122,7 @@ export default function TicketDetail() {
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await apiUploadFile(`/api/files/upload?ticket_id=${id}`, form);
+      const res = await apiUploadFile(`/api/files/upload?ticket_id=${id}`, form) as Attachment;
       setAttachments((prev) => [...prev, {
         id: res.id,
         filename: res.filename,
@@ -135,7 +149,7 @@ export default function TicketDetail() {
         ticket_id: Number(id),
         comment: newComment.trim(),
         is_internal: isInternal
-      });
+      }) as any;
       setComments((prev) => [...prev, res]);
       setNewComment("");
       setIsInternal(false);
@@ -197,6 +211,19 @@ export default function TicketDetail() {
               <div>
                 <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>دسته‌بندی</div>
                 <div style={{ fontSize: 18, fontWeight: 600 }}>{getCategoryText(ticket.category)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>شعبه</div>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>
+                  {ticket.branch_id ? (
+                    (() => {
+                      const branch = branches.find(b => b.id === ticket.branch_id);
+                      return branch ? `${branch.name} (${branch.code})` : `شعبه ${ticket.branch_id}`;
+                    })()
+                  ) : (
+                    <span style={{ color: "var(--fg-secondary)" }}>بدون شعبه</span>
+                  )}
+                </div>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>عنوان</div>

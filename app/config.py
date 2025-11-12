@@ -42,10 +42,22 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS_ORIGINS string to list"""
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        # Also add localhost variants for common ports
+        additional_origins = []
+        for origin in origins:
+            if "localhost" in origin:
+                # Add 127.0.0.1 variant
+                additional_origins.append(origin.replace("localhost", "127.0.0.1"))
+            elif "127.0.0.1" in origin:
+                # Add localhost variant
+                additional_origins.append(origin.replace("127.0.0.1", "localhost"))
+        # Combine and remove duplicates
+        all_origins = list(set(origins + additional_origins))
+        return all_origins
 
     # Logging
-    LOG_LEVEL: str = "INFO"
+    LOG_LEVEL: str = "DEBUG"  # Changed to DEBUG for better error tracking
     LOG_FILE: str = "logs/app.log"
 
     # File Storage

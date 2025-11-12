@@ -20,13 +20,26 @@ def tickets_by_date(
   date_from: Optional[date] = None,
   date_to: Optional[date] = None,
 ) -> List[Dict[str, int]]:
-  q = db.query(cast(Ticket.created_at, Date).label("d"), func.count(Ticket.id))
+  # Use func.date() for SQLite compatibility instead of cast()
+  q = db.query(func.date(Ticket.created_at).label("d"), func.count(Ticket.id))
   if date_from:
     q = q.filter(Ticket.created_at >= datetime.combine(date_from, datetime.min.time()))
   if date_to:
     q = q.filter(Ticket.created_at <= datetime.combine(date_to, datetime.max.time()))
   rows = q.group_by("d").order_by("d").all()
-  return [{"date": str(d), "count": c} for d, c in rows]
+  # Handle both string and date objects from SQLite
+  result = []
+  for row in rows:
+    d, c = row
+    # Convert date to string if needed
+    if isinstance(d, str):
+      date_str = d
+    elif isinstance(d, date):
+      date_str = d.isoformat()
+    else:
+      date_str = str(d)
+    result.append({"date": date_str, "count": c})
+  return result
 
 
 def tickets_overview(db: Session) -> Dict[str, int]:
@@ -42,7 +55,12 @@ def tickets_by_branch(db: Session) -> List[Dict[str, any]]:
     .group_by(Ticket.branch_id, Branch.name, Branch.code)
     .all()
   )
-  return [{"branch_id": bid, "branch_name": name, "branch_code": code, "count": cnt} for bid, name, code, cnt in rows]
+  result = [{"branch_id": bid, "branch_name": name, "branch_code": code, "count": cnt} for bid, name, code, cnt in rows]
+  # Also count tickets without branch
+  no_branch_count = db.query(func.count(Ticket.id)).filter(Ticket.branch_id.is_(None)).scalar() or 0
+  if no_branch_count > 0:
+    result.append({"branch_id": None, "branch_name": "بدون شعبه", "branch_code": "NONE", "count": no_branch_count})
+  return result
 
 
 def average_response_time_hours(db: Session) -> Optional[float]:

@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { getToken, logout, getStoredProfile, fetchProfile, setProfile, clearProfile } from "./services/api";
 import { useEffect, useState } from "react";
+import logoUrl from "./assets/brand-logo.png";
 
 export default function App() {
   const navigate = useNavigate();
@@ -56,15 +57,24 @@ export default function App() {
   return (
     <div className="container">
       <header>
-        <nav>
-          <Link to="/">📊 داشبورد</Link>
-          <Link to="/tickets">🎫 تیکت‌ها</Link>
-          <Link to="/branches">🏢 شعب</Link>
-          {isAdmin && <Link to="/users">👥 کاربران</Link>}
-        </nav>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button 
-            onClick={() => setDark((d) => !d)} 
+        <div className="header-left">
+          <Link to="/" className="brand">
+            <img src={logoUrl} alt="لوگوی ایرانمهر" />
+            <div className="brand-text">
+              <span className="brand-title">سیستم تیکتینگ ایرانمهر</span>
+              <span className="brand-subtitle">پنل مدیریت</span>
+            </div>
+          </Link>
+          <nav>
+            <Link to="/">📊 داشبورد</Link>
+            <Link to="/tickets">🎫 تیکت‌ها</Link>
+            <Link to="/branches">🏢 شعب</Link>
+            {isAdmin && <Link to="/users">👥 کاربران</Link>}
+          </nav>
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button
+            onClick={() => setDark((d) => !d)}
             className="secondary"
             style={{ padding: "8px 16px", fontSize: 14 }}
           >

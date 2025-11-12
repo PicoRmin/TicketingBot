@@ -1,7 +1,7 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { getToken, logout, getStoredProfile, fetchProfile, setProfile, clearProfile } from "./services/api";
 import { useEffect, useState } from "react";
-import logoUrl from "./assets/brand-logo.png";
+import logoUrl from "./assets/brand-logo.svg";
 
 export default function App() {
   const navigate = useNavigate();
@@ -61,8 +61,8 @@ export default function App() {
           <Link to="/" className="brand">
             <img src={logoUrl} alt="لوگوی ایرانمهر" />
             <div className="brand-text">
-              <span className="brand-title">سیستم تیکتینگ ایرانمهر</span>
-              <span className="brand-subtitle">پنل مدیریت</span>
+              <span className="brand-title">IranMehr</span>
+              <span className="brand-subtitle">Help Desk Ticketing System</span>
             </div>
           </Link>
           <nav>

@@ -129,11 +129,11 @@
 - [x] ایجاد Ticket CRUD endpoints
 - [x] سیستم تولید شماره تیکت یکتا (T-YYYYMMDD-####)
 - [x] سیستم تغییر وضعیت تیکت
-- [ ] ایجاد تاریخچه تغییرات - برای نسخه‌های بعدی
+- [x] ایجاد تاریخچه تغییرات (TicketHistory model, service, API endpoint)
 - [x] فیلتر و جستجوی تیکت‌ها
 - [x] سیستم Pagination
 - [x] مدیریت دسترسی بر اساس نقش
-- [ ] مدیریت دسترسی بر اساس شعبه - برای نسخه‌های بعدی
+- [x] مدیریت دسترسی بر اساس شعبه (Branch-based access control برای Branch Admin)
 - [x] اعتبارسنجی داده‌های ورودی (Pydantic)
 
 ### فاز ۵: سیستم فایل / Phase 5: File Management ✅

@@ -59,6 +59,7 @@ export default function TicketDetail() {
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -91,6 +92,8 @@ export default function TicketDetail() {
         setAttachments(list);
         const commentsList = await apiGet(`/api/comments/ticket/${id}`) as any[];
         setComments(commentsList);
+        const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
+        setHistory(historyList);
       } catch (e: any) {
         setError(e?.message || "خطا در دریافت تیکت");
       } finally {
@@ -107,6 +110,9 @@ export default function TicketDetail() {
     try {
       const updated = await apiPatch(`/api/tickets/${id}/status`, { status: newStatus }) as Ticket;
       setTicket(updated);
+      // Reload history after status change
+      const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
+      setHistory(historyList);
       setError(null);
     } catch (e: any) {
       setError(e?.message || "خطا در تغییر وضعیت");
@@ -420,6 +426,74 @@ export default function TicketDetail() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* History Card */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">📜 تاریخچه تغییرات ({history.length})</h2>
+            </div>
+            {history.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 40, color: "var(--fg-secondary)" }}>
+                📋 هیچ تغییر وضعیتی ثبت نشده است
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: 12 }}>
+                {history.map((h, idx) => (
+                  <div 
+                    key={idx} 
+                    className="card"
+                    style={{ 
+                      padding: 16,
+                      background: "var(--bg)",
+                      borderLeft: "4px solid var(--primary)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 12
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: 8,
+                        marginBottom: 4
+                      }}>
+                        <span className={`badge ${h.status?.toLowerCase()}`}>
+                          {getStatusBadge(h.status)}
+                        </span>
+                        <span style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
+                          {h.created_at ? new Date(h.created_at).toLocaleString("fa-IR") : "-"}
+                        </span>
+                      </div>
+                      {h.comment && (
+                        <div style={{ 
+                          marginTop: 8, 
+                          padding: 8, 
+                          background: "var(--bg-secondary)", 
+                          borderRadius: "4px",
+                          fontSize: 13,
+                          color: "var(--fg-secondary)"
+                        }}>
+                          {h.comment}
+                        </div>
+                      )}
+                      {h.changed_by && (
+                        <div style={{ 
+                          marginTop: 4, 
+                          fontSize: 11, 
+                          color: "var(--muted)" 
+                        }}>
+                          تغییر توسط: {h.changed_by.full_name || h.changed_by.username}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}

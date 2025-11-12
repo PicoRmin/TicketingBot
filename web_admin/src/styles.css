@@ -135,14 +135,18 @@ header .brand-text {
 }
 
 header .brand-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--fg);
+  color: var(--primary);
+  letter-spacing: 0.5px;
 }
 
 header .brand-subtitle {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--fg-secondary);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
 }
 
 header nav a {

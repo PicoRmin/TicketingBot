@@ -74,6 +74,16 @@ async def login_password(update, context: ContextTypes.DEFAULT_TYPE):
             pass
     sessions.set_profile(user_id, profile)
 
+    # Link Telegram chat id with backend for notifications
+    telegram_user = update.effective_user
+    await api_client.link_telegram_account(
+        token=token,
+        chat_id=get_chat_id(update),
+        username=getattr(telegram_user, "username", None),
+        first_name=getattr(telegram_user, "first_name", None),
+        last_name=getattr(telegram_user, "last_name", None),
+    )
+
     await update.message.reply_text(get_message("login_success", language))
     await send_main_menu(update, context)
     context.user_data.pop("login", None)

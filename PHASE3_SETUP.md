@@ -3,22 +3,30 @@
 ## ✅ کارهای انجام شده
 
 ### ۱. ایجاد Schemas
-- ✅ `UserBase` - Base schema برای User
-- ✅ `UserCreate` - Schema برای ایجاد کاربر
-- ✅ `UserUpdate` - Schema برای به‌روزرسانی کاربر
+- ✅ `UserBase` - شامل زبان و شناسه شعبه (`branch_id`)
+- ✅ `UserCreate` - Schema برای ایجاد کاربر با نقش و شعبه
+- ✅ `UserUpdate` - Schema برای به‌روزرسانی کاربر (نقش/شعبه)
 - ✅ `UserResponse` - Schema برای پاسخ API
 - ✅ `LoginRequest` - Schema برای درخواست Login
-- ✅ `Token` - Schema برای Token response
-- ✅ `TokenData` - Schema برای داده‌های Token
+- ✅ `Token` - Schema برای Token response (شامل `refresh_token` و `expires_in`)
+- ✅ `TokenData` - Schema برای داده‌های Token (user_id، role، branch_id)
+- ✅ `RefreshTokenRequest` - Schema برای تازه‌سازی / خروج از سیستم
 
 ### ۲. ایجاد Dependencies
 - ✅ `get_current_user` - دریافت کاربر فعلی از Token
 - ✅ `get_current_active_user` - دریافت کاربر فعال فعلی
-- ✅ `require_admin` - نیاز به نقش Admin
+- ✅ `require_roles` - وابستگی عمومی برای نقش‌ها
+- ✅ `require_admin` - نقش‌های `admin` و `central_admin`
+- ✅ `require_central_admin` - نقش مرکزی
+- ✅ `require_branch_admin` - نقش مدیر شعبه
+- ✅ `require_report_access` - نقش‌های مجاز برای گزارش‌ها (report_manager، admin، central_admin)
 
 ### ۳. ایجاد API Endpoints
-- ✅ `POST /api/auth/login` - Login با OAuth2PasswordRequestForm
+- ✅ `POST /api/auth/login` - Login با OAuth2PasswordRequestForm (برمی‌گرداند access/refresh token)
 - ✅ `POST /api/auth/login-form` - Login با JSON form data
+- ✅ `POST /api/auth/refresh` - صدور access token جدید با refresh token
+- ✅ `POST /api/auth/logout` - ابطال refresh token
+- ✅ `POST /api/auth/link-telegram` - لینک کردن حساب تلگرام
 - ✅ `GET /api/auth/me` - دریافت اطلاعات کاربر فعلی
 
 ### ۴. ایجاد API Router
@@ -43,12 +51,8 @@
 
 3. **تست Login**:
    - کلیک روی `POST /api/auth/login`
-   - کلیک روی "Try it out"
-   - وارد کردن:
-     - username: `admin`
-     - password: `admin123`
-   - کلیک روی "Execute"
-   - دریافت `access_token`
+   - وارد کردن `username` و `password`
+   - پاسخ شامل `access_token`, `refresh_token`, `expires_in`
 
 4. **تست Get Current User**:
    - کلیک روی "Authorize" در بالای صفحه
@@ -67,14 +71,17 @@ curl -X POST "http://localhost:8000/api/auth/login" \
   -d "username=admin&password=admin123"
 
 # پاسخ:
-# {"access_token":"eyJ...","token_type":"bearer"}
+# {"access_token":"...","refresh_token":"...","token_type":"bearer","expires_in":86400}
 
-# 2. Get Current User
-curl -X GET "http://localhost:8000/api/auth/me" \
-  -H "Authorization: Bearer <access_token>"
+# 2. Refresh token
+curl -X POST "http://localhost:8000/api/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"<refresh_token>"}'
 
-# پاسخ:
-# {"id":1,"username":"admin","full_name":"مدیر سیستم",...}
+# 3. Logout (revoke refresh token)
+curl -X POST "http://localhost:8000/api/auth/logout" \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"<refresh_token>"}'
 ```
 
 ### تست با Python
@@ -137,8 +144,14 @@ app/
 
 ### JWT Token
 - **Algorithm**: HS256
-- **Expiration**: 1440 minutes (24 hours)
-- **Payload**: `{"sub": username, "user_id": id, "role": role}`
+- **Expiration**: 1440 دقیقه (24 ساعت)
+- **Payload**: `{"sub": username, "user_id": id, "role": role, "branch_id": branch_id}`
+
+### Refresh Tokens
+- **ساختار**: توکن تصادفی، ذخیره شده به صورت hash در جدول `refresh_tokens`
+- **انقضا**: ۱۴ روز (قابل تنظیم با `REFRESH_TOKEN_EXPIRE_DAYS`)
+- **چرخش**: در هر `refresh` توکن جدید صادر و قبلی ابطال می‌شود
+- **خروج**: `POST /api/auth/logout`
 
 ### Password Hashing
 - **Algorithm**: bcrypt
@@ -174,7 +187,14 @@ Authorization: Bearer <token>
 پس از تکمیل فاز ۳، می‌توانید به فاز ۴ بروید:
 - **فاز ۴**: API Core - مدیریت تیکت‌ها
 
+## 🔍 مهاجرت دیتابیس مرتبط
+```bash
+python scripts/migrate_v8_add_user_branch.py
+python scripts/migrate_v9_create_refresh_tokens.py
+```
+(در صورت اجرای نسخه‌های قبل، تنها اسکریپت‌های جدید لازم است.)
+
 ---
 
-**تاریخ تکمیل**: 2024-11-11
+**تاریخ تکمیل**: 2025-11-12
 

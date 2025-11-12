@@ -9,7 +9,8 @@
   "auth": {
     "login_success": "Logged in successfully",
     "login_failed": "Invalid username or password",
-    "inactive_user": "User is inactive"
+    "inactive_user": "User is inactive",
+    "invalid_refresh": "Invalid refresh token"
   },
   "tickets": {
     "created": "Ticket created successfully",
@@ -19,6 +20,32 @@
   },
   "ticket": {
     "creation_failed": "Failed to create ticket"
+  },
+  "notifications": {
+    "ticket_created_user": "✅ Your ticket has been created successfully.",
+    "ticket_created_admin": "📥 A new ticket has been created.",
+    "ticket_status_user": "♻️ The status of your ticket has changed.",
+    "ticket_status_admin": "🔔 Ticket status updated.",
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "category": {
+      "internet": "🌐 Internet",
+      "equipment": "💻 Equipment",
+      "software": "📱 Software",
+      "other": "📋 Other"
+    }
+  },
+  "users": {
+    "username_exists": "Username already exists.",
+    "branch_required": "Branch selection is required for this role.",
+    "branch_not_found": "Branch not found.",
+    "branch_admin_exists": "A branch administrator is already assigned for this branch.",
+    "not_found": "User not found.",
+    "cannot_delete_self": "You cannot delete the account that is currently signed in."
   },
   "files": {
     "uploaded": "File uploaded successfully",

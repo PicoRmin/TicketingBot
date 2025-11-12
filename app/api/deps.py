@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models import User
 from app.core.security import decode_access_token
 from app.schemas.token import TokenData
+from app.core.enums import UserRole
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -42,11 +43,21 @@ async def get_current_user(
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(
+            username=username,
+            user_id=payload.get("user_id"),
+            role=payload.get("role"),
+            branch_id=payload.get("branch_id"),
+        )
     except JWTError:
         raise credentials_exception
     
-    user = db.query(User).filter(User.username == token_data.username).first()
+    user_query = db.query(User)
+    if token_data.user_id:
+        user = user_query.filter(User.id == token_data.user_id).first()
+    else:
+        user = user_query.filter(User.username == token_data.username).first()
+    
     if user is None:
         raise credentials_exception
     
@@ -76,27 +87,22 @@ async def get_current_active_user(
     return current_user
 
 
-async def require_admin(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
-    """
-    Require admin role
-    
-    Args:
-        current_user: Current active user
-        
-    Returns:
-        User: Current admin user
-        
-    Raises:
-        HTTPException: If user is not admin
-    """
-    from app.core.enums import UserRole
-    
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    return current_user
+def require_roles(*allowed_roles: UserRole):
+    allowed_set = set(allowed_roles)
+
+    async def dependency(current_user: User = Depends(get_current_active_user)) -> User:
+        if current_user.role not in allowed_set:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions"
+            )
+        return current_user
+
+    return dependency
+
+
+require_admin = require_roles(UserRole.ADMIN, UserRole.CENTRAL_ADMIN)
+require_central_admin = require_roles(UserRole.CENTRAL_ADMIN)
+require_branch_admin = require_roles(UserRole.BRANCH_ADMIN, UserRole.CENTRAL_ADMIN)
+require_report_access = require_roles(UserRole.REPORT_MANAGER, UserRole.ADMIN, UserRole.CENTRAL_ADMIN)
 

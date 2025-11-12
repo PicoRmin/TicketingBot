@@ -6,14 +6,11 @@ from enum import Enum
 
 class UserRole(str, Enum):
     """User roles"""
+    CENTRAL_ADMIN = "central_admin"
     ADMIN = "admin"
+    BRANCH_ADMIN = "branch_admin"
+    REPORT_MANAGER = "report_manager"
     USER = "user"
-    
-    # برای نسخه‌های بعدی
-    # CENTRAL_ADMIN = "central_admin"
-    # BRANCH_ADMIN = "branch_admin"
-    # REPORT_MANAGER = "report_manager"
-    # STAFF = "staff"
 
 
 class Language(str, Enum):

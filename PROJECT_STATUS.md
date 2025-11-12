@@ -1,7 +1,7 @@
 # گزارش وضعیت پروژه / Project Status Report
 
-**تاریخ بررسی**: 2025-01-11
-**وضعیت کلی**: ✅ فاز ۹ تکمیل شده - سیستم کامل و آماده استفاده
+**تاریخ بررسی**: 2025-11-12
+**وضعیت کلی**: ✅ فاز ۱۰ تکمیل شده - نسخه جدید آماده استفاده
 
 ---
 
@@ -18,23 +18,26 @@
 - Scripts اولیه ایجاد شده
 
 #### ✅ فاز ۲: مدل داده‌ها (تکمیل شده)
-- مدل User با تمام فیلدها
-- مدل Ticket با تمام فیلدها
+- مدل User با تمام فیلدها (شامل telegram_chat_id)
+- مدل Ticket با تمام فیلدها (branch_id, resolved_at, closed_at)
 - مدل Branch (شعبه‌ها)
 - مدل Attachment (فایل‌های پیوست)
 - مدل Comment (نظرات)
+- مدل TicketHistory (تاریخچه وضعیت)
 - Enums (UserRole, Language, TicketCategory, TicketStatus)
 - روابط بین مدل‌ها
 - Indexes برای performance
-- Scripts (init_db, create_admin, test_models)
+- Scripts (init_db, migrate_*, inspect_db)
 
 #### ✅ فاز ۳: سیستم احراز هویت (تکمیل شده)
-- Schemas (User, Token)
-- Dependencies (get_current_user, get_current_active_user, require_admin)
-- API Endpoints (login, login-form, me)
-- JWT Token Authentication
-- Password hashing و verification
-- Role-based access control
+- Schemas کامل (User/Token/RefreshToken)
+- JWT Access Token با payload شامل user_id/role/branch_id
+- سیستم Refresh Token مبتنی بر دیتابیس (چرخش، خروج)
+- نقش‌ها: admin، central_admin، branch_admin، report_manager، user
+- Dependencies جدید (`require_roles`, `require_report_access`, ...)
+- Endpoints: login, login-form, refresh, logout, me, link-telegram
+- Password hashing با bcrypt
+- Role-based access control به‌روزرسانی شده
 
 #### ✅ فاز ۴: API Core - مدیریت تیکت‌ها (تکمیل شده)
 - Ticket Schemas (Create, Update, Response, ListResponse)
@@ -83,17 +86,16 @@
 - پشتیبانی از زبان کاربر در Profile
 
 #### ✅ فاز ۸: پنل وب مدیریتی (تکمیل شده)
-- انتخاب Framework Frontend (React + TypeScript + Vite)
-- ایجاد صفحه Login
-- ایجاد Dashboard با آمار کلی و نمودارها
-- صفحه لیست تیکت‌ها با Pagination
-- فیلتر و جستجو (وضعیت، تاریخ، شعبه)
-- صفحه جزئیات تیکت
-- امکان تغییر وضعیت تیکت (ادمین)
-- امکان افزودن نظر/پاسخ به تیکت
-- صفحه مدیریت شعبه‌ها (لیست و افزودن)
-- Responsive Design
-- Dark Mode
+- ✅ React + TypeScript + Vite
+- ✅ Authentication flow
+- ✅ Dashboard با نمودارها
+- ✅ Ticket management (CRUD, filters, search)
+- ✅ Comment system
+- ✅ Branch management
+- ✅ User management (ایجاد/ویرایش/حذف کاربران و نقش‌ها)
+- ✅ Report visualization
+- ✅ Dark Mode
+- ✅ Responsive Design
 
 #### ✅ فاز ۹: سیستم گزارش‌گیری (تکمیل شده)
 - ایجاد API endpoints برای گزارش‌ها:
@@ -107,6 +109,13 @@
 - امکان Export گزارش به Excel (XLSX)
 - ایجاد نمایش جدولی برای گزارش‌ها
 - یکپارچه‌سازی با Web Admin Panel
+
+#### ✅ فاز ۱۰: اعلان‌ها و نوتیفیکیشن (تکمیل شده)
+- لینک حساب تلگرام کاربران
+- اعلان تلگرام در ایجاد تیکت
+- اعلان تلگرام در تغییر وضعیت تیکت
+- اعلان برای ادمین‌ها
+- ترجمه پیام‌های اعلان (FA/EN)
 
 ---
 
@@ -293,7 +302,6 @@ imehrTicketing/
 - ✅ مستندات کامل (run.md, PHASE*_SETUP.md)
 
 ### 📋 فازهای بعدی (اختیاری)
-- ⏳ فاز ۱۰: اعلان‌ها و نوتیفیکیشن
 - ⏳ فاز ۱۱: تست و QA
 - ⏳ فاز ۱۲: استقرار Production
 
@@ -327,8 +335,8 @@ imehrTicketing/
 
 ---
 
-**وضعیت نهایی**: ✅ **فاز ۹ تکمیل شده - سیستم کامل و آماده استفاده**
+**وضعیت نهایی**: ✅ **فاز ۱۰ تکمیل شده - نسخه جدید آماده استفاده**
 
 ---
 
-**تاریخ**: 2025-01-11
+**تاریخ**: 2025-11-12

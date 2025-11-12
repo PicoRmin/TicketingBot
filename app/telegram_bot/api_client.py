@@ -267,3 +267,30 @@ class APIClient:
             logger.exception(f"Exception while creating ticket: {e}")
             return None
 
+    async def link_telegram_account(
+        self,
+        token: str,
+        chat_id: int,
+        username: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+    ) -> bool:
+        """Inform backend about Telegram chat id for current user."""
+        try:
+            payload: Dict[str, Any] = {"chat_id": chat_id}
+            if username:
+                payload["username"] = username
+            if first_name:
+                payload["first_name"] = first_name
+            if last_name:
+                payload["last_name"] = last_name
+
+            response = await self.client.post(
+                f"{self.base_url}/api/auth/link-telegram",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            return response.status_code in (200, 201)
+        except Exception:
+            return False
+

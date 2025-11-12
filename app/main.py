@@ -107,6 +107,7 @@ async def health_check():
 from app.api import auth, tickets, files
 from app.api import branches, comments
 from app.api import reports
+from app.api import users
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["Tickets"])
@@ -114,6 +115,7 @@ app.include_router(files.router, prefix="/api/files", tags=["Files"])
 app.include_router(branches.router, prefix="/api/branches", tags=["Branches"])
 app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
 
 if __name__ == "__main__":
     import uvicorn

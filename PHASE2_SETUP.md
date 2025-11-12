@@ -15,8 +15,9 @@
 
 ### ۳. ایجاد مدل Ticket
 - فیلدها: id, ticket_number, title, description, category, status, user_id
-- Timestamps: created_at, updated_at
+- Timestamps: created_at, updated_at, resolved_at, closed_at
 - Relationship: user (Many-to-One با User)
+- Relationship: attachments, history
 - Indexes: برای بهینه‌سازی کوئری‌ها
 
 ### ۴. ایجاد Security Utilities
@@ -29,6 +30,9 @@
 - `scripts/init_db.py`: ایجاد جداول دیتابیس
 - `scripts/create_admin.py`: ایجاد کاربر ادمین
 - `scripts/test_models.py`: تست مدل‌ها
+- `scripts/migrate_v6_add_ticket_columns.py`: افزودن ستون‌های جدید تیکت
+- `scripts/migrate_v6_add_user_telegram.py`: افزودن ستون تلگرام کاربران
+- `scripts/migrate_v7_add_ticket_history.py`: ایجاد جدول تاریخچه تیکت‌ها
 
 ## 🚀 مراحل راه‌اندازی
 
@@ -118,44 +122,4 @@ app/
 - `id` (INTEGER, PRIMARY KEY)
 - `ticket_number` (VARCHAR, UNIQUE, INDEXED)
 - `title` (VARCHAR)
-- `description` (TEXT)
-- `category` (VARCHAR, ENUM)
-- `status` (VARCHAR, ENUM)
-- `user_id` (INTEGER, FOREIGN KEY)
-- `created_at` (DATETIME)
-- `updated_at` (DATETIME)
-
-## ✅ چک‌لیست
-
-- [ ] جداول دیتابیس ایجاد شده
-- [ ] کاربر ادمین ایجاد شده
-- [ ] مدل‌ها تست شده‌اند
-- [ ] روابط بین مدل‌ها کار می‌کنند
-- [ ] Indexes ایجاد شده‌اند
-
-## 🐛 عیب‌یابی
-
-### مشکل: خطای Import یا ModuleNotFoundError
-**راه‌حل**: 
-1. مطمئن شوید که Virtual Environment فعال است
-2. از `.venv\Scripts\python.exe` برای اجرای اسکریپت‌ها استفاده کنید
-3. یا Virtual Environment را فعال کنید: `.venv\Scripts\activate`
-
-### مشکل: Circular Import
-**راه‌حل**: این مشکل حل شده است. اگر باز هم رخ داد، مطمئن شوید که از آخرین نسخه فایل‌ها استفاده می‌کنید.
-
-### مشکل: خطای ایجاد جداول
-**راه‌حل**: مطمئن شوید که فایل `ticketing.db` موجود نیست یا آن را حذف کنید و دوباره اجرا کنید.
-
-### مشکل: خطای Foreign Key
-**راه‌حل**: مطمئن شوید که ابتدا User ایجاد شده است قبل از ایجاد Ticket.
-
-## 🎯 مراحل بعدی
-
-پس از تکمیل فاز ۲، می‌توانید به فاز ۳ بروید:
-- **فاز ۳**: سیستم احراز هویت (Authentication System)
-
----
-
-**تاریخ تکمیل**: 2024-11-11
-
+- `

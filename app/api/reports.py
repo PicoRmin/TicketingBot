@@ -9,7 +9,7 @@ except Exception:
   openpyxl = None
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.api.deps import get_current_active_user, require_admin
+from app.api.deps import require_report_access
 from app.models import User
 from app.services.report_service import tickets_by_status, tickets_by_date, tickets_overview, tickets_by_branch, average_response_time_hours
 from app.i18n.translator import translate
@@ -22,7 +22,7 @@ router = APIRouter()
 async def overview(
   request: Request,
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ) -> Dict[str, Any]:
   return tickets_overview(db)
 
@@ -31,7 +31,7 @@ async def overview(
 async def report_by_status(
   request: Request,
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ) -> Dict[str, int]:
   return tickets_by_status(db)
 
@@ -42,7 +42,7 @@ async def report_by_date(
   date_from: Optional[date] = Query(None),
   date_to: Optional[date] = Query(None),
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ) -> List[Dict[str, Any]]:
   return tickets_by_date(db, date_from, date_to)
 
@@ -51,7 +51,7 @@ async def report_by_date(
 async def report_by_branch(
   request: Request,
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ):
   return tickets_by_branch(db)
 
@@ -60,7 +60,7 @@ async def report_by_branch(
 async def report_response_time(
   request: Request,
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ):
   avg_hours = average_response_time_hours(db)
   return {"average_response_time_hours": avg_hours}
@@ -73,7 +73,7 @@ async def export_csv(
   date_from: Optional[date] = Query(None),
   date_to: Optional[date] = Query(None),
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ):
   # very basic CSV export (UTF-8)
   if kind == "overview":
@@ -106,7 +106,7 @@ async def export_xlsx(
   date_from: Optional[date] = Query(None),
   date_to: Optional[date] = Query(None),
   db: Session = Depends(get_db),
-  current_user: User = Depends(get_current_active_user)
+  _current_user: User = Depends(require_report_access)
 ):
   if openpyxl is None:
     raise HTTPException(status_code=500, detail="openpyxl is not installed")

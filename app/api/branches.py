@@ -4,7 +4,8 @@ from typing import List, Optional
 from app.database import get_db
 from app.models import Branch, User
 from app.schemas.branch import BranchCreate, BranchUpdate, BranchResponse
-from app.api.deps import require_admin, get_current_active_user
+from app.api.deps import get_current_active_user, require_roles
+from app.core.enums import UserRole
 from app.services.branch_service import (
   create_branch,
   get_branch,
@@ -34,7 +35,7 @@ async def add_branch(
   request: Request,
   data: BranchCreate,
   db: Session = Depends(get_db),
-  current_user: User = Depends(require_admin)
+  current_user: User = Depends(require_roles(UserRole.CENTRAL_ADMIN, UserRole.ADMIN))
 ):
   if get_branch_by_code(db, data.code):
     raise HTTPException(
@@ -64,7 +65,7 @@ async def update_branch(
   branch_id: int,
   data: BranchUpdate,
   db: Session = Depends(get_db),
-  current_user: User = Depends(require_admin)
+  current_user: User = Depends(require_roles(UserRole.CENTRAL_ADMIN, UserRole.ADMIN))
 ):
   branch = get_branch(db, branch_id)
   if not branch:

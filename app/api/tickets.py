@@ -3,7 +3,7 @@ Ticket API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 from app.database import get_db
 from app.models import Ticket, User
 from app.schemas.ticket import (
@@ -14,7 +14,7 @@ from app.schemas.ticket import (
     TicketListResponse
 )
 from app.core.enums import TicketStatus, TicketCategory, UserRole
-from app.api.deps import get_current_active_user, require_admin
+from app.api.deps import get_current_active_user, require_admin, require_roles
 from app.services.ticket_service import (
     create_ticket,
     get_ticket,
@@ -25,6 +25,12 @@ from app.services.ticket_service import (
     get_all_tickets,
     can_user_access_ticket,
 )
+from app.services.ticket_history_service import (
+    create_ticket_history,
+    get_ticket_history,
+)
+from app.schemas.ticket_history import TicketHistoryCreate, TicketHistoryResponse
+from app.services.notification_service import notify_ticket_created, notify_ticket_status_changed
 from app.i18n.translator import translate
 from app.i18n.fastapi_utils import resolve_lang
 
@@ -55,7 +61,21 @@ async def create_new_ticket(
     
     try:
         logger.info(f"Creating ticket: title={ticket_data.title[:50]}, category={ticket_data.category}, branch_id={ticket_data.branch_id}, user_id={current_user.id}")
-        
+
+        if current_user.role == UserRole.BRANCH_ADMIN:
+            lang = resolve_lang(request, current_user)
+            if current_user.branch_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=translate("common.forbidden", lang)
+                )
+            if ticket_data.branch_id and ticket_data.branch_id != current_user.branch_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=translate("common.forbidden", lang)
+                )
+            ticket_data.branch_id = current_user.branch_id
+
         # Create ticket
         ticket = create_ticket(db, ticket_data, current_user.id)
         logger.debug(f"Ticket created: id={ticket.id}, ticket_number={ticket.ticket_number}")
@@ -80,7 +100,20 @@ async def create_new_ticket(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=translate("ticket.creation_failed", resolve_lang(request, current_user))
             )
-        
+
+        # Log history for ticket creation
+        create_ticket_history(
+            db,
+            TicketHistoryCreate(
+                ticket_id=ticket.id,
+                status=ticket.status,
+                changed_by_id=current_user.id,
+                comment="Ticket created",
+            ),
+        )
+
+        await notify_ticket_created(ticket, db)
+
         logger.info(f"Ticket created successfully: id={ticket.id}, ticket_number={ticket.ticket_number}, user={ticket.user.username if ticket.user else 'None'}")
         return ticket
     except Exception as e:
@@ -119,11 +152,43 @@ async def get_tickets(
         TicketListResponse: List of tickets with pagination info
     """
     skip = (page - 1) * page_size
-    
-    # Admin can see all tickets, users can only see their own
-    if current_user.role == UserRole.ADMIN:
+    lang = resolve_lang(request, current_user)
+
+    admin_roles = (UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.REPORT_MANAGER)
+
+    if branch_id and current_user.role not in admin_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translate("common.forbidden", lang)
+        )
+
+    if current_user.role == UserRole.BRANCH_ADMIN:
+        if current_user.branch_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", lang)
+            )
+        if branch_id and branch_id != current_user.branch_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", lang)
+            )
         tickets, total = get_all_tickets(
-            db, skip=skip, limit=page_size, status=status, category=category, branch_id=branch_id
+            db,
+            skip=skip,
+            limit=page_size,
+            status=status,
+            category=category,
+            branch_id=current_user.branch_id,
+        )
+    elif current_user.role in admin_roles:
+        tickets, total = get_all_tickets(
+            db,
+            skip=skip,
+            limit=page_size,
+            status=status,
+            category=category,
+            branch_id=branch_id,
         )
     else:
         tickets, total = get_user_tickets(
@@ -282,7 +347,7 @@ async def update_ticket_status_by_id(
     ticket_id: int,
     status_data: TicketStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.BRANCH_ADMIN))
 ):
     """
     Update ticket status (Admin only)
@@ -308,7 +373,25 @@ async def update_ticket_status_by_id(
             detail=translate("tickets.not_found", lang)
         )
     
+    if current_user.role == UserRole.BRANCH_ADMIN:
+        if current_user.branch_id is None or ticket.branch_id != current_user.branch_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", resolve_lang(request, current_user))
+            )
+    
+    previous_status = ticket.status
     updated_ticket = update_ticket_status(db, ticket, status_data.status)
+    create_ticket_history(
+        db,
+        TicketHistoryCreate(
+            ticket_id=updated_ticket.id,
+            status=updated_ticket.status,
+            changed_by_id=current_user.id,
+            comment=None,
+        ),
+    )
+    await notify_ticket_status_changed(updated_ticket, previous_status, db)
     return updated_ticket
 
 
@@ -347,4 +430,30 @@ async def delete_ticket_by_id(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=translate("common.error", resolve_lang(request, current_user))
         )
+
+
+@router.get("/{ticket_id}/history", response_model=List[TicketHistoryResponse])
+async def list_ticket_history(
+    request: Request,
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Return chronological history for a ticket."""
+    ticket = get_ticket(db, ticket_id)
+    if not ticket:
+        lang = resolve_lang(request, current_user)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=translate("tickets.not_found", lang)
+        )
+
+    if not can_user_access_ticket(current_user, ticket):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
+        )
+
+    history = get_ticket_history(db, ticket_id)
+    return history
 

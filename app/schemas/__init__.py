@@ -21,6 +21,7 @@ from app.schemas.ticket import (
 from app.schemas.file import FileResponse, FileUploadResponse
 from app.schemas.branch import BranchCreate, BranchUpdate, BranchResponse
 from app.schemas.comment import CommentCreate, CommentResponse
+from app.schemas.ticket_history import TicketHistoryCreate, TicketHistoryResponse
 
 __all__ = [
     "UserBase",
@@ -44,4 +45,6 @@ __all__ = [
     "BranchResponse",
     "CommentCreate",
     "CommentResponse",
+    "TicketHistoryCreate",
+    "TicketHistoryResponse",
 ]

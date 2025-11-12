@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+    REFRESH_TOKEN_SECRET: str = "your-refresh-secret-key-change"
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
 
     # Telegram Bot
     TELEGRAM_BOT_TOKEN: str = ""

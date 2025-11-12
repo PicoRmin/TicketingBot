@@ -295,10 +295,16 @@ def can_user_access_ticket(user: User, ticket: Ticket) -> bool:
     Returns:
         bool: True if user can access
     """
-    # Admin can access all tickets
-    if user.role == UserRole.ADMIN:
+    # Admin-level roles can access all tickets
+    if user.role in (UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.REPORT_MANAGER):
         return True
-    
-    # User can only access their own tickets
+
+    # Branch admins limited to their branch
+    if user.role == UserRole.BRANCH_ADMIN:
+        if user.branch_id is None:
+            return False
+        return ticket.branch_id == user.branch_id
+
+    # Users can only access their own tickets
     return ticket.user_id == user.id
 

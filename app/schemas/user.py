@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from app.core.enums import UserRole, Language
+from app.schemas.branch import BranchResponse
 
 
 class UserBase(BaseModel):
@@ -12,6 +13,7 @@ class UserBase(BaseModel):
     username: str
     full_name: str
     language: Language = Language.FA
+    branch_id: Optional[int] = None
 
 
 class UserCreate(UserBase):
@@ -25,6 +27,9 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     language: Optional[Language] = None
     is_active: Optional[bool] = None
+    role: Optional[UserRole] = None
+    branch_id: Optional[int] = None
+    password: Optional[str] = None
 
 
 class UserResponse(UserBase):
@@ -34,7 +39,9 @@ class UserResponse(UserBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
+    telegram_chat_id: Optional[str] = None
+    branch: Optional[BranchResponse] = None
+
     class Config:
         from_attributes = True
 
@@ -48,4 +55,12 @@ class LoginRequest(BaseModel):
     """Schema for login request"""
     username: str
     password: str
+
+
+class TelegramLinkRequest(BaseModel):
+    """Request body for linking Telegram account"""
+    chat_id: int
+    username: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 

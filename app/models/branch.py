@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 
@@ -14,4 +15,6 @@ class Branch(Base):
     phone = Column(String(50), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    users = relationship("User", back_populates="branch")
 

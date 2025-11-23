@@ -3,7 +3,7 @@ Telegram bot handler registration entry point.
 """
 from telegram.ext import Application, CommandHandler
 
-from app.telegram_bot.handlers import auth, language, start, ticket, track
+from app.telegram_bot.handlers import auth, language, start, ticket, track, ticket_status
 from app.telegram_bot.handlers.common import cancel_command
 from app.telegram_bot.runtime import api_client
 
@@ -25,6 +25,10 @@ def register_handlers(application: Application) -> None:
 
     # Track ticket flow
     application.add_handler(track.get_handler())
+
+    # Ticket status change flow
+    for handler in ticket_status.get_handlers():
+        application.add_handler(handler)
 
     # Language selection callbacks
     for handler in language.get_handlers():

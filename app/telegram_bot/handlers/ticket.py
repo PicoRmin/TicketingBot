@@ -3,10 +3,13 @@ Ticket-related commands and conversations.
 """
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any, Dict
 
 from telegram.constants import ChatAction
+
+logger = logging.getLogger(__name__)
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
@@ -35,41 +38,75 @@ from app.telegram_bot.utils import get_chat_id, get_user_id
 
 async def my_tickets(update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Show the current user's tickets."""
-    token = await require_token(update, context)
-    if not token:
-        return
+    try:
+        token = await require_token(update, context)
+        if not token:
+            return
 
-    user_id = get_user_id(update)
-    language = sessions.get_language(user_id)
+        user_id = get_user_id(update)
+        language = sessions.get_language(user_id)
+        logger.debug(f"User {user_id} requested their tickets")
 
-    if update.callback_query:
-        query = update.callback_query
-        await query.answer()
-        try:
-            await query.edit_message_reply_markup(None)
-        except Exception:
-            pass
+        if update.callback_query:
+            query = update.callback_query
+            await query.answer()
+            try:
+                await query.edit_message_reply_markup(None)
+            except Exception:
+                pass
 
-    tickets_data = await api_client.get_user_tickets(token, page=1, page_size=10)
-    if not tickets_data or tickets_data.get("total", 0) == 0:
+        tickets_data = await api_client.get_user_tickets(token, page=1, page_size=10)
+        if not tickets_data or tickets_data.get("total", 0) == 0:
+            await context.bot.send_message(
+                chat_id=get_chat_id(update),
+                text=get_message("my_tickets_empty", language),
+            )
+            logger.debug(f"User {user_id} has no tickets")
+            return
+
+        header = get_message("my_tickets_list", language)
+        await context.bot.send_message(chat_id=get_chat_id(update), text=header)
+
+        ticket_count = 0
+        for ticket in tickets_data.get("items", []):
+            # Build message with priority and assigned_to
+            priority = ticket.get("priority", "medium")
+            priority_emoji = {
+                "critical": "🔴",
+                "high": "🟠",
+                "medium": "🟡",
+                "low": "🟢"
+            }.get(priority, "🟡")
+            
+            assigned_to = ticket.get("assigned_to")
+            assigned_text = ""
+            if assigned_to:
+                assigned_name = assigned_to.get("full_name") or assigned_to.get("username", "")
+                assigned_text = f"\n👤 کارشناس: {assigned_name}"
+            
+            message = get_message("ticket_item", language).format(
+                ticket_number=ticket.get("ticket_number", ""),
+                title=ticket.get("title", ""),
+                status=get_status_name(ticket.get("status", ""), language),
+                category=get_category_name(ticket.get("category", ""), language),
+                created_at=ticket.get("created_at", "")[:10] if ticket.get("created_at") else "",
+            )
+            # Add priority and assigned_to to message
+            message += f"\n{priority_emoji} اولویت: {get_message(f'priority_{priority}', language, default=priority)}"
+            message += assigned_text
+            
+            await context.bot.send_message(chat_id=get_chat_id(update), text=message)
+            ticket_count += 1
+        
+        logger.info(f"User {user_id} viewed {ticket_count} tickets")
+    except Exception as e:
+        logger.error(f"Error in my_tickets handler: {e}", exc_info=True)
+        user_id = get_user_id(update)
+        language = sessions.get_language(user_id)
         await context.bot.send_message(
             chat_id=get_chat_id(update),
-            text=get_message("my_tickets_empty", language),
+            text=get_message("error_occurred", language) or "❌ خطایی رخ داد. لطفاً دوباره تلاش کنید."
         )
-        return
-
-    header = get_message("my_tickets_list", language)
-    await context.bot.send_message(chat_id=get_chat_id(update), text=header)
-
-    for ticket in tickets_data.get("items", []):
-        message = get_message("ticket_item", language).format(
-            ticket_number=ticket.get("ticket_number", ""),
-            title=ticket.get("title", ""),
-            status=get_status_name(ticket.get("status", ""), language),
-            category=get_category_name(ticket.get("category", ""), language),
-            created_at=ticket.get("created_at", "")[:10] if ticket.get("created_at") else "",
-        )
-        await context.bot.send_message(chat_id=get_chat_id(update), text=message)
 
 
 async def start_new_ticket(update, context: ContextTypes.DEFAULT_TYPE):
@@ -238,12 +275,30 @@ async def ticket_category(update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     data["ticket"] = ticket
+    # Build message with priority and assigned_to
+    priority = ticket.get("priority", "medium")
+    priority_emoji = {
+        "critical": "🔴",
+        "high": "🟠",
+        "medium": "🟡",
+        "low": "🟢"
+    }.get(priority, "🟡")
+    
+    assigned_to = ticket.get("assigned_to")
+    assigned_text = ""
+    if assigned_to:
+        assigned_name = assigned_to.get("full_name") or assigned_to.get("username", "")
+        assigned_text = f"\n👤 کارشناس مسئول: {assigned_name}"
+    
     created_message = get_message("ticket_created", language).format(
         ticket_number=ticket.get("ticket_number", ""),
         title=ticket.get("title", ""),
         category=get_category_name(ticket.get("category", ""), language),
         status=get_status_name(ticket.get("status", ""), language),
     )
+    # Add priority and assigned_to
+    created_message += f"\n{priority_emoji} اولویت: {get_message(f'priority_{priority}', language, default=priority)}"
+    created_message += assigned_text
 
     await context.bot.send_message(chat_id=get_chat_id(update), text=created_message)
     await context.bot.send_message(
@@ -256,53 +311,118 @@ async def ticket_category(update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ticket_attachment(update, context: ContextTypes.DEFAULT_TYPE):
     """Handle document/photo uploads for attachments."""
-    user_id = get_user_id(update)
-    language = sessions.get_language(user_id)
-    data = context.user_data.get("ticket_flow")
-    token = sessions.get_token(user_id)
+    try:
+        user_id = get_user_id(update)
+        language = sessions.get_language(user_id)
+        data = context.user_data.get("ticket_flow")
+        token = sessions.get_token(user_id)
 
-    if not token or not data or "ticket" not in data:
-        await update.message.reply_text(get_message("error", language))
-        return ConversationHandler.END
+        if not token or not data or "ticket" not in data:
+            logger.warning(f"Invalid ticket flow state for user {user_id}")
+            await update.message.reply_text(get_message("error", language))
+            return ConversationHandler.END
 
-    attachment = update.message.document or (update.message.photo[-1] if update.message.photo else None)
-    if not attachment:
-        await update.message.reply_text(get_message("attachments_text_hint", language))
+        attachment = update.message.document or (update.message.photo[-1] if update.message.photo else None)
+        if not attachment:
+            await update.message.reply_text(get_message("attachments_text_hint", language))
+            return TicketState.ATTACHMENTS
+
+        ticket = data["ticket"]
+        ticket_id = ticket.get("id")
+        if not ticket_id:
+            logger.error(f"Ticket ID missing in ticket flow for user {user_id}")
+            await update.message.reply_text(get_message("error", language))
+            return ConversationHandler.END
+
+        # Get file info before downloading
+        file_name = getattr(attachment, "file_name", None)
+        file_size = getattr(attachment, "file_size", None)
+        mime_type = getattr(attachment, "mime_type", None) or (
+            "image/jpeg" if update.message.photo else "application/octet-stream"
+        )
+        
+        logger.debug(f"User {user_id} uploading file: name={file_name}, size={file_size}, type={mime_type}, ticket_id={ticket_id}")
+        
+        # Get file settings from API (to use database settings instead of config)
+        file_settings = await api_client.get_file_settings(token)
+        if not file_settings:
+            logger.warning(f"Failed to get file settings for user {user_id}, using defaults")
+            file_settings = None  # Will use defaults in validation
+        
+        # Get current attachment counts for this ticket
+        ticket_attachments_count = await api_client.get_ticket_attachments_count(token, ticket_id)
+        if not ticket_attachments_count:
+            logger.warning(f"Failed to get attachment counts for ticket {ticket_id}, using defaults")
+            ticket_attachments_count = None  # Will skip count validation
+        
+        # Validate file before downloading (with settings from database)
+        from app.telegram_bot.utils.file_validation import validate_telegram_file
+        is_valid, error_message = validate_telegram_file(
+            file_size=file_size,
+            mime_type=mime_type,
+            file_name=file_name,
+            file_settings=file_settings,
+            ticket_attachments_count=ticket_attachments_count
+        )
+        
+        if not is_valid:
+            error_msg = get_message("file_validation_error", language).format(error=error_message) if error_message else get_message("attachment_error", language)
+            logger.warning(f"File validation failed for user {user_id}: {error_message}")
+            await update.message.reply_text(error_msg)
+            return TicketState.ATTACHMENTS
+
+        await update.message.chat.send_action(ChatAction.UPLOAD_DOCUMENT)
+        
+        try:
+            telegram_file = await attachment.get_file()
+            file_bytes = await telegram_file.download_as_bytearray()
+            logger.debug(f"Downloaded file from Telegram: {len(file_bytes)} bytes")
+        except Exception as e:
+            logger.error(f"Error downloading file from Telegram for user {user_id}: {e}", exc_info=True)
+            await update.message.reply_text(get_message("attachment_error", language))
+            return TicketState.ATTACHMENTS
+
+        # Generate filename if not provided
+        if not file_name:
+            extension = ".jpg" if update.message.photo else ".bin"
+            file_name = f"attachment_{ticket_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}{extension}"
+
+        # Upload to API
+        logger.info(f"Uploading file to API: ticket_id={ticket_id}, file_name={file_name}, size={len(file_bytes)}")
+        try:
+            uploaded = await api_client.upload_ticket_attachment(
+                token=token,
+                ticket_id=ticket_id,
+                file_name=file_name,
+                file_bytes=bytes(file_bytes),
+                content_type=mime_type,
+            )
+
+            if not uploaded:
+                logger.error(f"File upload failed for user {user_id}, ticket_id={ticket_id}, file_name={file_name}")
+                error_msg = get_message("attachment_error", language)
+                await update.message.reply_text(error_msg)
+                return TicketState.ATTACHMENTS
+
+            logger.info(f"File uploaded successfully: user_id={user_id}, ticket_id={ticket_id}, file_name={file_name}")
+            await update.message.reply_text(
+                get_message("attachment_saved", language).format(file_name=file_name)
+            )
+            return TicketState.ATTACHMENTS
+        except Exception as upload_error:
+            logger.error(f"Exception during file upload API call: {upload_error}", exc_info=True)
+            error_msg = get_message("attachment_error", language)
+            await update.message.reply_text(error_msg)
+            return TicketState.ATTACHMENTS
+    except Exception as e:
+        logger.error(f"Error in ticket_attachment handler: {e}", exc_info=True)
+        user_id = get_user_id(update)
+        language = sessions.get_language(user_id)
+        try:
+            await update.message.reply_text(get_message("attachment_error", language))
+        except Exception as reply_error:
+            logger.error(f"Failed to send error message: {reply_error}", exc_info=True)
         return TicketState.ATTACHMENTS
-
-    ticket = data["ticket"]
-    ticket_id = ticket.get("id")
-    if not ticket_id:
-        await update.message.reply_text(get_message("error", language))
-        return ConversationHandler.END
-
-    await update.message.chat.send_action(ChatAction.UPLOAD_DOCUMENT)
-    telegram_file = await attachment.get_file()
-    file_bytes = await telegram_file.download_as_bytearray()
-
-    file_name = getattr(attachment, "file_name", None)
-    if not file_name:
-        file_name = f"attachment_{ticket_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.jpg"
-    mime_type = getattr(attachment, "mime_type", None) or (
-        "image/jpeg" if update.message.photo else "application/octet-stream"
-    )
-
-    uploaded = await api_client.upload_ticket_attachment(
-        token=token,
-        ticket_id=ticket_id,
-        file_name=file_name,
-        file_bytes=bytes(file_bytes),
-        content_type=mime_type,
-    )
-
-    if not uploaded:
-        await update.message.reply_text(get_message("attachment_error", language))
-        return TicketState.ATTACHMENTS
-
-    await update.message.reply_text(
-        get_message("attachment_saved", language).format(file_name=file_name)
-    )
-    return TicketState.ATTACHMENTS
 
 
 async def ticket_attachment_text(update, context: ContextTypes.DEFAULT_TYPE):

@@ -93,6 +93,8 @@ MESSAGES_FA: Dict[str, str] = {
                             "📝 توضیحات: {description}\n"
                             "📂 دسته‌بندی: {category}\n"
                             "📊 وضعیت: {status}\n"
+                            "{priority_line}"
+                            "{assigned_line}"
                             "📅 تاریخ ایجاد: {created_at}\n"
                             "🔄 آخرین به‌روزرسانی: {updated_at}",
     
@@ -100,6 +102,7 @@ MESSAGES_FA: Dict[str, str] = {
     "cancelled": "❌ عملیات لغو شد.",
     
     "error": "❌ خطایی رخ داد. لطفاً دوباره تلاش کنید.",
+    "error_occurred": "❌ خطایی رخ داد. لطفاً دوباره تلاش کنید.",
     
     "invalid_input": "⚠️ ورودی نامعتبر است. لطفاً دوباره تلاش کنید.",
     "attachments_prompt": "📎 می‌توانید فایل‌های مرتبط با تیکت را ارسال کنید (تصاویر یا اسناد).\n"
@@ -109,6 +112,7 @@ MESSAGES_FA: Dict[str, str] = {
     "attachments_text_hint": "ℹ️ اگر می‌خواهید بدون فایل ادامه دهید، «تمام» را ارسال کنید یا از دستور /skip استفاده کنید.",
     "attachment_saved": "✅ فایل {file_name} با موفقیت ذخیره شد.",
     "attachment_error": "❌ خطا در ذخیره فایل. لطفاً دوباره تلاش کنید.",
+    "file_validation_error": "⚠️ خطا در اعتبارسنجی فایل:\n{error}\n\nلطفاً فایل دیگری ارسال کنید.",
     
     "category_internet": "🌐 اینترنت",
     "category_equipment": "💻 تجهیزات",
@@ -119,6 +123,28 @@ MESSAGES_FA: Dict[str, str] = {
     "status_in_progress": "🔄 در حال انجام",
     "status_resolved": "✅ حل شده",
     "status_closed": "🔒 بسته شده",
+    
+    "menu_change_status": "🔄 تغییر وضعیت تیکت",
+    "change_status_prompt": "🔄 تغییر وضعیت تیکت\n\n"
+                            "لطفاً شماره تیکت را وارد کنید (مثال: T-20241111-0001):",
+    "change_status_not_allowed": "❌ شما مجاز به تغییر وضعیت تیکت نیستید.\n\n"
+                                 "فقط مدیران ارشد و کارشناسان IT می‌توانند وضعیت تیکت را تغییر دهند.",
+    "change_status_ticket_not_found": "❌ تیکت یافت نشد.\n\n"
+                                       "لطفاً شماره تیکت را صحیح وارد کنید.",
+    "change_status_select": "✅ تیکت یافت شد:\n\n"
+                            "🔹 شماره: {ticket_number}\n"
+                            "📊 وضعیت فعلی: {current_status}\n\n"
+                            "لطفاً وضعیت جدید را انتخاب کنید:",
+    "change_status_success": "✅ وضعیت تیکت با موفقیت تغییر یافت!\n\n"
+                             "🔹 شماره تیکت: {ticket_number}\n"
+                             "📊 وضعیت جدید: {new_status}",
+    "change_status_error": "❌ خطا در تغییر وضعیت تیکت.\n\n"
+                           "لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.",
+    
+    "priority_critical": "بحرانی",
+    "priority_high": "بالا",
+    "priority_medium": "متوسط",
+    "priority_low": "پایین",
 }
 
 # English messages
@@ -210,6 +236,8 @@ MESSAGES_EN: Dict[str, str] = {
                             "📝 Description: {description}\n"
                             "📂 Category: {category}\n"
                             "📊 Status: {status}\n"
+                            "{priority_line}"
+                            "{assigned_line}"
                             "📅 Created: {created_at}\n"
                             "🔄 Updated: {updated_at}",
     
@@ -217,6 +245,7 @@ MESSAGES_EN: Dict[str, str] = {
     "cancelled": "❌ Operation cancelled.",
     
     "error": "❌ An error occurred. Please try again.",
+    "error_occurred": "❌ An error occurred. Please try again.",
     
     "invalid_input": "⚠️ Invalid input. Please try again.",
     "attachments_prompt": "📎 You can send related files (images or documents).\n"
@@ -226,6 +255,7 @@ MESSAGES_EN: Dict[str, str] = {
     "attachments_text_hint": "ℹ️ To finish without files, send \"done\" or use /skip.",
     "attachment_saved": "✅ File {file_name} saved successfully.",
     "attachment_error": "❌ Failed to save the file. Please try again.",
+    "file_validation_error": "⚠️ File validation error:\n{error}\n\nPlease send another file.",
     
     "category_internet": "🌐 Internet",
     "category_equipment": "💻 Equipment",
@@ -236,22 +266,48 @@ MESSAGES_EN: Dict[str, str] = {
     "status_in_progress": "🔄 In Progress",
     "status_resolved": "✅ Resolved",
     "status_closed": "🔒 Closed",
+    
+    "menu_change_status": "🔄 Change Ticket Status",
+    "change_status_prompt": "🔄 Change Ticket Status\n\n"
+                            "Please enter the ticket number (e.g., T-20241111-0001):",
+    "change_status_not_allowed": "❌ You are not allowed to change ticket status.\n\n"
+                                 "Only senior managers and IT specialists can change ticket status.",
+    "change_status_ticket_not_found": "❌ Ticket not found.\n\n"
+                                       "Please enter a valid ticket number.",
+    "change_status_select": "✅ Ticket found:\n\n"
+                            "🔹 Number: {ticket_number}\n"
+                            "📊 Current status: {current_status}\n\n"
+                            "Please select the new status:",
+    "change_status_success": "✅ Ticket status changed successfully!\n\n"
+                             "🔹 Ticket Number: {ticket_number}\n"
+                             "📊 New Status: {new_status}",
+    "change_status_error": "❌ Error changing ticket status.\n\n"
+                           "Please try again or contact support.",
+    
+    "priority_critical": "Critical",
+    "priority_high": "High",
+    "priority_medium": "Medium",
+    "priority_low": "Low",
 }
 
 
-def get_message(key: str, language: Language = Language.FA) -> str:
+def get_message(key: str, language: Language = Language.FA, default: str = None) -> str:
     """
     Get localized message
     
     Args:
         key: Message key
         language: Language (FA or EN)
+        default: Default value if key not found
         
     Returns:
         Localized message string
     """
     messages = MESSAGES_EN if language == Language.EN else MESSAGES_FA
-    return messages.get(key, f"[{key}]")
+    result = messages.get(key)
+    if result is None:
+        return default if default is not None else f"[{key}]"
+    return result
 
 
 def get_category_name(category: str, language: Language = Language.FA) -> str:

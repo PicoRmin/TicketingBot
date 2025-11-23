@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from app.core.enums import Language, TicketCategory
+from app.core.enums import Language, TicketCategory, TicketStatus
 from app.telegram_bot.callbacks import (
     CALLBACK_BRANCH_PREFIX,
     CALLBACK_CATEGORY_PREFIX,
@@ -20,6 +20,7 @@ from app.telegram_bot.callbacks import (
     CALLBACK_NEW_TICKET,
     CALLBACK_SKIP_ATTACHMENTS,
     CALLBACK_TRACK_TICKET,
+    CALLBACK_STATUS_PREFIX,
 )
 from app.telegram_bot.i18n import get_message
 
@@ -28,7 +29,7 @@ def _button(text: str, callback_data: str) -> InlineKeyboardButton:
     return InlineKeyboardButton(text, callback_data=callback_data)
 
 
-def main_menu_keyboard(language: Language, is_authenticated: bool) -> InlineKeyboardMarkup:
+def main_menu_keyboard(language: Language, is_authenticated: bool, can_change_status: bool = False) -> InlineKeyboardMarkup:
     """Return the main menu keyboard."""
     buttons: List[List[InlineKeyboardButton]] = [
         [
@@ -39,10 +40,17 @@ def main_menu_keyboard(language: Language, is_authenticated: bool) -> InlineKeyb
             _button(get_message("menu_track_ticket", language), CALLBACK_TRACK_TICKET),
             _button(get_message("menu_help", language), CALLBACK_HELP),
         ],
-        [
-            _button(get_message("menu_language", language), CALLBACK_LANGUAGE),
-        ],
     ]
+    
+    # Add change status button for authorized users
+    if can_change_status:
+        buttons.append([
+            _button(get_message("menu_change_status", language), CALLBACK_CHANGE_STATUS),
+        ])
+    
+    buttons.append([
+        _button(get_message("menu_language", language), CALLBACK_LANGUAGE),
+    ])
 
     auth_button = (
         _button(get_message("menu_logout", language), CALLBACK_LOGOUT)
@@ -129,11 +137,33 @@ def skip_attachments_keyboard(language: Language) -> InlineKeyboardMarkup:
     )
 
 
+def status_keyboard(language: Language) -> InlineKeyboardMarkup:
+    """Return a keyboard for selecting ticket status."""
+    statuses = [
+        TicketStatus.PENDING,
+        TicketStatus.IN_PROGRESS,
+        TicketStatus.RESOLVED,
+        TicketStatus.CLOSED,
+    ]
+
+    buttons = [
+        [
+            _button(
+                get_message(f"status_{status.value}", language),
+                f"{CALLBACK_STATUS_PREFIX}{status.value}",
+            )
+        ]
+        for status in statuses
+    ]
+    return InlineKeyboardMarkup(buttons)
+
+
 __all__ = [
     "main_menu_keyboard",
     "category_keyboard",
     "branch_keyboard",
     "language_keyboard",
     "skip_attachments_keyboard",
+    "status_keyboard",
 ]
 

@@ -2,9 +2,12 @@
 API client for Telegram Bot to communicate with FastAPI
 """
 import httpx
+import logging
 from typing import Any, Dict, List, Optional
 from app.telegram_bot.config import API_BASE_URL
 from app.core.enums import TicketCategory
+
+logger = logging.getLogger(__name__)
 
 
 class APIClient:
@@ -59,6 +62,59 @@ class APIClient:
         except Exception:
             return None
     
+    async def get_file_settings(self, token: str) -> Optional[Dict[str, Any]]:
+        """
+        Get file upload settings from API
+        
+        Args:
+            token: Access token
+            
+        Returns:
+            File settings dictionary or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/settings/file",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get file settings: {e}")
+            return None
+    
+    async def get_ticket_attachments_count(
+        self,
+        token: str,
+        ticket_id: int
+    ) -> Optional[Dict[str, int]]:
+        """
+        Get count of images and documents for a ticket
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            
+        Returns:
+            Dictionary with image_count and document_count, or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/files/ticket/{ticket_id}/list",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if response.status_code == 200:
+                attachments = response.json()
+                from app.services.file_service import ALLOWED_IMAGE_TYPES, ALLOWED_DOCUMENT_TYPES
+                image_count = sum(1 for att in attachments if att.get("file_type") in ALLOWED_IMAGE_TYPES)
+                document_count = sum(1 for att in attachments if att.get("file_type") in ALLOWED_DOCUMENT_TYPES)
+                return {"image_count": image_count, "document_count": document_count}
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get ticket attachments count: {e}")
+            return None
+    
     async def upload_ticket_attachment(
         self,
         token: str,
@@ -72,20 +128,59 @@ class APIClient:
 
         Returns uploaded attachment metadata or None if failed.
         """
-        files = {
-            "file": (file_name, file_bytes, content_type),
-        }
         try:
+            # Prepare multipart form data
+            files = {
+                "file": (file_name, file_bytes, content_type),
+            }
+            headers = {
+                "Authorization": f"Bearer {token}",
+            }
+            
+            logger.debug(
+                f"Uploading file: ticket_id={ticket_id}, file_name={file_name}, "
+                f"size={len(file_bytes)}, content_type={content_type}"
+            )
+            
             response = await self.client.post(
                 f"{self.base_url}/api/files/upload",
-                headers={"Authorization": f"Bearer {token}"},
+                headers=headers,
                 params={"ticket_id": ticket_id},
                 files=files,
+                timeout=60.0,  # Increase timeout for large files
             )
+            
+            logger.debug(f"Upload response: status={response.status_code}")
+            
             if response.status_code in (200, 201):
-                return response.json()
+                result = response.json()
+                logger.info(f"File uploaded successfully: ticket_id={ticket_id}, file_name={file_name}")
+                return result
+            
+            # Log error details for debugging
+            error_detail = None
+            try:
+                error_data = response.json()
+                error_detail = error_data.get("detail", str(error_data))
+                logger.error(
+                    f"File upload failed: status={response.status_code}, "
+                    f"ticket_id={ticket_id}, file_name={file_name}, detail={error_detail}"
+                )
+            except Exception:
+                error_text = response.text[:500] if response.text else "No response body"
+                logger.error(
+                    f"File upload failed: status={response.status_code}, "
+                    f"ticket_id={ticket_id}, file_name={file_name}, response={error_text}"
+                )
             return None
-        except Exception:
+        except httpx.TimeoutException as e:
+            logger.error(f"File upload timeout: ticket_id={ticket_id}, file_name={file_name}, error={e}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"File upload request error: ticket_id={ticket_id}, file_name={file_name}, error={e}")
+            return None
+        except Exception as e:
+            logger.exception(f"Exception during file upload: ticket_id={ticket_id}, file_name={file_name}, error={e}")
             return None
     
     async def get_user_tickets(
@@ -200,7 +295,9 @@ class APIClient:
         title: str,
         description: str,
         category: TicketCategory,
-        branch_id: Optional[int] = None
+        branch_id: Optional[int] = None,
+        department_id: Optional[int] = None,
+        priority: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Create a new ticket
@@ -226,6 +323,10 @@ class APIClient:
             }
             if branch_id:
                 json_data["branch_id"] = branch_id
+            if department_id:
+                json_data["department_id"] = department_id
+            if priority:
+                json_data["priority"] = priority
             
             response = await self.client.post(
                 f"{self.base_url}/api/tickets",
@@ -293,4 +394,34 @@ class APIClient:
             return response.status_code in (200, 201)
         except Exception:
             return False
+    
+    async def update_ticket_status(
+        self,
+        token: str,
+        ticket_id: int,
+        status: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update ticket status
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            status: New status (pending, in_progress, resolved, closed)
+            
+        Returns:
+            Updated ticket data or None if failed
+        """
+        try:
+            response = await self.client.patch(
+                f"{self.base_url}/api/tickets/{ticket_id}/status",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"status": status}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to update ticket status: {e}")
+            return None
 

@@ -49,14 +49,49 @@
   },
   "files": {
     "uploaded": "File uploaded successfully",
+    "upload_error": "Error uploading file",
     "too_large": "File size exceeds the allowed limit",
     "type_not_allowed": "File type not allowed",
     "not_found": "File not found",
-    "missing_on_server": "File not found on server"
+    "missing_on_server": "File not found on server",
+    "count_limit_exceeded": "Maximum file count limit reached for this ticket",
+    "save_failed": "Error saving file"
   },
   "validation": {
     "required_field": "Field is required: {field}",
     "invalid_credentials": "Invalid credentials"
+  },
+  "departments": {
+    "not_found": "Department not found",
+    "code_exists": "Department code already exists",
+    "name_exists": "Department name already exists",
+    "has_users": "Cannot delete department with users",
+    "has_tickets": "Cannot delete department with tickets",
+    "created": "Department created successfully",
+    "updated": "Department updated successfully",
+    "deleted": "Department deleted"
+  },
+  "priorities": {
+    "critical": "🔴 Critical",
+    "high": "🟠 High",
+    "medium": "🟡 Medium",
+    "low": "🟢 Low"
+  },
+  "sla": {
+    "not_found": "SLA rule not found",
+    "name_exists": "SLA rule name already exists",
+    "log_not_found": "SLA log not found for this ticket",
+    "created": "SLA rule created successfully",
+    "updated": "SLA rule updated successfully",
+    "deleted": "SLA rule deleted"
+  },
+  "automation": {
+    "not_found": "Automation rule not found",
+    "name_exists": "Automation rule name already exists",
+    "invalid_type": "Invalid rule type",
+    "created": "Automation rule created successfully",
+    "updated": "Automation rule updated successfully",
+    "deleted": "Automation rule deleted"
   }
 }
 

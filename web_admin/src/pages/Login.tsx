@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { login, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -9,9 +9,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  if (isAuthenticated()) {
-    navigate("/");
-  }
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();

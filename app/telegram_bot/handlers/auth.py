@@ -3,6 +3,7 @@ Authentication (login/logout) handlers and conversation.
 """
 from __future__ import annotations
 
+import logging
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
@@ -11,6 +12,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+logger = logging.getLogger(__name__)
 
 from app.core.enums import Language
 from app.telegram_bot import sessions
@@ -48,46 +51,59 @@ async def login_username(update, context: ContextTypes.DEFAULT_TYPE) -> LoginSta
 
 async def login_password(update, context: ContextTypes.DEFAULT_TYPE):
     """Validate credentials and finish login conversation."""
-    user_id = get_user_id(update)
-    language = sessions.get_language(user_id)
-    credentials = context.user_data.get("login", {})
-    username = credentials.get("username")
-    password = update.message.text.strip()
+    try:
+        user_id = get_user_id(update)
+        language = sessions.get_language(user_id)
+        credentials = context.user_data.get("login", {})
+        username = credentials.get("username")
+        password = update.message.text.strip()
 
-    if not username:
-        await update.message.reply_text(get_message("login_prompt_username", language))
-        return LoginState.USERNAME
+        if not username:
+            await update.message.reply_text(get_message("login_prompt_username", language))
+            return LoginState.USERNAME
 
-    token = await api_client.login(username=username, password=password)
-    if not token:
+        logger.debug(f"User {user_id} attempting login with username: {username}")
+        token = await api_client.login(username=username, password=password)
+        if not token:
+            logger.warning(f"Login failed for username: {username}")
+            await update.message.reply_text(get_message("login_failed", language))
+            return LoginState.USERNAME
+
+        sessions.set_token(user_id, token)
+
+        profile = await api_client.get_current_user(token)
+        if profile and profile.get("language"):
+            try:
+                sessions.set_language(user_id, Language(profile["language"]))
+                language = sessions.get_language(user_id)
+            except ValueError:
+                pass
+        sessions.set_profile(user_id, profile)
+
+        # Link Telegram chat id with backend for notifications
+        telegram_user = update.effective_user
+        try:
+            await api_client.link_telegram_account(
+                token=token,
+                chat_id=get_chat_id(update),
+                username=getattr(telegram_user, "username", None),
+                first_name=getattr(telegram_user, "first_name", None),
+                last_name=getattr(telegram_user, "last_name", None),
+            )
+            logger.info(f"User {user_id} (username: {username}) logged in and linked Telegram account")
+        except Exception as e:
+            logger.warning(f"Failed to link Telegram account for user {user_id}: {e}")
+
+        await update.message.reply_text(get_message("login_success", language))
+        await send_main_menu(update, context)
+        context.user_data.pop("login", None)
+        return ConversationHandler.END
+    except Exception as e:
+        logger.error(f"Error in login_password: {e}", exc_info=True)
+        user_id = get_user_id(update)
+        language = sessions.get_language(user_id)
         await update.message.reply_text(get_message("login_failed", language))
         return LoginState.USERNAME
-
-    sessions.set_token(user_id, token)
-
-    profile = await api_client.get_current_user(token)
-    if profile and profile.get("language"):
-        try:
-            sessions.set_language(user_id, Language(profile["language"]))
-            language = sessions.get_language(user_id)
-        except ValueError:
-            pass
-    sessions.set_profile(user_id, profile)
-
-    # Link Telegram chat id with backend for notifications
-    telegram_user = update.effective_user
-    await api_client.link_telegram_account(
-        token=token,
-        chat_id=get_chat_id(update),
-        username=getattr(telegram_user, "username", None),
-        first_name=getattr(telegram_user, "first_name", None),
-        last_name=getattr(telegram_user, "last_name", None),
-    )
-
-    await update.message.reply_text(get_message("login_success", language))
-    await send_main_menu(update, context)
-    context.user_data.pop("login", None)
-    return ConversationHandler.END
 
 
 async def logout_command(update, context: ContextTypes.DEFAULT_TYPE) -> None:

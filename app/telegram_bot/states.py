@@ -21,5 +21,10 @@ class TrackState(Enum):
     NUMBER = auto()
 
 
-__all__ = ["LoginState", "TicketState", "TrackState"]
+class ChangeStatusState(Enum):
+    TICKET_NUMBER = auto()
+    STATUS = auto()
+
+
+__all__ = ["LoginState", "TicketState", "TrackState", "ChangeStatusState"]
 

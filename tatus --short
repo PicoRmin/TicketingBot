@@ -1,0 +1,46 @@
+warning: in the working copy of 'app/api/__init__.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/i18n/en.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/i18n/fa.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/main.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/models/__init__.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/models/ticket.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/services/ticket_service.py', LF will be replaced by CRLF the next time Git touches it
+ app/api/__init__.py                   |   9 [32m+[m[31m-[m
+ app/api/files.py                      |  30 [32m++[m[31m-[m
+ app/api/reports.py                    |  86 [32m++++++[m[31m-[m
+ app/api/tickets.py                    | 299 [32m+++++++++++++++++++++[m[31m-[m
+ app/core/enums.py                     |   9 [32m+[m
+ app/i18n/en.json                      |  37 [32m++[m[31m-[m
+ app/i18n/fa.json                      |  37 [32m++[m[31m-[m
+ app/main.py                           |  30 [32m+++[m
+ app/models/__init__.py                |  13 [32m+[m
+ app/models/branch.py                  |   1 [32m+[m
+ app/models/ticket.py                  |  23 [32m+[m[31m-[m
+ app/models/user.py                    |   6 [32m+[m[31m-[m
+ app/schemas/ticket.py                 |  42 [32m+++[m[31m-[m
+ app/services/file_service.py          | 204 [32m+++++++++++[m[31m----[m
+ app/services/notification_service.py  |  63 [32m+++++[m
+ app/services/report_service.py        | 134 [32m+++++++++[m[31m-[m
+ app/services/ticket_service.py        | 163 [32m+++++++++++[m[31m-[m
+ app/telegram_bot/api_client.py        | 145 [32m++++++++++[m[31m-[m
+ app/telegram_bot/callbacks.py         |   4 [32m+[m
+ app/telegram_bot/handlers/__init__.py |   6 [32m+[m[31m-[m
+ app/telegram_bot/handlers/auth.py     |  92 [32m++++[m[31m---[m
+ app/telegram_bot/handlers/common.py   |  20 [32m+[m[31m-[m
+ app/telegram_bot/handlers/ticket.py   | 268 [32m++++++++++++++[m[31m------[m
+ app/telegram_bot/handlers/track.py    |  85 [32m+++++[m[31m--[m
+ app/telegram_bot/i18n.py              |  60 [32m++++[m[31m-[m
+ app/telegram_bot/keyboards.py         |  40 [32m++[m[31m-[m
+ app/telegram_bot/states.py            |   7 [32m+[m[31m-[m
+ app/telegram_bot/utils.py             |  26 [31m--[m
+ roadmap.md                            |  25 [32m+[m[31m-[m
+ scripts/init_db.py                    |  13 [32m+[m[31m-[m
+ web_admin/src/App.tsx                 |  64 [32m++++[m[31m-[m
+ web_admin/src/main.tsx                |  31 [32m++[m[31m-[m
+ web_admin/src/pages/Dashboard.tsx     | 279 [32m++++++++++++++++++++[m[31m-[m
+ web_admin/src/pages/Login.tsx         |  10 [32m+[m[31m-[m
+ web_admin/src/pages/TicketDetail.tsx  | 445 [32m++++++++++++++++++++++++++++++++[m[31m-[m
+ web_admin/src/pages/Tickets.tsx       | 452 [32m++++++++++++++++++++++++++++++++[m[31m--[m
+ web_admin/src/pages/Users.tsx         |  37 [32m++[m[31m-[m
+ web_admin/src/styles.css              |  42 [32m++++[m
+ 38 files changed, 3026 insertions(+), 311 deletions(-)

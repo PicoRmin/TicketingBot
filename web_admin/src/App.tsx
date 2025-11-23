@@ -15,24 +15,41 @@ export default function App() {
     if (!token) {
       setProfileState(null);
       clearProfile();
+      navigate("/login");
       return;
     }
 
     const stored = getStoredProfile();
     if (stored) {
       setProfileState(stored);
+        // Redirect regular users to user dashboard
+        if (stored.role === "user" && window.location.pathname.startsWith("/") && 
+            !window.location.pathname.startsWith("/user-portal") && 
+            !window.location.pathname.startsWith("/user-tickets") &&
+            !window.location.pathname.startsWith("/user-dashboard") &&
+            window.location.pathname !== "/login") {
+          navigate("/user-dashboard");
+        }
       return;
     }
 
     fetchProfile()
-      .then((p) => {
+      .then((p: any) => {
         setProfile(p);
         setProfileState(p);
+        // Redirect regular users to user dashboard
+        if (p?.role === "user" && window.location.pathname.startsWith("/") && 
+            !window.location.pathname.startsWith("/user-portal") && 
+            !window.location.pathname.startsWith("/user-tickets") &&
+            !window.location.pathname.startsWith("/user-dashboard") &&
+            window.location.pathname !== "/login") {
+          navigate("/user-dashboard");
+        }
       })
       .catch(() => {
         // ignore
       });
-  }, [token]);
+  }, [token, navigate]);
 
   useEffect(() => {
     const cls = document.documentElement.classList;
@@ -52,7 +69,24 @@ export default function App() {
   };
 
   const isAdmin = profile && ["admin", "central_admin"].includes(profile.role);
+  const isCentralAdmin = profile && profile.role === "central_admin";
+  const isReportManager = profile && profile.role === "report_manager";
   const displayName = profile?.full_name || profile?.username;
+  
+  // Role labels
+  const getRoleLabel = (role: string) => {
+    const roleMap: Record<string, string> = {
+      "central_admin": "👑 مدیر ارشد",
+      "admin": "🛡️ مدیر سیستم",
+      "branch_admin": "🏢 مسئول شعبه",
+      "it_specialist": "💻 کارشناس IT",
+      "report_manager": "📊 گزارش‌گیر",
+      "user": "👤 کاربر"
+    };
+    return roleMap[role] || role;
+  };
+  
+  const roleLabel = profile ? getRoleLabel(profile.role) : "";
 
   return (
     <div className="container">
@@ -66,10 +100,26 @@ export default function App() {
             </div>
           </Link>
           <nav>
-            <Link to="/">📊 داشبورد</Link>
-            <Link to="/tickets">🎫 تیکت‌ها</Link>
-            <Link to="/branches">🏢 شعب</Link>
-            {isAdmin && <Link to="/users">👥 کاربران</Link>}
+            {profile?.role === "user" ? (
+              // Navigation for regular users
+              <>
+                <Link to="/user-dashboard">📊 داشبورد</Link>
+                <Link to="/user-portal">🎫 تیکت‌های من</Link>
+              </>
+            ) : (
+              // Navigation for admins
+              <>
+                <Link to="/">📊 داشبورد</Link>
+                {!isReportManager && <Link to="/tickets">🎫 تیکت‌ها</Link>}
+                {!isReportManager && <Link to="/branches">🏢 شعب</Link>}
+                {isAdmin && <Link to="/departments">🏢 دپارتمان‌ها</Link>}
+                {isAdmin && <Link to="/users">👥 کاربران</Link>}
+                {isAdmin && <Link to="/automation">🤖 اتوماسیون</Link>}
+                {isAdmin && <Link to="/sla">⏱️ SLA</Link>}
+                {isCentralAdmin && <Link to="/settings">⚙️ تنظیمات</Link>}
+                {isCentralAdmin && <Link to="/infrastructure">🏗️ زیرساخت</Link>}
+              </>
+            )}
           </nav>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -82,7 +132,7 @@ export default function App() {
           </button>
           {displayName && (
             <span style={{ fontSize: 14, color: "var(--fg-secondary)" }}>
-              👤 {displayName}
+              👤 {displayName} {roleLabel && `(${roleLabel})`}
             </span>
           )}
           {token ? (

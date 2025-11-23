@@ -368,6 +368,48 @@ tbody tr:last-child td {
   color: #d1d5db;
 }
 
+/* Priority Badges */
+.badge.priority-critical {
+  background: #dc2626;
+  color: white;
+  font-weight: 600;
+}
+
+.dark .badge.priority-critical {
+  background: #ef4444;
+}
+
+.badge.priority-high {
+  background: #f59e0b;
+  color: white;
+  font-weight: 600;
+}
+
+.dark .badge.priority-high {
+  background: #fbbf24;
+}
+
+.badge.priority-medium {
+  background: #eab308;
+  color: #111827;
+  font-weight: 600;
+}
+
+.dark .badge.priority-medium {
+  background: #fbbf24;
+  color: #0f172a;
+}
+
+.badge.priority-low {
+  background: #10b981;
+  color: white;
+  font-weight: 600;
+}
+
+.dark .badge.priority-low {
+  background: #22c55e;
+}
+
 /* Loading */
 .loading {
   display: inline-block;

@@ -16,6 +16,7 @@ const ROLE_OPTIONS = [
   { value: "central_admin", label: "👑 مدیر ارشد" },
   { value: "admin", label: "🛡️ مدیر سیستم" },
   { value: "branch_admin", label: "🏢 مسئول شعبه" },
+  { value: "it_specialist", label: "💻 کارشناس IT" },
   { value: "report_manager", label: "📊 گزارش‌گیر" },
   { value: "user", label: "👤 کاربر" }
 ];
@@ -33,11 +34,20 @@ type UserItem = {
   language: string;
   branch_id?: number | null;
   branch?: { id: number; name: string; code: string } | null;
+  department_id?: number | null;
+  department?: { id: number; name: string; code: string } | null;
   is_active: boolean;
   created_at: string;
 };
 
 type BranchItem = {
+  id: number;
+  name: string;
+  code: string;
+  is_active: boolean;
+};
+
+type DepartmentItem = {
   id: number;
   name: string;
   code: string;
@@ -50,6 +60,7 @@ const EMPTY_FORM = {
   password: "",
   role: "user",
   branch_id: "",
+  department_id: "",
   language: "fa",
   is_active: true,
 };
@@ -59,6 +70,7 @@ export default function Users() {
   const [profile, setProfileState] = useState<any | null>(() => getStoredProfile());
   const [users, setUsers] = useState<UserItem[]>([]);
   const [branches, setBranches] = useState<BranchItem[]>([]);
+  const [departments, setDepartments] = useState<DepartmentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -103,12 +115,14 @@ export default function Users() {
       if (filterRole) params.push(`role=${filterRole}`);
       if (filterBranch) params.push(`branch_id=${filterBranch}`);
       const query = params.length ? `?${params.join("&")}` : "";
-      const [usersRes, branchesRes] = await Promise.all([
+      const [usersRes, branchesRes, departmentsRes] = await Promise.all([
         fetchUsers(query),
         apiGet("/api/branches?is_active=true"),
+        apiGet("/api/departments?page_size=100&is_active=true"),
       ]);
       setUsers(usersRes as UserItem[]);
       setBranches((branchesRes as BranchItem[]).filter((b) => b.is_active));
+      setDepartments((departmentsRes as DepartmentItem[]).filter((d) => d.is_active));
     } catch (e: any) {
       setError(e?.message || "خطا در دریافت کاربران");
     } finally {
@@ -139,6 +153,7 @@ export default function Users() {
       password: "",
       role: user.role,
       branch_id: user.branch_id ? String(user.branch_id) : "",
+      department_id: user.department_id ? String(user.department_id) : "",
       language: user.language || "fa",
       is_active: user.is_active,
     });
@@ -196,11 +211,13 @@ export default function Users() {
       const branchIdValue = form.branch_id ? Number(form.branch_id) : undefined;
 
       if (editingId) {
+        const departmentIdValue = form.department_id ? Number(form.department_id) : undefined;
         const payload: any = {
           full_name: form.full_name,
           language: form.language,
           role: form.role,
           branch_id: branchIdValue ?? null,
+          department_id: departmentIdValue ?? null,
           is_active: form.is_active,
         };
         if (form.password.trim()) {
@@ -209,6 +226,7 @@ export default function Users() {
         await updateUserApi(editingId, payload);
         setSuccess("کاربر با موفقیت به‌روزرسانی شد");
       } else {
+        const departmentIdValue = form.department_id ? Number(form.department_id) : undefined;
         await createUserApi({
           username: form.username,
           full_name: form.full_name,
@@ -216,6 +234,7 @@ export default function Users() {
           role: form.role,
           language: form.language,
           branch_id: branchIdValue ?? null,
+          department_id: departmentIdValue ?? null,
         });
         setSuccess("کاربر جدید با موفقیت ایجاد شد");
       }
@@ -229,6 +248,7 @@ export default function Users() {
   };
 
   const branchOptions = useMemo(() => branches, [branches]);
+  const departmentOptions = useMemo(() => departments, [departments]);
 
   return (
     <div className="fade-in">
@@ -324,6 +344,21 @@ export default function Users() {
               </select>
             </label>
           )}
+
+          <label>
+            دپارتمان:
+            <select
+              value={form.department_id}
+              onChange={(e) => setForm((f) => ({ ...f, department_id: e.target.value }))}
+            >
+              <option value="">بدون دپارتمان</option>
+              {departmentOptions.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <label>
             رمز عبور {editingId ? "(برای تغییر)" : ""}:

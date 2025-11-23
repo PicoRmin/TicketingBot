@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from pathlib import Path
 import os
+import logging
 from app.database import get_db
 from app.models import Attachment, Ticket, User
 from app.schemas.file import FileResponse, FileUploadResponse
@@ -24,6 +25,7 @@ from app.services.ticket_service import get_ticket, can_user_access_ticket
 from app.i18n.translator import translate
 from app.i18n.fastapi_utils import resolve_lang
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -66,8 +68,8 @@ async def upload_file(
             detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     
-    # Validate file
-    is_valid, error_message = validate_file(file)
+    # Validate file (with count check)
+    is_valid, error_message = validate_file(file, db=db, ticket_id=ticket_id)
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -75,8 +77,8 @@ async def upload_file(
         )
     
     try:
-        # Save file
-        filename, file_path, file_size = save_file(file, ticket_id, current_user.id)
+        # Save file (with db for settings)
+        filename, file_path, file_size = save_file(file, ticket_id, current_user.id, db=db)
         
         # Create attachment record
         attachment = create_attachment(
@@ -84,11 +86,13 @@ async def upload_file(
             ticket_id=ticket_id,
             user_id=current_user.id,
             filename=filename,
-            original_filename=file.filename,
+            original_filename=file.filename or "unknown",
             file_path=file_path,
             file_size=file_size,
             file_type=file.content_type or "application/octet-stream"
         )
+        
+        logger.info(f"File uploaded successfully: attachment_id={attachment.id}, ticket_id={ticket_id}, user_id={current_user.id}, size={file_size}")
         
         return FileUploadResponse(
             id=attachment.id,
@@ -102,9 +106,11 @@ async def upload_file(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error uploading file for ticket {ticket_id}: {e}", exc_info=True)
+        lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=translate("common.error", resolve_lang(request, current_user))
+            detail=translate("files.upload_error", lang) or translate("common.error", lang)
         )
 
 
@@ -155,11 +161,13 @@ async def download_file(
     
     # Check if file exists
     if not os.path.exists(attachment.file_path):
+        logger.warning(f"File not found on server: {attachment.file_path} (attachment_id={file_id})")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=translate("files.missing_on_server", resolve_lang(request, current_user))
         )
     
+    logger.debug(f"File download: attachment_id={file_id}, ticket_id={attachment.ticket_id}, user_id={current_user.id}")
     return FastAPIFileResponse(
         path=attachment.file_path,
         filename=attachment.original_filename,
@@ -224,20 +232,24 @@ async def delete_file(
         current_user: Current admin user
         
     Raises:
-        HTTPException: If file not found
+        HTTPException: If file not found or deletion fails
     """
     attachment = get_attachment(db, file_id)
     if not attachment:
         lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found"
+            detail=translate("files.not_found", lang)
         )
+    
+    logger.info(f"Deleting file: attachment_id={file_id}, ticket_id={attachment.ticket_id}, deleted_by={current_user.id}")
     
     success = delete_attachment(db, attachment)
     if not success:
+        lang = resolve_lang(request, current_user)
+        logger.error(f"Failed to delete attachment {file_id}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=translate("common.error", resolve_lang(request, current_user))
+            detail=translate("common.error", lang)
         )
 

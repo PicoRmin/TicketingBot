@@ -2,8 +2,8 @@ from datetime import datetime, date
 from typing import Dict, List, Tuple, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date
-from app.models import Ticket, Branch
-from app.core.enums import TicketStatus, TicketCategory
+from app.models import Ticket, Branch, Department, SLALog, SLARule
+from app.core.enums import TicketStatus, TicketCategory, TicketPriority
 
 
 def tickets_by_status(db: Session) -> Dict[str, int]:
@@ -74,4 +74,134 @@ def average_response_time_hours(db: Session) -> Optional[float]:
   if seconds is None:
     return None
   return float(seconds) / 3600.0
+
+
+def tickets_by_priority(db: Session) -> Dict[str, int]:
+  """Report tickets by priority"""
+  rows = (
+    db.query(Ticket.priority, func.count(Ticket.id))
+    .group_by(Ticket.priority)
+    .all()
+  )
+  return {priority.value: count for priority, count in rows}
+
+
+def tickets_by_department(db: Session) -> List[Dict[str, any]]:
+  """Report tickets by department"""
+  rows = (
+    db.query(Ticket.department_id, Department.name, Department.code, func.count(Ticket.id))
+    .join(Department, Department.id == Ticket.department_id)
+    .group_by(Ticket.department_id, Department.name, Department.code)
+    .all()
+  )
+  result = [{"department_id": did, "department_name": name, "department_code": code, "count": cnt} 
+            for did, name, code, cnt in rows]
+  # Also count tickets without department
+  no_dept_count = db.query(func.count(Ticket.id)).filter(Ticket.department_id.is_(None)).scalar() or 0
+  if no_dept_count > 0:
+    result.append({"department_id": None, "department_name": "بدون دپارتمان", "department_code": "NONE", "count": no_dept_count})
+  return result
+
+
+def sla_compliance_report(db: Session) -> Dict[str, any]:
+  """SLA compliance report"""
+  total_logs = db.query(func.count(SLALog.id)).scalar() or 0
+  
+  if total_logs == 0:
+    return {
+      "total_tickets_with_sla": 0,
+      "response_on_time": 0,
+      "response_warning": 0,
+      "response_breached": 0,
+      "resolution_on_time": 0,
+      "resolution_warning": 0,
+      "resolution_breached": 0,
+      "escalated_count": 0,
+      "response_compliance_rate": 0.0,
+      "resolution_compliance_rate": 0.0
+    }
+  
+  # Response status counts
+  response_on_time = db.query(func.count(SLALog.id)).filter(SLALog.response_status == "on_time").scalar() or 0
+  response_warning = db.query(func.count(SLALog.id)).filter(SLALog.response_status == "warning").scalar() or 0
+  response_breached = db.query(func.count(SLALog.id)).filter(SLALog.response_status == "breached").scalar() or 0
+  
+  # Resolution status counts
+  resolution_on_time = db.query(func.count(SLALog.id)).filter(SLALog.resolution_status == "on_time").scalar() or 0
+  resolution_warning = db.query(func.count(SLALog.id)).filter(SLALog.resolution_status == "warning").scalar() or 0
+  resolution_breached = db.query(func.count(SLALog.id)).filter(SLALog.resolution_status == "breached").scalar() or 0
+  
+  # Escalated count
+  escalated_count = db.query(func.count(SLALog.id)).filter(SLALog.escalated == True).scalar() or 0
+  
+  # Calculate compliance rates
+  response_completed = response_on_time + response_breached
+  resolution_completed = resolution_on_time + resolution_breached
+  
+  response_compliance_rate = (response_on_time / response_completed * 100) if response_completed > 0 else 0.0
+  resolution_compliance_rate = (resolution_on_time / resolution_completed * 100) if resolution_completed > 0 else 0.0
+  
+  return {
+    "total_tickets_with_sla": total_logs,
+    "response_on_time": response_on_time,
+    "response_warning": response_warning,
+    "response_breached": response_breached,
+    "resolution_on_time": resolution_on_time,
+    "resolution_warning": resolution_warning,
+    "resolution_breached": resolution_breached,
+    "escalated_count": escalated_count,
+    "response_compliance_rate": round(response_compliance_rate, 2),
+    "resolution_compliance_rate": round(resolution_compliance_rate, 2)
+  }
+
+
+def sla_by_priority(db: Session) -> List[Dict[str, any]]:
+  """SLA compliance report by priority"""
+  result = []
+  
+  for priority in TicketPriority:
+    # Get SLA rule for this priority
+    sla_rule = db.query(SLARule).filter(
+      SLARule.priority == priority,
+      SLARule.is_active == True
+    ).first()
+    
+    if not sla_rule:
+      continue
+    
+    # Get tickets with this priority and their SLA logs
+    tickets_with_sla = (
+      db.query(Ticket, SLALog)
+      .join(SLALog, SLALog.ticket_id == Ticket.id)
+      .filter(
+        Ticket.priority == priority,
+        SLALog.sla_rule_id == sla_rule.id
+      )
+      .all()
+    )
+    
+    total = len(tickets_with_sla)
+    if total == 0:
+      continue
+    
+    response_on_time = sum(1 for t, log in tickets_with_sla if log.response_status == "on_time")
+    response_breached = sum(1 for t, log in tickets_with_sla if log.response_status == "breached")
+    resolution_on_time = sum(1 for t, log in tickets_with_sla if log.resolution_status == "on_time")
+    resolution_breached = sum(1 for t, log in tickets_with_sla if log.resolution_status == "breached")
+    
+    response_completed = response_on_time + response_breached
+    resolution_completed = resolution_on_time + resolution_breached
+    
+    result.append({
+      "priority": priority.value,
+      "total_tickets": total,
+      "response_on_time": response_on_time,
+      "response_breached": response_breached,
+      "resolution_on_time": resolution_on_time,
+      "resolution_breached": resolution_breached,
+      "response_compliance_rate": round((response_on_time / response_completed * 100) if response_completed > 0 else 0.0, 2),
+      "resolution_compliance_rate": round((resolution_on_time / resolution_completed * 100) if resolution_completed > 0 else 0.0, 2)
+    })
+  
+  return result
 

@@ -17,4 +17,5 @@ class Branch(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     users = relationship("User", back_populates="branch")
+    infrastructure = relationship("BranchInfrastructure", back_populates="branch", cascade="all, delete-orphan")
 

@@ -54,6 +54,22 @@ async def startup_event():
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
     
+    # Start automation scheduler
+    try:
+        from app.tasks.automation_tasks import start_automation_scheduler
+        start_automation_scheduler()
+        logger.info("Automation scheduler started")
+    except Exception as e:
+        logger.warning(f"Failed to start automation scheduler: {e}")
+    
+    # Start SLA monitoring scheduler
+    try:
+        from app.tasks.sla_tasks import start_sla_scheduler
+        start_sla_scheduler()
+        logger.info("SLA monitoring scheduler started")
+    except Exception as e:
+        logger.warning(f"Failed to start SLA scheduler: {e}")
+    
     # Start Telegram Bot if token is provided
     if settings.TELEGRAM_BOT_TOKEN:
         try:
@@ -108,6 +124,13 @@ from app.api import auth, tickets, files
 from app.api import branches, comments
 from app.api import reports
 from app.api import users
+from app.api import settings as settings_api
+from app.api import branch_infrastructure
+from app.api import departments
+from app.api import priorities
+from app.api import sla
+from app.api import automation
+from app.api import time_tracker
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["Tickets"])
@@ -116,6 +139,13 @@ app.include_router(branches.router, prefix="/api/branches", tags=["Branches"])
 app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
+app.include_router(settings_api.router, prefix="/api/settings", tags=["Settings"])
+app.include_router(branch_infrastructure.router, prefix="/api/branch-infrastructure", tags=["Branch Infrastructure"])
+app.include_router(departments.router, prefix="/api/departments", tags=["Departments"])
+app.include_router(priorities.router, prefix="/api/priorities", tags=["Priorities"])
+app.include_router(sla.router, prefix="/api/sla", tags=["SLA"])
+app.include_router(automation.router, prefix="/api/automation", tags=["Automation"])
+app.include_router(time_tracker.router, prefix="/api/time-tracker", tags=["Time Tracker"])
 
 if __name__ == "__main__":
     import uvicorn

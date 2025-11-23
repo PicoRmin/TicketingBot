@@ -10,10 +10,13 @@ from app.schemas.ticket import (
     TicketCreate,
     TicketUpdate,
     TicketStatusUpdate,
+    TicketAssignUpdate,
     TicketResponse,
-    TicketListResponse
+    TicketListResponse,
+    BulkActionRequest,
+    BulkActionResponse
 )
-from app.core.enums import TicketStatus, TicketCategory, UserRole
+from app.core.enums import TicketStatus, TicketCategory, TicketPriority, UserRole
 from app.api.deps import get_current_active_user, require_admin, require_roles
 from app.services.ticket_service import (
     create_ticket,
@@ -133,7 +136,10 @@ async def get_tickets(
     page_size: int = Query(10, ge=1, le=100, description="تعداد آیتم در هر صفحه"),
     status: Optional[TicketStatus] = Query(None, description="فیلتر بر اساس وضعیت"),
     category: Optional[TicketCategory] = Query(None, description="فیلتر بر اساس دسته‌بندی"),
+    priority: Optional[TicketPriority] = Query(None, description="فیلتر بر اساس اولویت"),
     branch_id: Optional[int] = Query(None, description="فیلتر بر اساس شعبه (فقط ادمین)"),
+    department_id: Optional[int] = Query(None, description="فیلتر بر اساس دپارتمان"),
+    assigned_to_id: Optional[int] = Query(None, description="فیلتر بر اساس کارشناس مسئول"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -179,7 +185,10 @@ async def get_tickets(
             limit=page_size,
             status=status,
             category=category,
+            priority=priority,
             branch_id=current_user.branch_id,
+            department_id=department_id,
+            assigned_to_id=assigned_to_id,
         )
     elif current_user.role in admin_roles:
         tickets, total = get_all_tickets(
@@ -188,17 +197,23 @@ async def get_tickets(
             limit=page_size,
             status=status,
             category=category,
+            priority=priority,
             branch_id=branch_id,
+            department_id=department_id,
+            assigned_to_id=assigned_to_id,
         )
     else:
         tickets, total = get_user_tickets(
-            db, current_user.id, skip=skip, limit=page_size, status=status, category=category
+            db, current_user.id, skip=skip, limit=page_size, status=status, category=category, priority=priority
         )
     
-    # Load user relationship for each ticket
+    # Load relationships for each ticket
+    from sqlalchemy.orm import joinedload
     for ticket in tickets:
         if not ticket.user:
             ticket.user = db.query(User).filter(User.id == ticket.user_id).first()
+        if ticket.assigned_to_id and not ticket.assigned_to:
+            ticket.assigned_to = db.query(User).filter(User.id == ticket.assigned_to_id).first()
     
     total_pages = (total + page_size - 1) // page_size
     
@@ -347,7 +362,7 @@ async def update_ticket_status_by_id(
     ticket_id: int,
     status_data: TicketStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.BRANCH_ADMIN))
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.BRANCH_ADMIN, UserRole.IT_SPECIALIST))
 ):
     """
     Update ticket status (Admin only)
@@ -382,6 +397,9 @@ async def update_ticket_status_by_id(
     
     previous_status = ticket.status
     updated_ticket = update_ticket_status(db, ticket, status_data.status)
+    
+    # Create history entry
+    from app.schemas.ticket_history import TicketHistoryCreate
     create_ticket_history(
         db,
         TicketHistoryCreate(
@@ -393,6 +411,154 @@ async def update_ticket_status_by_id(
     )
     await notify_ticket_status_changed(updated_ticket, previous_status, db)
     return updated_ticket
+
+
+@router.patch("/{ticket_id}/assign", response_model=TicketResponse)
+async def assign_ticket(
+    request: Request,
+    ticket_id: int,
+    assign_data: TicketAssignUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.BRANCH_ADMIN, UserRole.IT_SPECIALIST))
+):
+    """
+    Assign ticket to a specialist
+    
+    Args:
+        ticket_id: Ticket ID
+        assign_data: Assignment data (assigned_to_id)
+        db: Database session
+        current_user: Current authenticated user
+        
+    Returns:
+        TicketResponse: Updated ticket
+        
+    Raises:
+        HTTPException: If ticket or user not found
+    """
+    lang = resolve_lang(request, current_user)
+    
+    ticket = get_ticket(db, ticket_id)
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=translate("tickets.not_found", lang) or "تیکت یافت نشد."
+        )
+    
+    # Check access
+    if not can_user_access_ticket(current_user, ticket):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translate("common.forbidden", lang)
+        )
+    
+    # Validate assigned user exists
+    assigned_user = db.query(User).filter(User.id == assign_data.assigned_to_id).first()
+    if not assigned_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=translate("users.not_found", lang) or "کاربر یافت نشد."
+        )
+    
+    # Check if user is active
+    if not assigned_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=translate("users.inactive_user", lang) or "کاربر غیرفعال است."
+        )
+    
+    # Update ticket assignment
+    previous_assigned_to_id = ticket.assigned_to_id
+    ticket.assigned_to_id = assign_data.assigned_to_id
+    db.commit()
+    db.refresh(ticket)
+    
+    # Load assigned_to relationship
+    if ticket.assigned_to_id:
+        ticket.assigned_to = db.query(User).filter(User.id == ticket.assigned_to_id).first()
+    
+    # Create history entry
+    from app.schemas.ticket_history import TicketHistoryCreate
+    from app.services.ticket_history_service import create_ticket_history
+    
+    assignment_comment = f"تیکت به {assigned_user.full_name} تخصیص داده شد."
+    if previous_assigned_to_id:
+        previous_user = db.query(User).filter(User.id == previous_assigned_to_id).first()
+        if previous_user:
+            assignment_comment = f"تیکت از {previous_user.full_name} به {assigned_user.full_name} منتقل شد."
+    
+    create_ticket_history(
+        db,
+        TicketHistoryCreate(
+            ticket_id=ticket.id,
+            status=ticket.status,
+            changed_by_id=current_user.id,
+            comment=assignment_comment,
+        ),
+    )
+    
+    return ticket
+
+
+@router.patch("/{ticket_id}/unassign", response_model=TicketResponse)
+async def unassign_ticket(
+    request: Request,
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.BRANCH_ADMIN, UserRole.IT_SPECIALIST))
+):
+    """
+    Unassign ticket (remove assignment)
+    
+    Args:
+        ticket_id: Ticket ID
+        db: Database session
+        current_user: Current authenticated user
+        
+    Returns:
+        TicketResponse: Updated ticket
+    """
+    lang = resolve_lang(request, current_user)
+    
+    ticket = get_ticket(db, ticket_id)
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=translate("tickets.not_found", lang) or "تیکت یافت نشد."
+        )
+    
+    # Check access
+    if not can_user_access_ticket(current_user, ticket):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translate("common.forbidden", lang)
+        )
+    
+    # Remove assignment
+    previous_assigned_to_id = ticket.assigned_to_id
+    ticket.assigned_to_id = None
+    db.commit()
+    db.refresh(ticket)
+    
+    # Create history entry
+    from app.schemas.ticket_history import TicketHistoryCreate
+    from app.services.ticket_history_service import create_ticket_history
+    
+    if previous_assigned_to_id:
+        previous_user = db.query(User).filter(User.id == previous_assigned_to_id).first()
+        if previous_user:
+            unassign_comment = f"تیکت از {previous_user.full_name} خارج شد."
+            create_ticket_history(
+                db,
+                TicketHistoryCreate(
+                    ticket_id=ticket.id,
+                    status=ticket.status,
+                    changed_by_id=current_user.id,
+                    comment=unassign_comment,
+                ),
+            )
+    
+    return ticket
 
 
 @router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -456,4 +622,127 @@ async def list_ticket_history(
 
     history = get_ticket_history(db, ticket_id)
     return history
+
+
+@router.post("/bulk-action", response_model=BulkActionResponse)
+async def bulk_action_tickets(
+    request: Request,
+    bulk_data: BulkActionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Bulk actions on tickets (Admin only)
+    
+    Actions:
+    - status: Change status of multiple tickets
+    - assign: Assign multiple tickets to a specialist
+    - unassign: Unassign multiple tickets
+    - delete: Delete multiple tickets
+    """
+    lang = resolve_lang(request, current_user)
+    success_count = 0
+    failed_count = 0
+    failed_ids = []
+    
+    for ticket_id in bulk_data.ticket_ids:
+        try:
+            ticket = get_ticket(db, ticket_id)
+            if not ticket:
+                failed_count += 1
+                failed_ids.append(ticket_id)
+                continue
+            
+            # Check access
+            if not can_user_access_ticket(current_user, ticket):
+                failed_count += 1
+                failed_ids.append(ticket_id)
+                continue
+            
+            if bulk_data.action == "status":
+                if not bulk_data.status:
+                    failed_count += 1
+                    failed_ids.append(ticket_id)
+                    continue
+                previous_status = ticket.status
+                update_ticket_status(db, ticket, bulk_data.status)
+                # Create history
+                create_ticket_history(
+                    db,
+                    TicketHistoryCreate(
+                        ticket_id=ticket.id,
+                        status=bulk_data.status,
+                        changed_by_id=current_user.id,
+                        comment=f"تغییر وضعیت از {previous_status.value} به {bulk_data.status.value} (Bulk Action)",
+                    ),
+                )
+                # Notify
+                await notify_ticket_status_changed(ticket, previous_status, db)
+                
+            elif bulk_data.action == "assign":
+                if not bulk_data.assigned_to_id:
+                    failed_count += 1
+                    failed_ids.append(ticket_id)
+                    continue
+                from app.services.user_service import get_user
+                assignee = get_user(db, bulk_data.assigned_to_id)
+                if not assignee:
+                    failed_count += 1
+                    failed_ids.append(ticket_id)
+                    continue
+                ticket.assigned_to_id = bulk_data.assigned_to_id
+                db.commit()
+                db.refresh(ticket)
+                # Create history
+                create_ticket_history(
+                    db,
+                    TicketHistoryCreate(
+                        ticket_id=ticket.id,
+                        status=ticket.status,
+                        changed_by_id=current_user.id,
+                        comment=f"تخصیص به {assignee.full_name} (Bulk Action)",
+                    ),
+                )
+                
+            elif bulk_data.action == "unassign":
+                ticket.assigned_to_id = None
+                db.commit()
+                db.refresh(ticket)
+                # Create history
+                create_ticket_history(
+                    db,
+                    TicketHistoryCreate(
+                        ticket_id=ticket.id,
+                        status=ticket.status,
+                        changed_by_id=current_user.id,
+                        comment="حذف تخصیص (Bulk Action)",
+                    ),
+                )
+                
+            elif bulk_data.action == "delete":
+                from app.services.ticket_service import delete_ticket
+                if not delete_ticket(db, ticket):
+                    failed_count += 1
+                    failed_ids.append(ticket_id)
+                    continue
+            else:
+                failed_count += 1
+                failed_ids.append(ticket_id)
+                continue
+            
+            success_count += 1
+            
+        except Exception as e:
+            db.rollback()
+            failed_count += 1
+            failed_ids.append(ticket_id)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Bulk action error for ticket {ticket_id}: {e}")
+    
+    return BulkActionResponse(
+        success_count=success_count,
+        failed_count=failed_count,
+        failed_ids=failed_ids
+    )
 

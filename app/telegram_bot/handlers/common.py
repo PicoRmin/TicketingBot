@@ -16,7 +16,25 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Send the main menu to the user."""
     user_id = get_user_id(update)
     language = sessions.get_language(user_id)
-    keyboard = main_menu_keyboard(language, sessions.is_authenticated(user_id))
+    is_authenticated = sessions.is_authenticated(user_id)
+    
+    # Check if user can change status
+    can_change_status = False
+    if is_authenticated:
+        token = sessions.get_token(user_id)
+        if token:
+            from app.telegram_bot.runtime import api_client
+            from app.core.enums import UserRole
+            try:
+                user_info = await api_client.get_current_user(token)
+                if user_info:
+                    user_role = user_info.get("role")
+                    allowed_roles = [UserRole.CENTRAL_ADMIN.value, UserRole.ADMIN.value, UserRole.IT_SPECIALIST.value]
+                    can_change_status = user_role in allowed_roles
+            except Exception:
+                pass  # If check fails, don't show the button
+    
+    keyboard = main_menu_keyboard(language, is_authenticated, can_change_status)
 
     await context.bot.send_message(
         chat_id=get_chat_id(update),

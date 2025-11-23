@@ -10,7 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from app.database import engine, Base
 # Import all models to ensure they are registered with Base
-from app.models import User, Ticket, Attachment, Branch, Comment, TicketHistory, RefreshToken  # noqa
+from app.models import User, Ticket, Attachment, Branch, Comment, TicketHistory, RefreshToken, SystemSettings  # noqa
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 import logging
@@ -26,6 +26,17 @@ def init_db():
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database tables created successfully!")
 
+        # Initialize default settings
+        db: Session = SessionLocal()
+        try:
+            from app.services.settings_service import initialize_default_settings
+            initialize_default_settings(db)
+            logger.info("✅ Default settings initialized!")
+        except Exception as e:
+            logger.warning(f"Could not initialize default settings: {e}")
+        finally:
+            db.close()
+        
         # Seed default branches if table is empty
         db: Session = SessionLocal()
         try:

@@ -19,15 +19,19 @@ class User(Base):
     role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
     language = Column(Enum(Language), default=Language.FA, nullable=False)
     branch_id = Column(Integer, ForeignKey("branches.id", ondelete="SET NULL"), nullable=True, index=True)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
     telegram_chat_id = Column(String, unique=True, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    tickets = relationship("Ticket", back_populates="user", cascade="all, delete-orphan")
+    tickets = relationship("Ticket", foreign_keys="Ticket.user_id", back_populates="user", cascade="all, delete-orphan")
+    assigned_tickets = relationship("Ticket", foreign_keys="Ticket.assigned_to_id", back_populates="assigned_to")
     branch = relationship("Branch", back_populates="users")
+    department = relationship("Department", back_populates="users")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    time_logs = relationship("TimeLog", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"

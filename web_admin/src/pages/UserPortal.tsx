@@ -1,0 +1,398 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
+import { Link } from "react-router-dom";
+
+type TicketItem = {
+  id: number;
+  ticket_number: string;
+  title: string;
+  status: string;
+  category: string;
+  priority?: string;
+  assigned_to?: { id: number; full_name: string; username: string } | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type TicketListResponse = {
+  items: TicketItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+};
+
+const getStatusBadge = (status: string) => {
+  const statusMap: Record<string, { text: string; class: string }> = {
+    pending: { text: "در انتظار", class: "pending" },
+    in_progress: { text: "در حال انجام", class: "in_progress" },
+    resolved: { text: "حل شده", class: "resolved" },
+    closed: { text: "بسته شده", class: "closed" },
+  };
+  const s = statusMap[status] || { text: status, class: "pending" };
+  return <span className={`badge ${s.class}`}>{s.text}</span>;
+};
+
+const getCategoryText = (category: string) => {
+  const catMap: Record<string, string> = {
+    internet: "🌐 اینترنت",
+    equipment: "💻 تجهیزات",
+    software: "📱 نرم‌افزار",
+    other: "📋 سایر",
+  };
+  return catMap[category] || category;
+};
+
+const getPriorityBadge = (priority: string) => {
+  const priorityMap: Record<string, { text: string; class: string; emoji: string }> = {
+    critical: { text: "بحرانی", class: "priority-critical", emoji: "🔴" },
+    high: { text: "بالا", class: "priority-high", emoji: "🟠" },
+    medium: { text: "متوسط", class: "priority-medium", emoji: "🟡" },
+    low: { text: "پایین", class: "priority-low", emoji: "🟢" },
+  };
+  const p = priorityMap[priority] || { text: priority, class: "priority-medium", emoji: "🟡" };
+  return <span className={`badge ${p.class}`} title={p.text}>{p.emoji} {p.text}</span>;
+};
+
+export default function UserPortal() {
+  const navigate = useNavigate();
+  const [profile] = useState<any | null>(() => getStoredProfile());
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [showNewTicketForm, setShowNewTicketForm] = useState(false);
+  
+  // New ticket form
+  const [newTicket, setNewTicket] = useState({
+    title: "",
+    description: "",
+    category: "other",
+    priority: "medium",
+    branch_id: "",
+  });
+  const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+    
+    // Check if user is regular user (not admin)
+    if (profile && !["user"].includes(profile.role)) {
+      // Redirect admins to admin panel
+      navigate("/");
+      return;
+    }
+    
+    loadBranches();
+  }, [navigate, profile]);
+
+  useEffect(() => {
+    if (isAuthenticated() && profile && ["user"].includes(profile.role)) {
+      loadTickets();
+    }
+  }, [page, statusFilter]);
+
+  const loadBranches = async () => {
+    try {
+      const brs = await apiGet("/api/branches") as { id: number; name: string; code: string }[];
+      setBranches(brs);
+    } catch (e: any) {
+      console.error("Error loading branches:", e);
+    }
+  };
+
+  const loadTickets = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("page_size", "10");
+      if (statusFilter) {
+        params.set("status", statusFilter);
+      }
+      
+      const data = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
+      setTickets(data.items || []);
+      setTotalPages(data.total_pages || 1);
+    } catch (e: any) {
+      setError(e?.message || "خطا در دریافت تیکت‌ها");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTicket.title || !newTicket.description) {
+      setError("عنوان و توضیحات الزامی است");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      const payload: any = {
+        title: newTicket.title,
+        description: newTicket.description,
+        category: newTicket.category,
+        priority: newTicket.priority,
+      };
+      
+      if (newTicket.branch_id) {
+        payload.branch_id = Number(newTicket.branch_id);
+      }
+
+      const ticket = await apiPost("/api/tickets", payload) as TicketItem;
+      setShowNewTicketForm(false);
+      setNewTicket({ title: "", description: "", category: "other", priority: "medium", branch_id: "" });
+      await loadTickets();
+      // Navigate to ticket detail
+      navigate(`/user-tickets/${ticket.id}`);
+    } catch (e: any) {
+      setError(e?.message || "خطا در ایجاد تیکت");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h1 className="page-title">🎫 پورتال کاربران</h1>
+        <button
+          onClick={() => setShowNewTicketForm(!showNewTicketForm)}
+          style={{ padding: "12px 24px", fontSize: 16 }}
+        >
+          {showNewTicketForm ? "❌ انصراف" : "➕ تیکت جدید"}
+        </button>
+      </div>
+
+      {/* New Ticket Form */}
+      {showNewTicketForm && (
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="card-header">
+            <h2 className="card-title">ایجاد تیکت جدید</h2>
+          </div>
+          {error && <div className="alert error fade-in">{error}</div>}
+          <form onSubmit={handleCreateTicket}>
+            <label>
+              عنوان تیکت:
+              <input
+                type="text"
+                value={newTicket.title}
+                onChange={(e) => setNewTicket({ ...newTicket, title: e.target.value })}
+                placeholder="مثال: مشکل در اتصال به اینترنت"
+                required
+                minLength={5}
+                maxLength={255}
+              />
+            </label>
+            <label>
+              توضیحات:
+              <textarea
+                value={newTicket.description}
+                onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                placeholder="توضیحات کامل مشکل یا درخواست خود را بنویسید..."
+                required
+                minLength={10}
+                rows={5}
+              />
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <label>
+                دسته‌بندی:
+                <select
+                  value={newTicket.category}
+                  onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value })}
+                  required
+                >
+                  <option value="internet">🌐 اینترنت</option>
+                  <option value="equipment">💻 تجهیزات</option>
+                  <option value="software">📱 نرم‌افزار</option>
+                  <option value="other">📋 سایر</option>
+                </select>
+              </label>
+              <label>
+                اولویت:
+                <select
+                  value={newTicket.priority}
+                  onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value })}
+                  required
+                >
+                  <option value="low">🟢 پایین</option>
+                  <option value="medium">🟡 متوسط</option>
+                  <option value="high">🟠 بالا</option>
+                  <option value="critical">🔴 بحرانی</option>
+                </select>
+              </label>
+            </div>
+            {branches.length > 0 && (
+              <label>
+                شعبه (اختیاری):
+                <select
+                  value={newTicket.branch_id}
+                  onChange={(e) => setNewTicket({ ...newTicket, branch_id: e.target.value })}
+                >
+                  <option value="">انتخاب نشده</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={String(b.id)}>
+                      {b.name} ({b.code})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+              <button type="submit" disabled={submitting}>
+                {submitting ? "⏳ در حال ایجاد..." : "💾 ایجاد تیکت"}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setShowNewTicketForm(false);
+                  setNewTicket({ title: "", description: "", category: "other", priority: "medium", branch_id: "" });
+                  setError(null);
+                }}
+              >
+                انصراف
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Tickets List */}
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">تیکت‌های من</h2>
+        </div>
+        
+        {/* Filters */}
+        <div className="filters" style={{ marginBottom: 16 }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            style={{ flex: 1 }}
+          >
+            <option value="">همه وضعیت‌ها</option>
+            <option value="pending">در انتظار</option>
+            <option value="in_progress">در حال انجام</option>
+            <option value="resolved">حل شده</option>
+            <option value="closed">بسته شده</option>
+          </select>
+        </div>
+
+        {loading && (
+          <div style={{ textAlign: "center", padding: 40 }}>
+            <div className="loading" style={{ margin: "0 auto" }}></div>
+            <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>در حال بارگذاری...</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="alert error fade-in">{error}</div>
+        )}
+
+        {!loading && tickets.length === 0 && (
+          <div style={{ textAlign: "center", padding: 40, color: "var(--fg-secondary)" }}>
+            {statusFilter ? "هیچ تیکتی با این فیلتر یافت نشد." : "هنوز تیکتی ایجاد نکرده‌اید."}
+            <br />
+            <button
+              onClick={() => setShowNewTicketForm(true)}
+              style={{ marginTop: 16, padding: "12px 24px" }}
+            >
+              ➕ ایجاد تیکت جدید
+            </button>
+          </div>
+        )}
+
+        {!loading && tickets.length > 0 && (
+          <>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>شماره تیکت</th>
+                    <th>عنوان</th>
+                    <th>دسته‌بندی</th>
+                    <th>اولویت</th>
+                    <th>وضعیت</th>
+                    <th>کارشناس مسئول</th>
+                    <th>تاریخ ایجاد</th>
+                    <th>عملیات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickets.map((ticket) => (
+                    <tr key={ticket.id}>
+                      <td>
+                        <strong>{ticket.ticket_number}</strong>
+                      </td>
+                      <td>{ticket.title}</td>
+                      <td>{getCategoryText(ticket.category)}</td>
+                      <td>{ticket.priority ? getPriorityBadge(ticket.priority) : "🟡 متوسط"}</td>
+                      <td>{getStatusBadge(ticket.status)}</td>
+                      <td>
+                        {ticket.assigned_to ? (
+                          <span>{ticket.assigned_to.full_name}</span>
+                        ) : (
+                          <span style={{ color: "var(--fg-secondary)", fontSize: 12 }}>تخصیص داده نشده</span>
+                        )}
+                      </td>
+                      <td>
+                        {ticket.created_at
+                          ? new Date(ticket.created_at).toLocaleDateString("fa-IR")
+                          : "-"}
+                      </td>
+                      <td>
+                        <Link to={`/user-tickets/${ticket.id}`}>
+                          <button className="secondary small">👁️ مشاهده</button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="secondary"
+                >
+                  ⬅️ قبلی
+                </button>
+                <span style={{ padding: "8px 16px", display: "flex", alignItems: "center" }}>
+                  صفحه {page} از {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="secondary"
+                >
+                  بعدی ➡️
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+

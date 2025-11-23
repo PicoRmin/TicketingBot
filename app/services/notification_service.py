@@ -156,3 +156,66 @@ async def notify_ticket_status_changed(
             await _send_telegram_messages(messages)
     except Exception as exc:
         logger.exception("Error in notify_ticket_status_changed: %s", exc)
+
+
+async def send_telegram_notification_to_user(chat_id: str, message: str) -> None:
+    """
+    ارسال اعلان تلگرام به یک کاربر خاص
+    
+    Args:
+        chat_id: شناسه چت تلگرام کاربر
+        message: متن پیام
+    """
+    if not chat_id or not message:
+        return
+    
+    try:
+        await _send_telegram_messages([(chat_id, message)])
+    except Exception as exc:
+        logger.exception("Error sending telegram notification to user: %s", exc)
+
+
+async def send_telegram_notification_to_role(
+    db: Session | None,
+    role: UserRole,
+    message: str
+) -> None:
+    """
+    ارسال اعلان تلگرام به تمام کاربران با یک نقش خاص
+    
+    Args:
+        db: Session دیتابیس (اگر None باشد، از SessionLocal استفاده می‌شود)
+        role: نقش کاربران
+        message: متن پیام
+    """
+    if not message:
+        return
+    
+    try:
+        if db is None:
+            from app.database import SessionLocal
+            db = SessionLocal()
+            should_close = True
+        else:
+            should_close = False
+        
+        try:
+            users = (
+                db.query(User)
+                .filter(
+                    User.role == role,
+                    User.is_active.is_(True),
+                    User.telegram_chat_id.isnot(None)
+                )
+                .all()
+            )
+            
+            messages = [(user.telegram_chat_id, message) for user in users if user.telegram_chat_id]
+            
+            if messages:
+                await _send_telegram_messages(messages)
+        finally:
+            if should_close:
+                db.close()
+    except Exception as exc:
+        logger.exception("Error sending telegram notification to role: %s", exc)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from typing import Optional, List, Tuple
 from app.models import Ticket, User
-from app.core.enums import TicketStatus, TicketCategory, UserRole
+from app.core.enums import TicketStatus, TicketCategory, TicketPriority, UserRole
 from app.schemas.ticket import TicketCreate, TicketUpdate
 
 
@@ -77,14 +77,32 @@ def create_ticket(
         
         logger.debug(f"Final branch_id: {branch_id}")
         
+        # Validate department_id if provided
+        department_id = ticket_data.department_id
+        if department_id is not None and department_id <= 0:
+            department_id = None
+        elif department_id is not None:
+            from app.models import Department
+            department = db.query(Department).filter(Department.id == department_id).first()
+            if not department:
+                logger.warning(f"Department with id {department_id} not found, setting to None")
+                department_id = None
+        
+        # Determine priority (use provided or auto-detect)
+        priority = ticket_data.priority
+        if priority is None:
+            priority = _auto_determine_priority(ticket_data.title, ticket_data.description)
+        
         ticket = Ticket(
             ticket_number=ticket_number,
             title=ticket_data.title,
             description=ticket_data.description,
             category=ticket_data.category,
             status=TicketStatus.PENDING,
+            priority=priority,
             user_id=user_id,
-            branch_id=branch_id
+            branch_id=branch_id,
+            department_id=department_id
         )
         
         logger.debug(f"Creating ticket: {ticket}")
@@ -94,6 +112,30 @@ def create_ticket(
         
         db.refresh(ticket)
         logger.debug(f"Ticket refreshed: id={ticket.id}, ticket_number={ticket.ticket_number}")
+        
+        # Create SLA log if matching rule found
+        try:
+            from app.services.sla_service import find_matching_sla_rule, create_sla_log
+            sla_rule = find_matching_sla_rule(db, priority, ticket_data.category, department_id)
+            if sla_rule:
+                logger.debug(f"Found matching SLA rule: {sla_rule.name}")
+                create_sla_log(db, ticket, sla_rule)
+                logger.debug("SLA log created successfully")
+        except Exception as e:
+            logger.warning(f"Failed to create SLA log: {e}")
+            # Don't fail ticket creation if SLA fails
+        
+        # Auto-assign ticket if no manual assignment
+        if ticket.assigned_to_id is None:
+            try:
+                from app.services.automation_service import auto_assign_ticket
+                assigned_user = auto_assign_ticket(db, ticket)
+                if assigned_user:
+                    logger.debug(f"Auto-assigned ticket {ticket.id} to user {assigned_user.username}")
+                    db.refresh(ticket)
+            except Exception as e:
+                logger.warning(f"Failed to auto-assign ticket: {e}")
+                # Don't fail ticket creation if auto-assign fails
         
         return ticket
     except Exception as e:
@@ -130,6 +172,38 @@ def get_ticket_by_number(db: Session, ticket_number: str) -> Optional[Ticket]:
     return db.query(Ticket).filter(Ticket.ticket_number == ticket_number).first()
 
 
+def _auto_determine_priority(title: str, description: str) -> TicketPriority:
+    """
+    Auto-determine ticket priority based on title and description
+    
+    Args:
+        title: Ticket title
+        description: Ticket description
+        
+    Returns:
+        TicketPriority: Determined priority
+    """
+    text = (title + " " + description).lower()
+    
+    # Critical keywords
+    critical_keywords = ["قطع کامل", "کار نمی‌کند", "متوقف شده", "down", "not working", "stopped", "critical"]
+    if any(keyword in text for keyword in critical_keywords):
+        return TicketPriority.CRITICAL
+    
+    # High keywords
+    high_keywords = ["مشکل دارد", "کند است", "has problem", "slow", "error", "خطا"]
+    if any(keyword in text for keyword in high_keywords):
+        return TicketPriority.HIGH
+    
+    # Low keywords
+    low_keywords = ["درخواست", "سوال", "راهنمایی", "request", "question", "help", "پیشنهاد", "suggestion"]
+    if any(keyword in text for keyword in low_keywords):
+        return TicketPriority.LOW
+    
+    # Default to Medium
+    return TicketPriority.MEDIUM
+
+
 def update_ticket(
     db: Session,
     ticket: Ticket,
@@ -154,6 +228,37 @@ def update_ticket(
         ticket.category = ticket_data.category
     if ticket_data.status is not None:
         ticket.status = ticket_data.status
+    if ticket_data.priority is not None:
+        ticket.priority = ticket_data.priority
+    if ticket_data.department_id is not None:
+        # Validate department exists
+        if ticket_data.department_id > 0:
+            from app.models import Department
+            department = db.query(Department).filter(Department.id == ticket_data.department_id).first()
+            if department:
+                ticket.department_id = ticket_data.department_id
+            else:
+                ticket.department_id = None
+        else:
+            ticket.department_id = None
+    if ticket_data.assigned_to_id is not None:
+        # Validate user exists
+        if ticket_data.assigned_to_id > 0:
+            assigned_user = db.query(User).filter(User.id == ticket_data.assigned_to_id).first()
+            if assigned_user:
+                ticket.assigned_to_id = ticket_data.assigned_to_id
+            else:
+                ticket.assigned_to_id = None
+        else:
+            ticket.assigned_to_id = None
+    if ticket_data.estimated_resolution_hours is not None:
+        ticket.estimated_resolution_hours = ticket_data.estimated_resolution_hours
+    if ticket_data.satisfaction_rating is not None:
+        ticket.satisfaction_rating = ticket_data.satisfaction_rating
+    if ticket_data.satisfaction_comment is not None:
+        ticket.satisfaction_comment = ticket_data.satisfaction_comment
+    if ticket_data.cost is not None:
+        ticket.cost = ticket_data.cost
     
     db.commit()
     db.refresh(ticket)
@@ -177,14 +282,39 @@ def update_ticket_status(
     Returns:
         Ticket: Updated ticket
     """
+    previous_status = ticket.status
     ticket.status = new_status
-    # update timestamps for status transitions
+    
+    # Update timestamps for status transitions
+    if new_status == TicketStatus.IN_PROGRESS and ticket.first_response_at is None:
+        ticket.first_response_at = datetime.utcnow()
     if new_status == TicketStatus.RESOLVED and ticket.resolved_at is None:
         ticket.resolved_at = datetime.utcnow()
+        # Calculate actual resolution hours
+        if ticket.created_at:
+            delta = ticket.resolved_at - ticket.created_at
+            ticket.actual_resolution_hours = int(delta.total_seconds() / 3600)
     if new_status == TicketStatus.CLOSED and ticket.closed_at is None:
         ticket.closed_at = datetime.utcnow()
+        # Calculate actual resolution hours if not already calculated
+        if ticket.actual_resolution_hours is None and ticket.created_at:
+            delta = ticket.closed_at - ticket.created_at
+            ticket.actual_resolution_hours = int(delta.total_seconds() / 3600)
+    
     db.commit()
     db.refresh(ticket)
+    
+    # Update SLA log status
+    try:
+        from app.services.sla_service import get_ticket_sla_log, update_sla_log_status
+        sla_log = get_ticket_sla_log(db, ticket.id)
+        if sla_log:
+            update_sla_log_status(db, sla_log, ticket)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to update SLA log: {e}")
+        # Don't fail status update if SLA update fails
     
     return ticket
 
@@ -195,7 +325,8 @@ def get_user_tickets(
     skip: int = 0,
     limit: int = 100,
     status: Optional[TicketStatus] = None,
-    category: Optional[TicketCategory] = None
+    category: Optional[TicketCategory] = None,
+    priority: Optional[TicketPriority] = None
 ) -> Tuple[List[Ticket], int]:
     """
     Get tickets for a specific user with filters
@@ -217,9 +348,14 @@ def get_user_tickets(
         query = query.filter(Ticket.status == status)
     if category:
         query = query.filter(Ticket.category == category)
+    if priority:
+        query = query.filter(Ticket.priority == priority)
     
     total = query.count()
-    tickets = query.order_by(Ticket.created_at.desc()).offset(skip).limit(limit).all()
+    tickets = query.order_by(
+        Ticket.priority.asc(),
+        Ticket.created_at.desc()
+    ).offset(skip).limit(limit).all()
     
     return tickets, total
 
@@ -230,8 +366,11 @@ def get_all_tickets(
     limit: int = 100,
     status: Optional[TicketStatus] = None,
     category: Optional[TicketCategory] = None,
+    priority: Optional[TicketPriority] = None,
     user_id: Optional[int] = None,
-    branch_id: Optional[int] = None
+    branch_id: Optional[int] = None,
+    department_id: Optional[int] = None,
+    assigned_to_id: Optional[int] = None
 ) -> Tuple[List[Ticket], int]:
     """
     Get all tickets (for admin) with filters
@@ -253,13 +392,23 @@ def get_all_tickets(
         query = query.filter(Ticket.status == status)
     if category:
         query = query.filter(Ticket.category == category)
+    if priority:
+        query = query.filter(Ticket.priority == priority)
     if user_id:
         query = query.filter(Ticket.user_id == user_id)
     if branch_id:
         query = query.filter(Ticket.branch_id == branch_id)
+    if department_id:
+        query = query.filter(Ticket.department_id == department_id)
+    if assigned_to_id:
+        query = query.filter(Ticket.assigned_to_id == assigned_to_id)
     
     total = query.count()
-    tickets = query.order_by(Ticket.created_at.desc()).offset(skip).limit(limit).all()
+    # Order by priority (critical first) then by created_at
+    tickets = query.order_by(
+        Ticket.priority.asc(),  # Critical=1, High=2, Medium=3, Low=4
+        Ticket.created_at.desc()
+    ).offset(skip).limit(limit).all()
     
     return tickets, total
 

@@ -10,9 +10,27 @@ type Ticket = {
   description: string;
   status: string;
   category: string;
+  priority?: string;
   branch_id?: number | null;
+  department_id?: number | null;
+  assigned_to_id?: number | null;
+  assigned_to?: { id: number; full_name: string; username: string } | null;
   created_at?: string;
   updated_at?: string;
+};
+
+type SLALog = {
+  id: number;
+  ticket_id: number;
+  sla_rule_id: number;
+  target_response_time: string;
+  target_resolution_time: string;
+  actual_response_time?: string | null;
+  actual_resolution_time?: string | null;
+  response_status?: string | null;
+  resolution_status?: string | null;
+  escalated: boolean;
+  escalated_at?: string | null;
 };
 
 type Attachment = {
@@ -45,6 +63,50 @@ const getCategoryText = (category: string) => {
   return catMap[category] || category;
 };
 
+const getPriorityBadge = (priority: string) => {
+  const priorityMap: Record<string, { text: string; class: string; emoji: string }> = {
+    critical: { text: "بحرانی", class: "priority-critical", emoji: "🔴" },
+    high: { text: "بالا", class: "priority-high", emoji: "🟠" },
+    medium: { text: "متوسط", class: "priority-medium", emoji: "🟡" },
+    low: { text: "پایین", class: "priority-low", emoji: "🟢" },
+  };
+  const p = priorityMap[priority] || { text: priority, class: "priority-medium", emoji: "🟡" };
+  return <span className={`badge ${p.class}`} title={p.text}>{p.emoji} {p.text}</span>;
+};
+
+const getSLAStatusBadge = (status: string | null | undefined) => {
+  if (!status) return null;
+  const statusMap: Record<string, { text: string; class: string; emoji: string }> = {
+    on_time: { text: "در مهلت", class: "badge resolved", emoji: "✅" },
+    warning: { text: "هشدار", class: "badge in_progress", emoji: "⚠️" },
+    breached: { text: "نقض شده", class: "badge pending", emoji: "❌" },
+  };
+  const s = statusMap[status] || { text: status, class: "badge", emoji: "" };
+  return <span className={s.class} title={s.text}>{s.emoji} {s.text}</span>;
+};
+
+const formatTimeRemaining = (targetTime: string) => {
+  const target = new Date(targetTime);
+  const now = new Date();
+  const diff = target.getTime() - now.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (diff < 0) {
+    const absMinutes = Math.abs(minutes);
+    const absHours = Math.abs(hours);
+    const absDays = Math.abs(days);
+    if (absDays > 0) return `${absDays} روز گذشته`;
+    if (absHours > 0) return `${absHours} ساعت گذشته`;
+    return `${absMinutes} دقیقه گذشته`;
+  }
+  
+  if (days > 0) return `${days} روز باقی مانده`;
+  if (hours > 0) return `${hours} ساعت باقی مانده`;
+  return `${minutes} دقیقه باقی مانده`;
+};
+
 export default function TicketDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -59,7 +121,20 @@ export default function TicketDetail() {
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [departments, setDepartments] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [users, setUsers] = useState<{ id: number; full_name: string; username: string }[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [slaLog, setSlaLog] = useState<SLALog | null>(null);
+  const [assigning, setAssigning] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [canAssign, setCanAssign] = useState(false);
+  
+  // Time Tracker states
+  const [activeTimer, setActiveTimer] = useState<any | null>(null);
+  const [timeLogs, setTimeLogs] = useState<any[]>([]);
+  const [timeSummary, setTimeSummary] = useState<{ total_minutes: number; total_hours: number; logs_count: number } | null>(null);
+  const [timerDescription, setTimerDescription] = useState("");
+  const [timerLoading, setTimerLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -68,15 +143,24 @@ export default function TicketDetail() {
   }, []);
 
   useEffect(() => {
-    const loadBranches = async () => {
+    const loadData = async () => {
       try {
         const b = await apiGet(`/api/branches`) as any[];
         setBranches(b.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
+        const d = await apiGet(`/api/departments?page_size=100`) as any[];
+        setDepartments(d.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
+        const u = await apiGet(`/api/users?page_size=100`) as any;
+        setUsers(u.items?.map((x: any) => ({ id: x.id, full_name: x.full_name, username: x.username })) || []);
+        
+        // Check if user can assign tickets
+        const profile = await apiGet(`/api/auth/me`) as any;
+        const allowedRoles = ["admin", "central_admin", "branch_admin", "it_specialist"];
+        setCanAssign(allowedRoles.includes(profile?.role));
       } catch {
         // ignore
       }
     };
-    loadBranches();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -94,6 +178,21 @@ export default function TicketDetail() {
         setComments(commentsList);
         const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
         setHistory(historyList);
+        try {
+          const sla = await apiGet(`/api/sla/ticket/${id}`) as SLALog;
+          setSlaLog(sla);
+        } catch {
+          // SLA log might not exist for old tickets
+          setSlaLog(null);
+        }
+        
+        // Set selected user for assignment
+        if (t.assigned_to_id) {
+          setSelectedUserId(String(t.assigned_to_id));
+        }
+        
+        // Load Time Tracker data
+        loadTimeTrackerData();
       } catch (e: any) {
         setError(e?.message || "خطا در دریافت تیکت");
       } finally {
@@ -144,6 +243,117 @@ export default function TicketDetail() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const assignTicket = async () => {
+    if (!id) return;
+    setAssigning(true);
+    setError(null);
+    try {
+      if (selectedUserId) {
+        await apiPatch(`/api/tickets/${id}/assign`, { assigned_to_id: Number(selectedUserId) });
+      } else {
+        await apiPatch(`/api/tickets/${id}/unassign`, {});
+      }
+      // Reload ticket
+      const t = await apiGet(`/api/tickets/${id}`) as Ticket;
+      setTicket(t);
+      if (t.assigned_to_id) {
+        setSelectedUserId(String(t.assigned_to_id));
+      } else {
+        setSelectedUserId("");
+      }
+      // Reload history
+      const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
+      setHistory(historyList);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message || "خطا در تخصیص تیکت");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const loadTimeTrackerData = async () => {
+    if (!id) return;
+    try {
+      // Load active timer
+      const active = await apiGet(`/api/time-tracker/active`) as any;
+      if (active && active.ticket_id === Number(id)) {
+        setActiveTimer(active);
+      } else {
+        setActiveTimer(null);
+      }
+      
+      // Load time logs for this ticket
+      const logs = await apiGet(`/api/time-tracker/ticket/${id}`) as any[];
+      setTimeLogs(logs || []);
+      
+      // Load time summary
+      const summary = await apiGet(`/api/time-tracker/ticket/${id}/summary`) as any;
+      setTimeSummary(summary);
+    } catch (e: any) {
+      // Time tracker might not be available for all users
+      console.warn("Time tracker error:", e);
+    }
+  };
+
+  const startTimer = async () => {
+    if (!id) return;
+    setTimerLoading(true);
+    setError(null);
+    try {
+      const timer = await apiPost(`/api/time-tracker/start`, {
+        ticket_id: Number(id),
+        description: timerDescription
+      }) as any;
+      setActiveTimer(timer);
+      setTimerDescription("");
+      await loadTimeTrackerData();
+    } catch (e: any) {
+      setError(e?.message || "خطا در شروع تایمر");
+    } finally {
+      setTimerLoading(false);
+    }
+  };
+
+  const stopTimer = async (timeLogId?: number) => {
+    setTimerLoading(true);
+    setError(null);
+    try {
+      if (timeLogId) {
+        await apiPost(`/api/time-tracker/stop/${timeLogId}`, {
+          description: timerDescription
+        });
+      } else {
+        await apiPost(`/api/time-tracker/stop-active`, {
+          description: timerDescription
+        });
+      }
+      setActiveTimer(null);
+      setTimerDescription("");
+      await loadTimeTrackerData();
+    } catch (e: any) {
+      setError(e?.message || "خطا در توقف تایمر");
+    } finally {
+      setTimerLoading(false);
+    }
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours} ساعت و ${mins} دقیقه`;
+    }
+    return `${mins} دقیقه`;
+  };
+
+  const formatElapsedTime = (startTime: string) => {
+    const start = new Date(startTime);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - start.getTime()) / 1000 / 60); // minutes
+    return formatDuration(diff);
   };
 
   const addComment = async () => {
@@ -215,6 +425,12 @@ export default function TicketDetail() {
                 </div>
               </div>
               <div>
+                <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>اولویت</div>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>
+                  {getPriorityBadge(ticket.priority || "medium")}
+                </div>
+              </div>
+              <div>
                 <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>دسته‌بندی</div>
                 <div style={{ fontSize: 18, fontWeight: 600 }}>{getCategoryText(ticket.category)}</div>
               </div>
@@ -228,6 +444,26 @@ export default function TicketDetail() {
                     })()
                   ) : (
                     <span style={{ color: "var(--fg-secondary)" }}>بدون شعبه</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>دپارتمان</div>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>
+                  {ticket.department_id ? (
+                    departments.find(d => d.id === ticket.department_id)?.name || "-"
+                  ) : (
+                    <span style={{ color: "var(--fg-secondary)" }}>بدون دپارتمان</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>کارشناس مسئول</div>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>
+                  {ticket.assigned_to ? (
+                    ticket.assigned_to.full_name
+                  ) : (
+                    <span style={{ color: "var(--fg-secondary)" }}>تخصیص داده نشده</span>
                   )}
                 </div>
               </div>
@@ -257,6 +493,60 @@ export default function TicketDetail() {
             </div>
           </div>
 
+          {/* SLA Status Card */}
+          {slaLog && (
+            <div className="card" style={{ marginBottom: 24 }}>
+              <div className="card-header">
+                <h2 className="card-title">⏱️ وضعیت SLA</h2>
+              </div>
+              <div className="grid grid-cols-2" style={{ gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>وضعیت پاسخ</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+                    {getSLAStatusBadge(slaLog.response_status)}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
+                    {slaLog.actual_response_time ? (
+                      <>پاسخ داده شده: {new Date(slaLog.actual_response_time).toLocaleString("fa-IR")}</>
+                    ) : (
+                      <>مهلت: {new Date(slaLog.target_response_time).toLocaleString("fa-IR")} ({formatTimeRemaining(slaLog.target_response_time)})</>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>وضعیت حل</div>
+                  <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
+                    {getSLAStatusBadge(slaLog.resolution_status)}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
+                    {slaLog.actual_resolution_time ? (
+                      <>حل شده: {new Date(slaLog.actual_resolution_time).toLocaleString("fa-IR")}</>
+                    ) : (
+                      <>مهلت: {new Date(slaLog.target_resolution_time).toLocaleString("fa-IR")} ({formatTimeRemaining(slaLog.target_resolution_time)})</>
+                    )}
+                  </div>
+                </div>
+                {slaLog.escalated && (
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div className="alert" style={{ 
+                      background: "var(--warning)", 
+                      color: "white",
+                      padding: "12px",
+                      borderRadius: "var(--radius)"
+                    }}>
+                      <strong>⚠️ Escalated:</strong> این تیکت به سطح بالاتر ارجاع داده شده است.
+                      {slaLog.escalated_at && (
+                        <span style={{ display: "block", marginTop: 4, fontSize: 12 }}>
+                          زمان: {new Date(slaLog.escalated_at).toLocaleString("fa-IR")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Status Change Card */}
           <div className="card" style={{ marginBottom: 24 }}>
             <div className="card-header">
@@ -283,6 +573,157 @@ export default function TicketDetail() {
               </button>
             </div>
           </div>
+
+          {/* Assignment Card */}
+          {canAssign && (
+            <div className="card" style={{ marginBottom: 24 }}>
+              <div className="card-header">
+                <h2 className="card-title">👤 تخصیص تیکت</h2>
+              </div>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 250 }}>
+                  <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+                    کارشناس مسئول
+                  </label>
+                  <select 
+                    value={selectedUserId} 
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    disabled={assigning}
+                  >
+                    <option value="">بدون تخصیص</option>
+                    {users
+                      .filter(u => u.id !== ticket.user_id) // Don't show ticket creator
+                      .map((user) => (
+                        <option key={user.id} value={String(user.id)}>
+                          {user.full_name} ({user.username})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <button 
+                  onClick={assignTicket} 
+                  disabled={assigning || selectedUserId === String(ticket.assigned_to_id || "")}
+                  style={{ minWidth: 140 }}
+                >
+                  {assigning ? "⏳ در حال ذخیره..." : selectedUserId ? "💾 تخصیص" : "🗑️ حذف تخصیص"}
+                </button>
+              </div>
+              {ticket.assigned_to && (
+                <div style={{ marginTop: 12, padding: 12, background: "var(--bg-secondary)", borderRadius: "var(--radius)", fontSize: 14 }}>
+                  <strong>کارشناس فعلی:</strong> {ticket.assigned_to.full_name} ({ticket.assigned_to.username})
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Time Tracker Card */}
+          {canAssign && (
+            <div className="card" style={{ marginBottom: 24 }}>
+              <div className="card-header">
+                <h2 className="card-title">⏱️ زمان‌سنج کار</h2>
+                {timeSummary && (
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>
+                    کل زمان: <strong>{formatDuration(timeSummary.total_minutes)}</strong> ({timeSummary.logs_count} رکورد)
+                  </div>
+                )}
+              </div>
+              
+              {/* Active Timer */}
+              {activeTimer && (
+                <div style={{ 
+                  padding: 16, 
+                  background: "var(--success)", 
+                  color: "white", 
+                  borderRadius: "var(--radius)",
+                  marginBottom: 16
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div>
+                      <strong>⏱️ تایمر فعال</strong>
+                      <div style={{ fontSize: 12, marginTop: 4, opacity: 0.9 }}>
+                        زمان سپری شده: {formatElapsedTime(activeTimer.start_time)}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => stopTimer()}
+                      disabled={timerLoading}
+                      className="danger"
+                      style={{ padding: "8px 16px" }}
+                    >
+                      {timerLoading ? "⏳ در حال توقف..." : "⏹️ توقف"}
+                    </button>
+                  </div>
+                  {activeTimer.description && (
+                    <div style={{ fontSize: 12, opacity: 0.9, marginTop: 8 }}>
+                      توضیحات: {activeTimer.description}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Start Timer */}
+              {!activeTimer && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+                    توضیحات کار (اختیاری)
+                  </label>
+                  <textarea
+                    value={timerDescription}
+                    onChange={(e) => setTimerDescription(e.target.value)}
+                    placeholder="مثال: بررسی مشکل شبکه..."
+                    rows={2}
+                    style={{ width: "100%", marginBottom: 12 }}
+                  />
+                  <button
+                    onClick={startTimer}
+                    disabled={timerLoading}
+                    style={{ padding: "10px 20px" }}
+                  >
+                    {timerLoading ? "⏳ در حال شروع..." : "▶️ شروع تایمر"}
+                  </button>
+                </div>
+              )}
+              
+              {/* Time Logs List */}
+              {timeLogs.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <h3 style={{ fontSize: 16, marginBottom: 12 }}>تاریخچه زمان کار</h3>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>کاربر</th>
+                          <th>شروع</th>
+                          <th>پایان</th>
+                          <th>مدت زمان</th>
+                          <th>توضیحات</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {timeLogs.map((log) => (
+                          <tr key={log.id}>
+                            <td>{log.user?.full_name || "ناشناس"}</td>
+                            <td>{new Date(log.start_time).toLocaleString("fa-IR")}</td>
+                            <td>{log.end_time ? new Date(log.end_time).toLocaleString("fa-IR") : "-"}</td>
+                            <td>
+                              {log.duration_minutes 
+                                ? formatDuration(log.duration_minutes)
+                                : log.is_active === 1 
+                                  ? <span style={{ color: "var(--success)" }}>در حال کار...</span>
+                                  : "-"}
+                            </td>
+                            <td style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
+                              {log.description || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Attachments Card */}
           <div className="card" style={{ marginBottom: 24 }}>

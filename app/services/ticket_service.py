@@ -370,7 +370,10 @@ def get_all_tickets(
     user_id: Optional[int] = None,
     branch_id: Optional[int] = None,
     department_id: Optional[int] = None,
-    assigned_to_id: Optional[int] = None
+    assigned_to_id: Optional[int] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+    ticket_number: Optional[str] = None
 ) -> Tuple[List[Ticket], int]:
     """
     Get all tickets (for admin) with filters
@@ -402,6 +405,15 @@ def get_all_tickets(
         query = query.filter(Ticket.department_id == department_id)
     if assigned_to_id:
         query = query.filter(Ticket.assigned_to_id == assigned_to_id)
+    if date_from:
+        query = query.filter(Ticket.created_at >= date_from)
+    if date_to:
+        # Add one day to include the entire end date
+        from datetime import timedelta
+        date_to_end = date_to + timedelta(days=1)
+        query = query.filter(Ticket.created_at < date_to_end)
+    if ticket_number:
+        query = query.filter(Ticket.ticket_number.ilike(f"%{ticket_number}%"))
     
     total = query.count()
     # Order by priority (critical first) then by created_at

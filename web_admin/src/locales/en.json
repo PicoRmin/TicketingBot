@@ -1,0 +1,125 @@
+{
+  "brandTitle": "IranMehr",
+  "brandSubtitle": "Iranmehr Help Desk Ticketing",
+  "nav": {
+    "dashboard": "📊 Dashboard",
+    "tickets": "🎫 Tickets",
+    "branches": "🏢 Branches",
+    "departments": "🏢 Departments",
+    "users": "👥 Users",
+    "automation": "🤖 Automation",
+    "sla": "⏱️ SLA",
+    "customFields": "📋 Custom Fields",
+    "settings": "⚙️ Settings",
+    "infrastructure": "🏗️ Infrastructure",
+    "userPortal": "🎫 My Tickets"
+  },
+  "actions": {
+    "login": "🔐 Login",
+    "logout": "🚪 Logout",
+    "dark": "🌙 Dark",
+    "light": "☀️ Light",
+    "langFa": "فا",
+    "langEn": "En"
+  },
+  "role": {
+    "central_admin": "👑 Head Admin",
+    "admin": "🛡️ System Admin",
+    "branch_admin": "🏢 Branch Owner",
+    "it_specialist": "💻 IT Specialist",
+    "report_manager": "📊 Report Manager",
+    "user": "👤 User"
+  },
+  "layout": {
+    "footer": "Iranmehr Ticketing © 2025",
+    "version": "Version {{version}} | Crafted with ❤️"
+  },
+  "errors": {
+    "sessionExpired": "Session expired. Please login again.",
+    "network": "Unable to reach the server. Check backend status."
+  },
+  "dashboard": {
+    "title": "📊 Dashboard",
+    "buttons": {
+      "openFilters": "🔍 Advanced Filters",
+      "closeFilters": "❌ Hide Filters",
+      "refresh": "🔄 Refresh",
+      "loading": "🔄 Loading...",
+      "exportPdf": "📄 Export PDF"
+    },
+    "filters": {
+      "title": "🔍 Advanced Filters",
+      "dateFrom": "From date",
+      "dateTo": "To date",
+      "branch": "Branch",
+      "allBranches": "All branches",
+      "department": "Department",
+      "allDepartments": "All departments",
+      "priority": "Priority",
+      "allPriorities": "All priorities",
+      "clear": "🗑️ Clear filters"
+    },
+    "loading": "Loading...",
+    "errorLabel": "Error:",
+    "errors": {
+      "fetch": "Failed to load reports",
+      "pdf": "Failed to generate PDF"
+    },
+    "stats": {
+      "total": "Total tickets"
+    },
+    "cards": {
+      "responseTime": "⏱️ Average Response Time",
+      "hours": "hours"
+    },
+    "actions": {
+      "exportCsv": "📥 CSV"
+    },
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priority": {
+      "critical": "🔴 Critical",
+      "high": "🟠 High",
+      "medium": "🟡 Medium",
+      "low": "🟢 Low"
+    },
+    "charts": {
+      "statusTitle": "📊 Tickets by Status",
+      "statusPie": "🥧 Status Distribution",
+      "dateTrend": "📅 Tickets over Time",
+      "priorityBar": "⚡ Tickets by Priority",
+      "priorityComparison": "🎯 Priority Comparison",
+      "department": "🏢 Tickets by Department",
+      "slaCompliance": "⏱️ SLA Compliance Report",
+      "slaDistribution": "🥧 SLA Status Distribution",
+      "slaByPriority": "📊 SLA Compliance by Priority",
+      "slaTable": "📋 SLA Details by Priority",
+      "branch": "🏢 Tickets by Branch"
+    },
+    "labels": {
+      "count": "Count"
+    },
+    "slaCards": {
+      "totalSla": "Tickets with SLA",
+      "escalated": "Escalated Tickets",
+      "responseRate": "Response compliance",
+      "resolutionRate": "Resolution compliance"
+    },
+    "slaPie": {
+      "onTime": "On-time",
+      "warning": "Warning",
+      "breached": "Breached"
+    },
+    "table": {
+      "priority": "Priority",
+      "count": "Count",
+      "responseRate": "Response rate",
+      "resolutionRate": "Resolution rate"
+    }
+  }
+}
+

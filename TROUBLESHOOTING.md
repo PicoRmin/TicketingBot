@@ -46,6 +46,44 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:8000,h
 
 ---
 
+## ✅ چک‌لیست "رفع خطاهای جاری" (Backend + Frontend)
+
+1. **ورود مجدد**
+   - به `/login` بروید، دکمه خروج را بزنید و دوباره احراز هویت کنید.
+   - در DevTools → Application → Local Storage مطمئن شوید `imehr_token` تازه شده است.
+2. **اجرای صحیح Backend**
+   - دستور:
+     ```powershell
+     uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+     ```
+   - آدرس `http://127.0.0.1:8000/health` باید `status: healthy` برگرداند.
+3. **تنظیم CORS_ORIGINS**
+   - در `.env` یا متغیر محیطی:
+     ```
+     CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
+     ```
+   - تغییرات را ذخیره و Backend را ری‌استارت کنید.
+4. **بررسی هدر واقعی با curl**
+   - در PowerShell/Git Bash:
+     ```bash
+     curl -I http://127.0.0.1:8000/api/auth/me
+     ```
+   - باید هدر `access-control-allow-origin` با مقدار `http://localhost:5173` را ببینید.
+   - اگر وضعیت 401 بود، یعنی نیاز به لاگین مجدد دارید.
+5. **پاک‌سازی کش مرورگر**
+   - DevTools → Application → Clear storage → Clear site data.
+6. **اجرای Frontend**
+   - دستور:
+     ```bash
+     cd web_admin
+     npm run dev -- --host localhost --port 5173
+     ```
+   - در صورت نیاز، از `http://127.0.0.1:5173` نیز تست بگیرید.
+
+این شش مرحله قبل از هر گزارش خطای CORS یا 401 باید انجام شود.
+
+---
+
 ## ❌ خطا در ثبت تیکت
 
 ### علل احتمالی:

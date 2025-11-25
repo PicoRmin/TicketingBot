@@ -1,6 +1,7 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState, ChangeEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { getToken, logout, getStoredProfile, fetchProfile, setProfile, clearProfile } from "./services/api";
-import { useEffect, useState } from "react";
 import logoUrl from "./assets/brand-logo.svg";
 
 export default function App() {
@@ -10,6 +11,7 @@ export default function App() {
   const [dark, setDark] = useState<boolean>(() => {
     return localStorage.getItem("imehr_dark") === "1";
   });
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (!token) {
@@ -72,21 +74,17 @@ export default function App() {
   const isCentralAdmin = profile && profile.role === "central_admin";
   const isReportManager = profile && profile.role === "report_manager";
   const displayName = profile?.full_name || profile?.username;
-  
+
   // Role labels
   const getRoleLabel = (role: string) => {
-    const roleMap: Record<string, string> = {
-      "central_admin": "👑 مدیر ارشد",
-      "admin": "🛡️ مدیر سیستم",
-      "branch_admin": "🏢 مسئول شعبه",
-      "it_specialist": "💻 کارشناس IT",
-      "report_manager": "📊 گزارش‌گیر",
-      "user": "👤 کاربر"
-    };
-    return roleMap[role] || role;
+    return t(`role.${role}`, { defaultValue: role });
   };
   
   const roleLabel = profile ? getRoleLabel(profile.role) : "";
+  const handleLangChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    i18n.changeLanguage(e.target.value);
+  };
+  const versionLabel = t("layout.version", { version: "0.1.0" });
 
   return (
     <div className="container">
@@ -95,29 +93,30 @@ export default function App() {
           <Link to="/" className="brand">
             <img src={logoUrl} alt="لوگوی ایرانمهر" />
             <div className="brand-text">
-              <span className="brand-title">IranMehr</span>
-              <span className="brand-subtitle">Help Desk Ticketing System</span>
+              <span className="brand-title">{t("brandTitle")}</span>
+              <span className="brand-subtitle">{t("brandSubtitle")}</span>
             </div>
           </Link>
           <nav>
             {profile?.role === "user" ? (
               // Navigation for regular users
               <>
-                <Link to="/user-dashboard">📊 داشبورد</Link>
-                <Link to="/user-portal">🎫 تیکت‌های من</Link>
+                <Link to="/user-dashboard">{t("nav.dashboard")}</Link>
+                <Link to="/user-portal">{t("nav.userPortal")}</Link>
               </>
             ) : (
               // Navigation for admins
               <>
-                <Link to="/">📊 داشبورد</Link>
-                {!isReportManager && <Link to="/tickets">🎫 تیکت‌ها</Link>}
-                {!isReportManager && <Link to="/branches">🏢 شعب</Link>}
-                {isAdmin && <Link to="/departments">🏢 دپارتمان‌ها</Link>}
-                {isAdmin && <Link to="/users">👥 کاربران</Link>}
-                {isAdmin && <Link to="/automation">🤖 اتوماسیون</Link>}
-                {isAdmin && <Link to="/sla">⏱️ SLA</Link>}
-                {isCentralAdmin && <Link to="/settings">⚙️ تنظیمات</Link>}
-                {isCentralAdmin && <Link to="/infrastructure">🏗️ زیرساخت</Link>}
+                <Link to="/">{t("nav.dashboard")}</Link>
+                {!isReportManager && <Link to="/tickets">{t("nav.tickets")}</Link>}
+                {!isReportManager && <Link to="/branches">{t("nav.branches")}</Link>}
+                {isAdmin && <Link to="/departments">{t("nav.departments")}</Link>}
+                {isAdmin && <Link to="/users">{t("nav.users")}</Link>}
+                {isAdmin && <Link to="/automation">{t("nav.automation")}</Link>}
+                {isAdmin && <Link to="/sla">{t("nav.sla")}</Link>}
+                {isAdmin && <Link to="/custom-fields">{t("nav.customFields")}</Link>}
+                {isCentralAdmin && <Link to="/settings">{t("nav.settings")}</Link>}
+                {isCentralAdmin && <Link to="/infrastructure">{t("nav.infrastructure")}</Link>}
               </>
             )}
           </nav>
@@ -128,8 +127,17 @@ export default function App() {
             className="secondary"
             style={{ padding: "8px 16px", fontSize: 14 }}
           >
-            {dark ? "☀️ روشن" : "🌙 تاریک"}
+            {dark ? t("actions.light") : t("actions.dark")}
           </button>
+          <select
+            value={i18n.language}
+            onChange={handleLangChange}
+            className="secondary"
+            style={{ padding: "8px 12px", fontSize: 14, borderRadius: "var(--radius)" }}
+          >
+            <option value="fa">{t("actions.langFa")}</option>
+            <option value="en">{t("actions.langEn")}</option>
+          </select>
           {displayName && (
             <span style={{ fontSize: 14, color: "var(--fg-secondary)" }}>
               👤 {displayName} {roleLabel && `(${roleLabel})`}
@@ -137,12 +145,12 @@ export default function App() {
           )}
           {token ? (
             <button onClick={handleLogout} className="danger" style={{ padding: "8px 16px", fontSize: 14 }}>
-              🚪 خروج
+              {t("actions.logout")}
             </button>
           ) : (
             <Link to="/login">
               <button className="secondary" style={{ padding: "8px 16px", fontSize: 14 }}>
-                🔐 ورود
+                {t("actions.login")}
               </button>
             </Link>
           )}
@@ -152,9 +160,9 @@ export default function App() {
         <Outlet />
       </main>
       <footer>
-        <div>سیستم تیکتینگ ایرانمهر © 2025</div>
+        <div>{t("layout.footer")}</div>
         <div style={{ marginTop: 4, fontSize: 11 }}>
-          نسخه 0.1.0 | توسعه یافته با ❤️
+          {versionLabel}
         </div>
       </footer>
     </div>

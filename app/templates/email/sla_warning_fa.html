@@ -1,0 +1,49 @@
+{% extends "base_fa.html" %}
+
+{% block content %}
+<h2 style="color: #ff9800; margin-top: 0;">⚠️ هشدار SLA - زمان باقی‌مانده</h2>
+
+<p>سلام،</p>
+
+<p>این یک هشدار است که تیکت شما به مهلت SLA نزدیک می‌شود:</p>
+
+<div class="ticket-details">
+    <table>
+        <tr>
+            <td>شماره تیکت:</td>
+            <td><strong style="color: #667eea; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>عنوان:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>نوع هشدار:</td>
+            <td>
+                {% if warning_type == 'response' %}
+                    <span class="status-badge status-in-progress">زمان پاسخ</span>
+                {% else %}
+                    <span class="status-badge status-in-progress">زمان حل</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>زمان باقی‌مانده:</td>
+            <td><strong style="color: #ff9800; font-size: 16px;">{{ remaining_time }}</strong></td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box" style="background-color: #fff3cd; border-right-color: #ffc107;">
+    <p><strong>🚨 توجه:</strong></p>
+    <p>لطفاً در اسرع وقت به این تیکت رسیدگی کنید تا از نقض SLA جلوگیری شود.</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button">مشاهده و رسیدگی به تیکت</a>
+</div>
+
+<p>با تشکر،<br>
+<strong>سیستم {{ app_name }}</strong></p>
+{% endblock %}
+

@@ -1,0 +1,51 @@
+{% extends "base_fa.html" %}
+
+{% block content %}
+<h2 style="color: #dc3545; margin-top: 0;">🔴 نقض SLA - تیکت از مهلت گذشته است</h2>
+
+<p>سلام،</p>
+
+<p><strong style="color: #dc3545;">هشدار مهم:</strong> تیکت زیر از مهلت SLA خود گذشته است:</p>
+
+<div class="ticket-details" style="border-color: #dc3545;">
+    <table>
+        <tr>
+            <td>شماره تیکت:</td>
+            <td><strong style="color: #dc3545; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>عنوان:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>نوع نقض:</td>
+            <td>
+                {% if breach_type == 'response' %}
+                    <span class="status-badge" style="background-color: #dc3545; color: #fff;">زمان پاسخ</span>
+                {% else %}
+                    <span class="status-badge" style="background-color: #dc3545; color: #fff;">زمان حل</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>زمان تاخیر:</td>
+            <td><strong style="color: #dc3545; font-size: 16px;">{{ delay_time }}</strong></td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box" style="background-color: #f8d7da; border-right-color: #dc3545;">
+    <p><strong>🚨 هشدار جدی:</strong></p>
+    <p>این تیکت از مهلت SLA خود گذشته است. لطفاً <strong>فوراً</strong> به آن رسیدگی کنید.</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">رسیدگی فوری به تیکت</a>
+</div>
+
+<p>این یک وضعیت بحرانی است و نیاز به رسیدگی فوری دارد.</p>
+
+<p>با تشکر،<br>
+<strong>سیستم {{ app_name }}</strong></p>
+{% endblock %}
+

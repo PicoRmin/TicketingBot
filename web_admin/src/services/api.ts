@@ -1,4 +1,8 @@
+import { emitError } from "./errorBus";
+
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const SESSION_EXPIRED_MESSAGE = "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.";
+const NETWORK_ERROR_MESSAGE = `خطا در اتصال به سرور. لطفاً مطمئن شوید که Backend روی ${API_BASE_URL} در حال اجرا است.`;
 
 const TOKEN_KEY = "imehr_token";
 const PROFILE_KEY = "imehr_profile";
@@ -53,10 +57,20 @@ async function safeJson(res: Response) {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await safeJson(res);
-    const errorMessage = body?.detail || body?.message || res.statusText || "خطای نامشخص";
+    let errorMessage = body?.detail || body?.message || res.statusText || "خطای نامشخص";
+    if (res.status === 401) {
+      errorMessage = SESSION_EXPIRED_MESSAGE;
+      logout();
+    }
+    emitError(errorMessage, res.status);
     throw new Error(errorMessage);
   }
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    // در برخی DELETE ها بدنه‌ای نداریم
+    return undefined as T;
+  }
 }
 
 async function fetchWithErrorHandling(
@@ -75,9 +89,8 @@ async function fetchWithErrorHandling(
   } catch (error: any) {
     // Network error or CORS error
     if (error.name === "TypeError" || error.message.includes("fetch")) {
-      throw new Error(
-        `خطا در اتصال به سرور. لطفاً مطمئن شوید که Backend روی ${API_BASE_URL} در حال اجرا است.`
-      );
+      emitError(NETWORK_ERROR_MESSAGE);
+      throw new Error(NETWORK_ERROR_MESSAGE);
     }
     throw error;
   }
@@ -141,6 +154,10 @@ export async function apiDelete(path: string) {
   if (!res.ok) {
     const body = await safeJson(res);
     const errorMessage = body?.detail || body?.message || res.statusText || "خطای نامشخص";
+    emitError(errorMessage, res.status);
+    if (res.status === 401) {
+      logout();
+    }
     throw new Error(errorMessage);
   }
   return true;
@@ -159,6 +176,9 @@ export async function login(username: string, password: string) {
     });
 
     if (!res.ok) {
+      const body = await safeJson(res);
+      const errorMessage = body?.detail || "نام کاربری یا رمز عبور نادرست است.";
+      emitError(errorMessage, res.status);
       return false;
     }
     const data = await res.json();
@@ -172,9 +192,10 @@ export async function login(username: string, password: string) {
       }
       return true;
     }
+    emitError("پاسخ نامعتبر از سرور دریافت شد.");
     return false;
   } catch (error: any) {
-    console.error("Login error:", error);
+    emitError(error?.message || "خطای ناشناخته در فرآیند ورود");
     return false;
   }
 }

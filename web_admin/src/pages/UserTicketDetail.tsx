@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
+import CustomFieldRenderer from "../components/CustomFieldRenderer";
 
 type Ticket = {
   id: number;
@@ -76,6 +77,9 @@ export default function UserTicketDetail() {
   const [error, setError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  
+  // Custom Fields states (فقط برای نمایش)
+  const [customFields, setCustomFields] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -116,6 +120,16 @@ export default function UserTicketDetail() {
         setAttachments(atts);
       } catch {
         setAttachments([]);
+      }
+      
+      // Load custom fields (فقط برای نمایش)
+      try {
+        const fields = await apiGet(`/api/custom-fields/ticket/${id}`) as any[];
+        // فیلتر فیلدهای قابل مشاهده برای کاربر
+        const visibleFields = fields.filter((f) => f.is_visible_to_user);
+        setCustomFields(visibleFields);
+      } catch {
+        setCustomFields([]);
       }
     } catch (e: any) {
       setError(e?.message || "خطا در دریافت تیکت");
@@ -241,6 +255,28 @@ export default function UserTicketDetail() {
         <div style={{ marginTop: 16 }}>
           <strong>توضیحات:</strong>
           <div style={{ marginTop: 4, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{ticket.description}</div>
+          
+          {/* فیلدهای سفارشی (فقط نمایش) */}
+          {customFields.length > 0 && (
+            <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>
+              <h3 style={{ marginBottom: "15px", fontSize: "16px", fontWeight: "600" }}>
+                📋 فیلدهای سفارشی
+              </h3>
+              <div style={{ display: "grid", gap: "15px" }}>
+                {customFields
+                  .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                  .map((field) => (
+                    <CustomFieldRenderer
+                      key={field.id}
+                      field={field}
+                      value={field.value || null}
+                      onChange={() => {}} // فقط خواندنی
+                      readOnly={true}
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

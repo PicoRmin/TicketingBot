@@ -4,12 +4,33 @@
 
 ## ویژگی‌ها / Features
 
+### ✨ ویژگی‌های اصلی:
 - ✅ ایجاد و پیگیری تیکت از طریق ربات تلگرام
-- ✅ پنل وب مدیریتی برای ادمین‌ها
-- ✅ سیستم مدیریت نقش‌ها
-- ✅ پشتیبانی دو زبانه (فارسی/انگلیسی)
-- ✅ پیوست فایل
-- ✅ سیستم گزارش‌گیری
+- ✅ پنل وب مدیریتی پیشرفته برای ادمین‌ها
+- ✅ پورتال کاربران برای کاربران عادی
+- ✅ سیستم مدیریت نقش‌ها (6 نقش)
+- ✅ پشتیبانی دو زبانه کامل (فارسی/انگلیسی)
+- ✅ پیوست فایل با اعتبارسنجی
+- ✅ سیستم گزارش‌گیری پیشرفته با Export (CSV, Excel, PDF)
+- ✅ سیستم SLA (Service Level Agreement) کامل
+- ✅ Automation Rules (تخصیص خودکار، بستن خودکار، اعلان خودکار)
+- ✅ فیلدهای سفارشی (Custom Fields) - 11 نوع فیلد
+- ✅ Time Tracker (زمان‌سنج کار)
+- ✅ Bulk Actions (عملیات گروهی)
+- ✅ Quick Actions (عملیات سریع)
+- ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
+- ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
+- ✅ Dashboard پیشرفته با نمودارهای جذاب
+- ✅ مدیریت کامل شعب و دپارتمان‌ها
+- ✅ زیرساخت شعب
+- ✅ تست‌های کامل (Unit Tests) - 70+ تست
+- ✅ تست‌های یکپارچه‌سازی (Integration Tests) - 60+ تست
+- ✅ تست‌های End-to-End (E2E) - 2 سناریو جامع
+- ✅ تست‌های امنیتی (Security Tests) - احراز هویت، مجوز، اعتبارسنجی ورودی
+- ✅ تست‌های کارایی (Performance Tests) - اسکریپت Load/Stress اختصاصی
+- ✅ کل تست‌ها: 185+ تست
+- ✅ راهنمای کامل Production Setup
+- ✅ اسکریپت‌های استقرار و Backup
 
 ## پیش‌نیازها / Prerequisites
 
@@ -87,9 +108,47 @@ imehrTicketing/
 └── tests/               # Tests
 ```
 
+## استقرار Production / Production Deployment
+
+برای استقرار در محیط Production:
+
+```bash
+# راه‌اندازی خودکار
+python scripts/setup_production.py
+
+# بررسی وضعیت
+./scripts/check_production.sh  # Linux
+# یا
+scripts\check_production.bat  # Windows
+```
+
+برای راهنمای کامل، به [راهنمای Production Setup](./docs/PRODUCTION_SETUP.md) مراجعه کنید.
+
 ## مستندات / Documentation
 
+### 📚 مستندات کامل:
 - [Roadmap](./roadmap.md) - راهنمای کامل توسعه پروژه
+- [Custom Fields Guide](./docs/CUSTOM_FIELDS.md) - راهنمای فیلدهای سفارشی
+- [Email Notifications Guide](./docs/EMAIL_NOTIFICATIONS.md) - راهنمای اعلان‌رسانی ایمیل
+- [SLA Management Guide](./docs/SLA_MANAGEMENT.md) - راهنمای مدیریت SLA
+- [Testing Guide](./docs/TESTING.md) - راهنمای کامل تست‌ها
+- [Performance Tests Guide](./docs/PERFORMANCE_TESTS.md) - تست‌های Load/Stress
+- [Integration Tests Guide](./docs/INTEGRATION_TESTS.md) - راهنمای تست‌های یکپارچه‌سازی
+- [End-to-End Tests Guide](./docs/END_TO_END_TESTS.md) - راهنمای تست‌های سرتاسری
+- [Production Setup Guide](./docs/PRODUCTION_SETUP.md) - راهنمای کامل استقرار Production
+- [Monitoring Guide](./docs/MONITORING.md) - راهنمای Monitoring و Logging
+- [Project Complete Features](./docs/PROJECT_COMPLETE_FEATURES.md) - فهرست کامل ویژگی‌ها
+- [Remaining Work](./REMAINING_WORK.md) - کارهای باقی‌مانده
+- [FAQ](./docs/FAQ.md) - پرسش‌های پرتکرار کاربران و کارشناسان
+- [Future Enhancements](./docs/FUTURE_ENHANCEMENTS.md) - مسیر توسعه نسخه‌های بعدی
+- [User Guide](./docs/USER_GUIDE.md) - راهنمای کاربران نهایی
+- [Admin Guide](./docs/ADMIN_GUIDE.md) - راهنمای مدیران و کارشناسان
+- [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) - معماری کلان و روابط دیتابیس
+
+### 📋 راهنماهای نصب:
+- [Quick Start](./QUICK_START.md) - راهنمای سریع
+- [Setup Guide](./SETUP.md) - راهنمای کامل نصب
+- [Telegram Bot Setup](./TELEGRAM_BOT_SETUP.md) - راهنمای راه‌اندازی ربات تلگرام
 
 ## مجوز / License
 

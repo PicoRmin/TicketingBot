@@ -1,0 +1,41 @@
+{% extends "base_en.html" %}
+
+{% block content %}
+<h2 style="color: #667eea; margin-top: 0;">💬 New Comment on Your Ticket</h2>
+
+<p>Hello,</p>
+
+<p>A new comment has been added to your ticket:</p>
+
+<div class="ticket-details">
+    <table>
+        <tr>
+            <td>Ticket Number:</td>
+            <td><strong style="color: #667eea; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>Ticket Title:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>From:</td>
+            <td>{{ comment_author }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box" style="background-color: #e7f3ff; border-left-color: #2196F3;">
+    <p><strong>📝 Comment:</strong></p>
+    <p style="white-space: pre-wrap; margin: 10px 0;">{{ comment_text }}</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button">View Ticket and Reply</a>
+</div>
+
+<p>Click the button above to view the full ticket and send a reply.</p>
+
+<p>Best regards,<br>
+<strong>{{ app_name }} Support Team</strong></p>
+{% endblock %}
+

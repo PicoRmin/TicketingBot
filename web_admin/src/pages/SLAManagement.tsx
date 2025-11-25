@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete, isAuthenticated, getStoredProfile } from "../services/api";
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 
 type SLARule = {
   id: number;
@@ -62,6 +63,22 @@ export default function SLAManagement() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [filterActive, setFilterActive] = useState<string>("");
+  
+  // SLA Logs states
+  const [slaLogs, setSlaLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsTotalPages, setLogsTotalPages] = useState(1);
+  const [showLogs, setShowLogs] = useState(false);
+  const [logFilters, setLogFilters] = useState({
+    response_status: "",
+    resolution_status: "",
+    escalated: "",
+  });
+  
+  // SLA Statistics states
+  const [slaStats, setSlaStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -218,9 +235,104 @@ export default function SLAManagement() {
     return `${hours} ساعت و ${mins} دقیقه`;
   };
 
+  /**
+   * بارگذاری لاگ‌های SLA
+   * Load SLA logs
+   */
+  const loadSlaLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(logsPage));
+      params.set("page_size", "20");
+      if (logFilters.response_status) params.set("response_status", logFilters.response_status);
+      if (logFilters.resolution_status) params.set("resolution_status", logFilters.resolution_status);
+      if (logFilters.escalated) params.set("escalated", logFilters.escalated);
+      
+      const logs = await apiGet(`/api/sla/logs?${params.toString()}`) as any[];
+      setSlaLogs(logs);
+      // محاسبه تعداد صفحات (فرض می‌کنیم هر صفحه 20 آیتم است)
+      setLogsTotalPages(Math.ceil(logs.length / 20) || 1);
+    } catch (e: any) {
+      console.error("Error loading SLA logs:", e);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  /**
+   * بارگذاری آمار SLA
+   * Load SLA statistics
+   */
+  const loadSlaStats = async () => {
+    setStatsLoading(true);
+    try {
+      // دریافت گزارش SLA از API
+      const stats = await apiGet("/api/reports/sla-compliance") as any;
+      // تطبیق نام فیلدها
+      setSlaStats({
+        total_logs: stats.total_tickets_with_sla || 0,
+        response_on_time: stats.response_on_time || 0,
+        response_warning: stats.response_warning || 0,
+        response_breached: stats.response_breached || 0,
+        resolution_on_time: stats.resolution_on_time || 0,
+        resolution_warning: stats.resolution_warning || 0,
+        resolution_breached: stats.resolution_breached || 0,
+        escalated_count: stats.escalated_count || 0,
+        response_compliance_rate: stats.response_compliance_rate || 0,
+        resolution_compliance_rate: stats.resolution_compliance_rate || 0,
+      });
+    } catch (e: any) {
+      console.error("Error loading SLA stats:", e);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showLogs) {
+      loadSlaLogs();
+    }
+  }, [showLogs, logsPage, logFilters]);
+
+  useEffect(() => {
+    loadSlaStats();
+  }, []);
+
+  /**
+   * تابع برای نمایش وضعیت SLA
+   * Function to display SLA status badge
+   */
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return <span className="badge secondary">نامشخص</span>;
+    const statusMap: Record<string, { text: string; class: string; emoji: string }> = {
+      on_time: { text: "در مهلت", class: "success", emoji: "✅" },
+      warning: { text: "هشدار", class: "warning", emoji: "⚠️" },
+      breached: { text: "نقض شده", class: "danger", emoji: "🔴" },
+    };
+    const s = statusMap[status] || { text: status, class: "secondary", emoji: "❓" };
+    return <span className={`badge ${s.class}`}>{s.emoji} {s.text}</span>;
+  };
+
   return (
     <div className="fade-in">
-      <h1 className="page-title">⏱️ مدیریت قوانین SLA</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h1 className="page-title">⏱️ مدیریت قوانین SLA</h1>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            onClick={() => {
+              setShowLogs(!showLogs);
+              if (!showLogs) {
+                loadSlaLogs();
+              }
+            }}
+            className={showLogs ? "secondary" : ""}
+            style={{ padding: "10px 20px" }}
+          >
+            {showLogs ? "📋 مخفی کردن لاگ‌ها" : "📋 نمایش لاگ‌های SLA"}
+          </button>
+        </div>
+      </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-header">
@@ -539,6 +651,310 @@ export default function SLAManagement() {
           </div>
         )}
       </div>
+
+      {/* آمار و نمودارهای SLA */}
+      {slaStats && (
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="card-header">
+            <h2 className="card-title">📊 آمار و نمودارهای SLA</h2>
+          </div>
+          {statsLoading ? (
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <div className="loading" style={{ margin: "0 auto" }}></div>
+              <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>در حال بارگذاری آمار...</p>
+            </div>
+          ) : (
+            <div style={{ padding: 20 }}>
+              {/* کارت‌های آماری */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 30 }}>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "var(--accent)", marginBottom: 8 }}>
+                    {slaStats.total_logs || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>کل لاگ‌های SLA</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#28a745", marginBottom: 8 }}>
+                    {slaStats.response_on_time || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>پاسخ در مهلت</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#ffc107", marginBottom: 8 }}>
+                    {slaStats.response_warning || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>هشدار پاسخ</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#dc3545", marginBottom: 8 }}>
+                    {slaStats.response_breached || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>نقض پاسخ</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#28a745", marginBottom: 8 }}>
+                    {slaStats.resolution_on_time || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>حل در مهلت</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#ffc107", marginBottom: 8 }}>
+                    {slaStats.resolution_warning || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>هشدار حل</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#dc3545", marginBottom: 8 }}>
+                    {slaStats.resolution_breached || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>نقض حل</div>
+                </div>
+                <div style={{ padding: 20, background: "var(--bg-secondary)", borderRadius: "var(--radius)", textAlign: "center" }}>
+                  <div style={{ fontSize: 32, fontWeight: "bold", color: "#ff6b6b", marginBottom: 8 }}>
+                    {slaStats.escalated_count || 0}
+                  </div>
+                  <div style={{ fontSize: 14, color: "var(--fg-secondary)" }}>Escalated</div>
+                </div>
+              </div>
+
+              {/* نمودارهای SLA */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 20 }}>
+                {/* نمودار وضعیت پاسخ */}
+                <div style={{ background: "var(--bg-primary)", padding: 20, borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+                  <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600 }}>📊 وضعیت پاسخ</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "در مهلت", value: slaStats.response_on_time || 0, color: "#28a745" },
+                          { name: "هشدار", value: slaStats.response_warning || 0, color: "#ffc107" },
+                          { name: "نقض شده", value: slaStats.response_breached || 0, color: "#dc3545" },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {[
+                          { name: "در مهلت", value: slaStats.response_on_time || 0, color: "#28a745" },
+                          { name: "هشدار", value: slaStats.response_warning || 0, color: "#ffc107" },
+                          { name: "نقض شده", value: slaStats.response_breached || 0, color: "#dc3545" },
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* نمودار وضعیت حل */}
+                <div style={{ background: "var(--bg-primary)", padding: 20, borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+                  <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600 }}>📊 وضعیت حل</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "در مهلت", value: slaStats.resolution_on_time || 0, color: "#28a745" },
+                          { name: "هشدار", value: slaStats.resolution_warning || 0, color: "#ffc107" },
+                          { name: "نقض شده", value: slaStats.resolution_breached || 0, color: "#dc3545" },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {[
+                          { name: "در مهلت", value: slaStats.resolution_on_time || 0, color: "#28a745" },
+                          { name: "هشدار", value: slaStats.resolution_warning || 0, color: "#ffc107" },
+                          { name: "نقض شده", value: slaStats.resolution_breached || 0, color: "#dc3545" },
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* نمودار مقایسه‌ای پاسخ و حل */}
+                <div style={{ background: "var(--bg-primary)", padding: 20, borderRadius: "var(--radius)", border: "1px solid var(--border)", gridColumn: "1 / -1" }}>
+                  <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600 }}>📊 مقایسه وضعیت پاسخ و حل</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={[
+                        { name: "در مهلت", پاسخ: slaStats.response_on_time || 0, حل: slaStats.resolution_on_time || 0 },
+                        { name: "هشدار", پاسخ: slaStats.response_warning || 0, حل: slaStats.resolution_warning || 0 },
+                        { name: "نقض شده", پاسخ: slaStats.response_breached || 0, حل: slaStats.resolution_breached || 0 },
+                      ]}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="پاسخ" fill="#4dabf7" />
+                      <Bar dataKey="حل" fill="#51cf66" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* لاگ‌های SLA */}
+      {showLogs && (
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">📋 لاگ‌های SLA</h2>
+          </div>
+          
+          {/* فیلترهای لاگ */}
+          <div className="filters" style={{ marginBottom: 16 }}>
+            <select
+              value={logFilters.response_status}
+              onChange={(e) => setLogFilters({ ...logFilters, response_status: e.target.value })}
+              style={{ flex: 1 }}
+            >
+              <option value="">همه وضعیت‌های پاسخ</option>
+              <option value="on_time">✅ در مهلت</option>
+              <option value="warning">⚠️ هشدار</option>
+              <option value="breached">🔴 نقض شده</option>
+            </select>
+            <select
+              value={logFilters.resolution_status}
+              onChange={(e) => setLogFilters({ ...logFilters, resolution_status: e.target.value })}
+              style={{ flex: 1 }}
+            >
+              <option value="">همه وضعیت‌های حل</option>
+              <option value="on_time">✅ در مهلت</option>
+              <option value="warning">⚠️ هشدار</option>
+              <option value="breached">🔴 نقض شده</option>
+            </select>
+            <select
+              value={logFilters.escalated}
+              onChange={(e) => setLogFilters({ ...logFilters, escalated: e.target.value })}
+              style={{ flex: 1 }}
+            >
+              <option value="">همه Escalation</option>
+              <option value="true">Escalated</option>
+              <option value="false">Not Escalated</option>
+            </select>
+          </div>
+
+          {logsLoading ? (
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <div className="loading" style={{ margin: "0 auto" }}></div>
+              <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>در حال بارگذاری لاگ‌ها...</p>
+            </div>
+          ) : slaLogs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 40, color: "var(--fg-secondary)" }}>
+              هیچ لاگ SLA یافت نشد.
+            </div>
+          ) : (
+            <>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>شماره تیکت</th>
+                      <th>قانون SLA</th>
+                      <th>وضعیت پاسخ</th>
+                      <th>وضعیت حل</th>
+                      <th>مهلت پاسخ</th>
+                      <th>مهلت حل</th>
+                      <th>Escalated</th>
+                      <th>عملیات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {slaLogs.map((log) => (
+                      <tr key={log.id}>
+                        <td>
+                          <Link to={`/tickets/${log.ticket_id}`} style={{ color: "var(--accent)", textDecoration: "none" }}>
+                            {log.ticket_number || `#${log.ticket_id}`}
+                          </Link>
+                        </td>
+                        <td>{log.sla_rule_name || `قانون #${log.sla_rule_id}`}</td>
+                        <td>{getStatusBadge(log.response_status)}</td>
+                        <td>{getStatusBadge(log.resolution_status)}</td>
+                        <td style={{ fontSize: 12 }}>
+                          {new Date(log.target_response_time).toLocaleString("fa-IR")}
+                          {log.actual_response_time && (
+                            <div style={{ color: "var(--fg-secondary)", marginTop: 4 }}>
+                              واقعی: {new Date(log.actual_response_time).toLocaleString("fa-IR")}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ fontSize: 12 }}>
+                          {new Date(log.target_resolution_time).toLocaleString("fa-IR")}
+                          {log.actual_resolution_time && (
+                            <div style={{ color: "var(--fg-secondary)", marginTop: 4 }}>
+                              واقعی: {new Date(log.actual_resolution_time).toLocaleString("fa-IR")}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {log.escalated ? (
+                            <span className="badge danger">
+                              ⚠️ Escalated
+                              {log.escalated_at && (
+                                <div style={{ fontSize: 11, marginTop: 4 }}>
+                                  {new Date(log.escalated_at).toLocaleString("fa-IR")}
+                                </div>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="badge secondary">-</span>
+                          )}
+                        </td>
+                        <td>
+                          <Link to={`/tickets/${log.ticket_id}`}>
+                            <button className="secondary small">مشاهده تیکت</button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {logsTotalPages > 1 && (
+                <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
+                  <button
+                    onClick={() => setLogsPage((p) => Math.max(1, p - 1))}
+                    disabled={logsPage === 1}
+                    className="secondary"
+                  >
+                    قبلی
+                  </button>
+                  <span style={{ padding: "8px 16px", display: "flex", alignItems: "center" }}>
+                    صفحه {logsPage} از {logsTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setLogsPage((p) => Math.min(logsTotalPages, p + 1))}
+                    disabled={logsPage === logsTotalPages}
+                    className="secondary"
+                  >
+                    بعدی
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

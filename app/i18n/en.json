@@ -92,6 +92,26 @@
     "created": "Automation rule created successfully",
     "updated": "Automation rule updated successfully",
     "deleted": "Automation rule deleted"
+  },
+  "emails": {
+    "ticket_created": {
+      "subject": "New Ticket Created - {{ ticket_number }}"
+    },
+    "ticket_status_changed": {
+      "subject": "Ticket Status Changed - {{ ticket_number }}"
+    },
+    "ticket_assigned": {
+      "subject": "New Ticket Assigned to You - {{ ticket_number }}"
+    },
+    "comment_added": {
+      "subject": "New Comment on Ticket - {{ ticket_number }}"
+    },
+    "sla_warning": {
+      "subject": "SLA Warning - Ticket {{ ticket_number }}"
+    },
+    "sla_breach": {
+      "subject": "SLA Breach - Ticket {{ ticket_number }}"
+    }
   }
 }
 

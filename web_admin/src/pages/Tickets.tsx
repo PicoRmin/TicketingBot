@@ -92,6 +92,13 @@ export default function Tickets() {
   const [bulkStatus, setBulkStatus] = useState<string>("");
   const [bulkAssignee, setBulkAssignee] = useState<string>("");
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  // Advanced filters
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [assignedToId, setAssignedToId] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [ticketNumber, setTicketNumber] = useState<string>("");
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -112,6 +119,11 @@ export default function Tickets() {
         if (priority) params.set("priority", priority);
         if (departmentId) params.set("department_id", departmentId);
         if (branchId) params.set("branch_id", branchId);
+        if (assignedToId) params.set("assigned_to_id", assignedToId);
+        if (userId) params.set("user_id", userId);
+        if (dateFrom) params.set("date_from", dateFrom);
+        if (dateTo) params.set("date_to", dateTo);
+        if (ticketNumber) params.set("ticket_number", ticketNumber);
         const res = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
         if (query) {
           res.items = res.items.filter((it: any) =>
@@ -125,8 +137,8 @@ export default function Tickets() {
         setLoading(false);
       }
     };
-    load();
-  }, [page, status, category, priority, departmentId, branchId, query]);
+      load();
+    }, [page, status, category, priority, departmentId, branchId, query, assignedToId, userId, dateFrom, dateTo, ticketNumber]);
 
   useEffect(() => {
     const loadBranches = async () => {
@@ -257,12 +269,19 @@ export default function Tickets() {
         </div>
       </div>
 
+      {/* Basic Filters */}
       <div className="filters">
         <input
           placeholder="🔍 جستجو در عنوان..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           style={{ flex: 2 }}
+        />
+        <input
+          placeholder="🔢 شماره تیکت..."
+          value={ticketNumber}
+          onChange={(e) => setTicketNumber(e.target.value)}
+          style={{ flex: 1 }}
         />
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">📊 همه وضعیت‌ها</option>
@@ -305,7 +324,115 @@ export default function Tickets() {
             ))}
           </select>
         )}
+        <button
+          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+          className="secondary"
+          style={{ padding: "8px 16px", whiteSpace: "nowrap" }}
+        >
+          {showAdvancedFilters ? "❌ بستن فیلترها" : "🔍 فیلترهای پیشرفته"}
+        </button>
+        {(status || category || priority || departmentId || branchId || assignedToId || userId || dateFrom || dateTo || ticketNumber) && (
+          <button
+            onClick={() => {
+              setStatus("");
+              setCategory("");
+              setPriority("");
+              setDepartmentId("");
+              setBranchId("");
+              setAssignedToId("");
+              setUserId("");
+              setDateFrom("");
+              setDateTo("");
+              setTicketNumber("");
+              setQuery("");
+            }}
+            className="secondary"
+            style={{ padding: "8px 16px", whiteSpace: "nowrap" }}
+          >
+            🗑️ پاک کردن همه
+          </button>
+        )}
       </div>
+
+      {/* Advanced Filters Panel */}
+      {showAdvancedFilters && (
+        <div className="card" style={{ marginBottom: 24, background: "var(--bg-secondary)" }}>
+          <div className="card-header">
+            <h2 className="card-title" style={{ fontSize: 18 }}>🔍 فیلترهای پیشرفته</h2>
+            <div style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
+              {[
+                dateFrom && "تاریخ از",
+                dateTo && "تاریخ تا",
+                assignedToId && "کارشناس",
+                userId && "کاربر",
+              ].filter(Boolean).length > 0 && (
+                <span>
+                  {[
+                    dateFrom && "تاریخ از",
+                    dateTo && "تاریخ تا",
+                    assignedToId && "کارشناس",
+                    userId && "کاربر",
+                  ].filter(Boolean).length} فیلتر فعال
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="filters" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <div>
+              <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>از تاریخ</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>تا تاریخ</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                style={{ width: "100%" }}
+              />
+            </div>
+            {users.length > 0 && (
+              <div>
+                <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>کارشناس مسئول</label>
+                <select
+                  value={assignedToId}
+                  onChange={(e) => setAssignedToId(e.target.value)}
+                  style={{ width: "100%" }}
+                >
+                  <option value="">همه کارشناسان</option>
+                  {users.filter((u: any) => u.role === "it_specialist" || u.role === "admin" || u.role === "central_admin").map((u) => (
+                    <option key={u.id} value={String(u.id)}>
+                      {u.full_name} ({u.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {isAdmin && users.length > 0 && (
+              <div>
+                <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>کاربر ایجادکننده</label>
+                <select
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  style={{ width: "100%" }}
+                >
+                  <option value="">همه کاربران</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={String(u.id)}>
+                      {u.full_name} ({u.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div style={{ textAlign: "center", padding: 40 }}>

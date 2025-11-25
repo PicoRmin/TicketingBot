@@ -4,6 +4,7 @@ Ticket API endpoints
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
+from datetime import date
 from app.database import get_db
 from app.models import Ticket, User
 from app.schemas.ticket import (
@@ -140,6 +141,10 @@ async def get_tickets(
     branch_id: Optional[int] = Query(None, description="فیلتر بر اساس شعبه (فقط ادمین)"),
     department_id: Optional[int] = Query(None, description="فیلتر بر اساس دپارتمان"),
     assigned_to_id: Optional[int] = Query(None, description="فیلتر بر اساس کارشناس مسئول"),
+    user_id: Optional[int] = Query(None, description="فیلتر بر اساس کاربر ایجادکننده"),
+    date_from: Optional[date] = Query(None, description="فیلتر از تاریخ"),
+    date_to: Optional[date] = Query(None, description="فیلتر تا تاریخ"),
+    ticket_number: Optional[str] = Query(None, description="فیلتر بر اساس شماره تیکت"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -179,6 +184,10 @@ async def get_tickets(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=translate("common.forbidden", lang)
             )
+        from datetime import datetime as dt
+        date_from_dt = dt.combine(date_from, dt.min.time()) if date_from else None
+        date_to_dt = dt.combine(date_to, dt.max.time()) if date_to else None
+        
         tickets, total = get_all_tickets(
             db,
             skip=skip,
@@ -189,8 +198,16 @@ async def get_tickets(
             branch_id=current_user.branch_id,
             department_id=department_id,
             assigned_to_id=assigned_to_id,
+            user_id=user_id,
+            date_from=date_from_dt,
+            date_to=date_to_dt,
+            ticket_number=ticket_number,
         )
     elif current_user.role in admin_roles:
+        from datetime import datetime as dt
+        date_from_dt = dt.combine(date_from, dt.min.time()) if date_from else None
+        date_to_dt = dt.combine(date_to, dt.max.time()) if date_to else None
+        
         tickets, total = get_all_tickets(
             db,
             skip=skip,
@@ -201,6 +218,10 @@ async def get_tickets(
             branch_id=branch_id,
             department_id=department_id,
             assigned_to_id=assigned_to_id,
+            user_id=user_id,
+            date_from=date_from_dt,
+            date_to=date_to_dt,
+            ticket_number=ticket_number,
         )
     else:
         tickets, total = get_user_tickets(
@@ -469,9 +490,15 @@ async def assign_ticket(
     
     # Update ticket assignment
     previous_assigned_to_id = ticket.assigned_to_id
+    previous_assigned_to_id = ticket.assigned_to_id
     ticket.assigned_to_id = assign_data.assigned_to_id
     db.commit()
     db.refresh(ticket)
+    
+    # ارسال اعلان تخصیص (اگر تخصیص تغییر کرده باشد)
+    if previous_assigned_to_id != assign_data.assigned_to_id:
+        from app.services.notification_service import notify_ticket_assigned
+        await notify_ticket_assigned(ticket, current_user, db)
     
     # Load assigned_to relationship
     if ticket.assigned_to_id:
@@ -496,6 +523,11 @@ async def assign_ticket(
             comment=assignment_comment,
         ),
     )
+    
+    # ارسال اعلان تخصیص (اگر تخصیص تغییر کرده باشد)
+    if previous_assigned_to_id != assign_data.assigned_to_id:
+        from app.services.notification_service import notify_ticket_assigned
+        await notify_ticket_assigned(ticket, current_user, db)
     
     return ticket
 

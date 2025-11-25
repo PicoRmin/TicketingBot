@@ -33,11 +33,16 @@ def list_departments(
     is_active: Optional[bool] = None
 ) -> tuple[List[Department], int]:
     """List departments with pagination"""
-    query = db.query(Department)
+    base_query = db.query(Department)
     if is_active is not None:
-        query = query.filter(Department.is_active == is_active)
-    total = query.count()
-    items = query.offset(skip).limit(limit).order_by(Department.name).all()
+        base_query = base_query.filter(Department.is_active == is_active)
+    total = base_query.count()
+    items = (
+        base_query.order_by(Department.name)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return items, total
 
 

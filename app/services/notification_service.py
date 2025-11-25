@@ -12,6 +12,7 @@ from app.config import settings
 from app.core.enums import Language, TicketStatus, UserRole
 from app.i18n.translator import translate
 from app.models import Ticket, User
+from app.services.email_service import email_service
 
 logger = logging.getLogger(__name__)
 
@@ -75,12 +76,17 @@ def _normalize_language(value: Language | str | None) -> Language:
 
 
 async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
-    """Notify ticket owner and admins about new ticket."""
+    """
+    اطلاع‌رسانی ایجاد تیکت به صاحب تیکت و ادمین‌ها
+    Notify ticket owner and admins about new ticket
+    """
     try:
         messages: List[Tuple[str, str]] = []
 
         creator = ticket.user
         creator_language = _normalize_language(creator.language if creator else None)
+        
+        # ارسال اعلان تلگرام به کاربر
         if creator and creator.telegram_chat_id:
             text = translate(
                 "notifications.ticket_created_user",
@@ -92,7 +98,25 @@ async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
                 f"\n{_ticket_category_label(ticket.category.value if hasattr(ticket.category, 'value') else ticket.category, creator_language)}"
             )
             messages.append((creator.telegram_chat_id, text))
+        
+        # ارسال ایمیل به کاربر (اگر ایمیل داشته باشد)
+        if creator and creator.email:
+            try:
+                category_label = _ticket_category_label(
+                    ticket.category.value if hasattr(ticket.category, 'value') else ticket.category,
+                    creator_language
+                )
+                await email_service.send_ticket_created_email(
+                    to_email=creator.email,
+                    ticket_number=ticket.ticket_number,
+                    ticket_title=ticket.title,
+                    ticket_category=category_label,
+                    language=creator_language
+                )
+            except Exception as e:
+                logger.error(f"Failed to send email notification to user {creator.id}: {e}")
 
+        # ارسال اعلان به ادمین‌ها
         admins = _collect_admin_recipients(db, exclude_user_id=creator.id if creator else None)
         for admin in admins:
             lang = _normalize_language(admin.language)
@@ -107,6 +131,23 @@ async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
                 f"\n👤 {creator.full_name if creator else '-'}"
             )
             messages.append((admin.telegram_chat_id, text))
+            
+            # ارسال ایمیل به ادمین (اگر ایمیل داشته باشد)
+            if admin.email:
+                try:
+                    category_label = _ticket_category_label(
+                        ticket.category.value if hasattr(ticket.category, 'value') else ticket.category,
+                        lang
+                    )
+                    await email_service.send_ticket_created_email(
+                        to_email=admin.email,
+                        ticket_number=ticket.ticket_number,
+                        ticket_title=ticket.title,
+                        ticket_category=category_label,
+                        language=lang
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send email notification to admin {admin.id}: {e}")
 
         if messages:
             await _send_telegram_messages(messages)
@@ -119,7 +160,10 @@ async def notify_ticket_status_changed(
     previous_status: TicketStatus,
     db: Session,
 ) -> None:
-    """Notify ticket owner about status change and alert admins."""
+    """
+    اطلاع‌رسانی تغییر وضعیت تیکت به صاحب تیکت و ادمین‌ها
+    Notify ticket owner about status change and alert admins
+    """
     try:
         messages: List[Tuple[str, str]] = []
 
@@ -136,6 +180,23 @@ async def notify_ticket_status_changed(
                 f"\n{_status_label(previous_status, lang)} ➡️ {_status_label(ticket.status, lang)}"
             )
             messages.append((creator.telegram_chat_id, text))
+        
+        # ارسال ایمیل به کاربر (اگر ایمیل داشته باشد)
+        if creator and creator.email:
+            try:
+                lang = _normalize_language(creator.language)
+                previous_status_label = _status_label(previous_status, lang)
+                new_status_label = _status_label(ticket.status, lang)
+                await email_service.send_ticket_status_changed_email(
+                    to_email=creator.email,
+                    ticket_number=ticket.ticket_number,
+                    ticket_title=ticket.title,
+                    previous_status=previous_status_label,
+                    new_status=new_status_label,
+                    language=lang
+                )
+            except Exception as e:
+                logger.error(f"Failed to send email notification to user {creator.id}: {e}")
 
         admins = _collect_admin_recipients(db)
         for admin in admins:
@@ -151,6 +212,22 @@ async def notify_ticket_status_changed(
                 f"\n👤 {creator.full_name if creator else '-'}"
             )
             messages.append((admin.telegram_chat_id, text))
+            
+            # ارسال ایمیل به ادمین (اگر ایمیل داشته باشد)
+            if admin.email:
+                try:
+                    previous_status_label = _status_label(previous_status, lang)
+                    new_status_label = _status_label(ticket.status, lang)
+                    await email_service.send_ticket_status_changed_email(
+                        to_email=admin.email,
+                        ticket_number=ticket.ticket_number,
+                        ticket_title=ticket.title,
+                        previous_status=previous_status_label,
+                        new_status=new_status_label,
+                        language=lang
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send email notification to admin {admin.id}: {e}")
 
         if messages:
             await _send_telegram_messages(messages)
@@ -173,6 +250,51 @@ async def send_telegram_notification_to_user(chat_id: str, message: str) -> None
         await _send_telegram_messages([(chat_id, message)])
     except Exception as exc:
         logger.exception("Error sending telegram notification to user: %s", exc)
+
+
+async def notify_ticket_assigned(
+    ticket: Ticket,
+    assigned_by: User,
+    db: Session
+) -> None:
+    """
+    اطلاع‌رسانی تخصیص تیکت به کاربر تخصیص داده شده
+    Notify user about ticket assignment
+    """
+    if not ticket.assigned_to:
+        return
+    
+    try:
+        assigned_user = ticket.assigned_to
+        lang = _normalize_language(assigned_user.language)
+        
+        # ارسال اعلان تلگرام
+        if assigned_user.telegram_chat_id:
+            text = translate(
+                "notifications.ticket_assigned",
+                lang,
+            ) or "A ticket has been assigned to you."
+            text += (
+                f"\n\n<strong>{ticket.ticket_number}</strong>"
+                f"\n{ticket.title}"
+                f"\n👤 تخصیص داده شده توسط: {assigned_by.full_name if assigned_by else 'سیستم'}"
+            )
+            await _send_telegram_messages([(assigned_user.telegram_chat_id, text)])
+        
+        # ارسال ایمیل
+        if assigned_user.email:
+            try:
+                await email_service.send_ticket_assigned_email(
+                    to_email=assigned_user.email,
+                    ticket_number=ticket.ticket_number,
+                    ticket_title=ticket.title,
+                    assigned_by=assigned_by.full_name if assigned_by else "سیستم",
+                    language=lang
+                )
+            except Exception as e:
+                logger.error(f"Failed to send email notification to assigned user {assigned_user.id}: {e}")
+    except Exception as exc:
+        logger.exception("Error in notify_ticket_assigned: %s", exc)
 
 
 async def send_telegram_notification_to_role(

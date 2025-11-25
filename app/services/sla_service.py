@@ -210,7 +210,8 @@ def list_sla_rules(
     if is_active is not None:
         query = query.filter(SLARule.is_active == is_active)
     total = query.count()
-    items = query.offset(skip).limit(limit).order_by(SLARule.name).all()
+    # order_by must be called before offset/limit
+    items = query.order_by(SLARule.name).offset(skip).limit(limit).all()
     return items, total
 
 
@@ -242,4 +243,46 @@ def delete_sla_rule(db: Session, sla_rule: SLARule) -> bool:
 def get_ticket_sla_log(db: Session, ticket_id: int) -> Optional[SLALog]:
     """Get SLA log for a ticket"""
     return db.query(SLALog).filter(SLALog.ticket_id == ticket_id).first()
+
+
+def list_sla_logs(
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
+    ticket_id: Optional[int] = None,
+    sla_rule_id: Optional[int] = None,
+    response_status: Optional[str] = None,
+    resolution_status: Optional[str] = None,
+    escalated: Optional[bool] = None
+) -> Tuple[List[SLALog], int]:
+    """
+    لیست لاگ‌های SLA با فیلتر و pagination
+    List SLA logs with filters and pagination
+    """
+    from sqlalchemy.orm import joinedload
+    
+    query = db.query(SLALog).options(
+        joinedload(SLALog.ticket),
+        joinedload(SLALog.sla_rule)
+    )
+    
+    # اعمال فیلترها
+    if ticket_id:
+        query = query.filter(SLALog.ticket_id == ticket_id)
+    if sla_rule_id:
+        query = query.filter(SLALog.sla_rule_id == sla_rule_id)
+    if response_status:
+        query = query.filter(SLALog.response_status == response_status)
+    if resolution_status:
+        query = query.filter(SLALog.resolution_status == resolution_status)
+    if escalated is not None:
+        query = query.filter(SLALog.escalated == escalated)
+    
+    # شمارش کل
+    total = query.count()
+    
+    # مرتب‌سازی و pagination
+    items = query.order_by(SLALog.created_at.desc()).offset(skip).limit(limit).all()
+    
+    return items, total
 

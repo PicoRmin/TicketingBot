@@ -1,12 +1,23 @@
 from datetime import date
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
-from fastapi.responses import PlainTextResponse, StreamingResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse, Response
 from io import BytesIO
 try:
   import openpyxl
 except Exception:
   openpyxl = None
+try:
+  from reportlab.lib.pagesizes import A4
+  from reportlab.lib import colors
+  from reportlab.lib.units import cm
+  from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+  from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+  from reportlab.pdfbase import pdfmetrics
+  from reportlab.pdfbase.ttfonts import TTFont
+  REPORTLAB_AVAILABLE = True
+except Exception:
+  REPORTLAB_AVAILABLE = False
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.api.deps import require_report_access
@@ -225,5 +236,180 @@ async def export_xlsx(
     bio,
     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     headers={"Content-Disposition": f'attachment; filename="report_{kind}.xlsx"'}
+  )
+
+
+@router.get("/export-pdf")
+async def export_pdf(
+  request: Request,
+  date_from: Optional[date] = Query(None),
+  date_to: Optional[date] = Query(None),
+  branch_id: Optional[int] = Query(None),
+  department_id: Optional[int] = Query(None),
+  priority: Optional[str] = Query(None),
+  db: Session = Depends(get_db),
+  _current_user: User = Depends(require_report_access)
+):
+  """Export comprehensive dashboard report as PDF"""
+  if not REPORTLAB_AVAILABLE:
+    raise HTTPException(status_code=500, detail="ReportLab is not installed")
+  
+  # Collect all report data
+  overview_data = tickets_overview(db)
+  status_data = tickets_by_status(db)
+  date_data = tickets_by_date(db, date_from, date_to)
+  branch_data = tickets_by_branch(db)
+  priority_data = tickets_by_priority(db)
+  department_data = tickets_by_department(db)
+  sla_data = sla_compliance_report(db)
+  response_time = average_response_time_hours(db)
+  
+  # Create PDF
+  bio = BytesIO()
+  doc = SimpleDocTemplate(bio, pagesize=A4)
+  story = []
+  styles = getSampleStyleSheet()
+  
+  # Title
+  title_style = ParagraphStyle(
+    'CustomTitle',
+    parent=styles['Heading1'],
+    fontSize=24,
+    textColor=colors.HexColor('#1a1a1a'),
+    spaceAfter=30,
+    alignment=1  # Center
+  )
+  story.append(Paragraph("گزارش جامع داشبورد سیستم تیکتینگ", title_style))
+  story.append(Spacer(1, 0.5*cm))
+  
+  # Overview Section
+  story.append(Paragraph("خلاصه کلی", styles['Heading2']))
+  overview_table_data = [
+    ['معیار', 'مقدار'],
+    ['مجموع تیکت‌ها', str(overview_data.get('total', 0))],
+    ['در انتظار', str(overview_data.get('pending', 0))],
+    ['در حال انجام', str(overview_data.get('in_progress', 0))],
+    ['حل شده', str(overview_data.get('resolved', 0))],
+    ['بسته شده', str(overview_data.get('closed', 0))],
+  ]
+  if response_time:
+    overview_table_data.append(['میانگین زمان پاسخ (ساعت)', f"{response_time:.2f}"])
+  
+  overview_table = Table(overview_table_data, colWidths=[8*cm, 8*cm])
+  overview_table.setStyle(TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ('FONTSIZE', (0, 0), (-1, 0), 12),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+  ]))
+  story.append(overview_table)
+  story.append(Spacer(1, 0.5*cm))
+  
+  # Status Section
+  story.append(Paragraph("تیکت‌ها بر اساس وضعیت", styles['Heading2']))
+  status_table_data = [['وضعیت', 'تعداد']]
+  status_map = {
+    'pending': 'در انتظار',
+    'in_progress': 'در حال انجام',
+    'resolved': 'حل شده',
+    'closed': 'بسته شده'
+  }
+  for status, count in status_data.items():
+    status_table_data.append([status_map.get(status, status), str(count)])
+  
+  status_table = Table(status_table_data, colWidths=[8*cm, 8*cm])
+  status_table.setStyle(TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ('FONTSIZE', (0, 0), (-1, 0), 12),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+  ]))
+  story.append(status_table)
+  story.append(Spacer(1, 0.5*cm))
+  
+  # Priority Section
+  story.append(Paragraph("تیکت‌ها بر اساس اولویت", styles['Heading2']))
+  priority_table_data = [['اولویت', 'تعداد']]
+  priority_map = {
+    'critical': 'بحرانی',
+    'high': 'بالا',
+    'medium': 'متوسط',
+    'low': 'پایین'
+  }
+  for pri, count in priority_data.items():
+    priority_table_data.append([priority_map.get(pri, pri), str(count)])
+  
+  priority_table = Table(priority_table_data, colWidths=[8*cm, 8*cm])
+  priority_table.setStyle(TableStyle([
+    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ('FONTSIZE', (0, 0), (-1, 0), 12),
+    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+  ]))
+  story.append(priority_table)
+  story.append(Spacer(1, 0.5*cm))
+  
+  # SLA Section
+  if sla_data and sla_data.get('total_tickets_with_sla', 0) > 0:
+    story.append(Paragraph("گزارش رعایت SLA", styles['Heading2']))
+    sla_table_data = [
+      ['معیار', 'مقدار'],
+      ['مجموع تیکت‌های دارای SLA', str(sla_data.get('total_tickets_with_sla', 0))],
+      ['پاسخ در مهلت', str(sla_data.get('response_on_time', 0))],
+      ['پاسخ هشدار', str(sla_data.get('response_warning', 0))],
+      ['پاسخ نقض شده', str(sla_data.get('response_breached', 0))],
+      ['نرخ رعایت پاسخ (%)', f"{sla_data.get('response_compliance_rate', 0):.1f}"],
+      ['حل در مهلت', str(sla_data.get('resolution_on_time', 0))],
+      ['حل هشدار', str(sla_data.get('resolution_warning', 0))],
+      ['حل نقض شده', str(sla_data.get('resolution_breached', 0))],
+      ['نرخ رعایت حل (%)', f"{sla_data.get('resolution_compliance_rate', 0):.1f}"],
+    ]
+    
+    sla_table = Table(sla_table_data, colWidths=[8*cm, 8*cm])
+    sla_table.setStyle(TableStyle([
+      ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+      ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+      ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+      ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+      ('FONTSIZE', (0, 0), (-1, 0), 12),
+      ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+      ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+      ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    story.append(sla_table)
+    story.append(Spacer(1, 0.5*cm))
+  
+  # Footer
+  from datetime import datetime
+  story.append(Spacer(1, 1*cm))
+  footer_style = ParagraphStyle(
+    'Footer',
+    parent=styles['Normal'],
+    fontSize=8,
+    textColor=colors.grey,
+    alignment=1
+  )
+  story.append(Paragraph(f"تاریخ تولید: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", footer_style))
+  
+  # Build PDF
+  doc.build(story)
+  bio.seek(0)
+  
+  return StreamingResponse(
+    bio,
+    media_type="application/pdf",
+    headers={"Content-Disposition": f'attachment; filename="dashboard-report-{datetime.now().strftime("%Y%m%d")}.pdf"'}
   )
 

@@ -1,0 +1,41 @@
+{% extends "base_fa.html" %}
+
+{% block content %}
+<h2 style="color: #667eea; margin-top: 0;">💬 پیام جدید در تیکت شما</h2>
+
+<p>سلام،</p>
+
+<p>یک پیام جدید در تیکت شما افزوده شده است:</p>
+
+<div class="ticket-details">
+    <table>
+        <tr>
+            <td>شماره تیکت:</td>
+            <td><strong style="color: #667eea; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>عنوان تیکت:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>فرستنده:</td>
+            <td>{{ comment_author }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box" style="background-color: #e7f3ff; border-right-color: #2196F3;">
+    <p><strong>📝 متن پیام:</strong></p>
+    <p style="white-space: pre-wrap; margin: 10px 0;">{{ comment_text }}</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button">مشاهده تیکت و پاسخ</a>
+</div>
+
+<p>برای مشاهده کامل تیکت و ارسال پاسخ، روی دکمه بالا کلیک کنید.</p>
+
+<p>با تشکر،<br>
+<strong>تیم پشتیبانی {{ app_name }}</strong></p>
+{% endblock %}
+

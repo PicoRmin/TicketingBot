@@ -18,4 +18,5 @@ class Branch(Base):
 
     users = relationship("User", back_populates="branch")
     infrastructure = relationship("BranchInfrastructure", back_populates="branch", cascade="all, delete-orphan")
+    custom_fields = relationship("CustomField", back_populates="branch", cascade="all, delete-orphan")
 

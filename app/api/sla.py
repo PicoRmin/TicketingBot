@@ -20,6 +20,7 @@ from app.services.sla_service import (
     update_sla_rule,
     delete_sla_rule,
     get_ticket_sla_log,
+    list_sla_logs,
 )
 from app.i18n.translator import translate
 from app.i18n.fastapi_utils import resolve_lang
@@ -155,5 +156,59 @@ async def get_ticket_sla(
             detail=translate("sla.log_not_found", lang) or "لاگ SLA برای این تیکت یافت نشد."
         )
     return sla_log
+
+
+@router.get("/logs", response_model=list[SLALogResponse])
+async def get_sla_logs(
+    request: Request,
+    page: int = Query(1, ge=1, description="شماره صفحه"),
+    page_size: int = Query(50, ge=1, le=100, description="تعداد آیتم در هر صفحه"),
+    ticket_id: Optional[int] = Query(None, description="فیلتر بر اساس تیکت"),
+    sla_rule_id: Optional[int] = Query(None, description="فیلتر بر اساس قانون SLA"),
+    response_status: Optional[str] = Query(None, description="فیلتر بر اساس وضعیت پاسخ"),
+    resolution_status: Optional[str] = Query(None, description="فیلتر بر اساس وضعیت حل"),
+    escalated: Optional[bool] = Query(None, description="فیلتر بر اساس Escalation"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    دریافت لیست لاگ‌های SLA با فیلتر و pagination
+    Get list of SLA logs with filters and pagination (Admin only)
+    """
+    skip = (page - 1) * page_size
+    logs, total = list_sla_logs(
+        db,
+        skip=skip,
+        limit=page_size,
+        ticket_id=ticket_id,
+        sla_rule_id=sla_rule_id,
+        response_status=response_status,
+        resolution_status=resolution_status,
+        escalated=escalated
+    )
+    
+    # اضافه کردن اطلاعات مرتبط برای نمایش بهتر
+    result = []
+    for log in logs:
+        log_dict = {
+            "id": log.id,
+            "ticket_id": log.ticket_id,
+            "sla_rule_id": log.sla_rule_id,
+            "target_response_time": log.target_response_time,
+            "target_resolution_time": log.target_resolution_time,
+            "actual_response_time": log.actual_response_time,
+            "actual_resolution_time": log.actual_resolution_time,
+            "response_status": log.response_status,
+            "resolution_status": log.resolution_status,
+            "escalated": log.escalated,
+            "escalated_at": log.escalated_at,
+            "created_at": log.created_at,
+            "updated_at": log.updated_at,
+            "ticket_number": log.ticket.ticket_number if log.ticket else None,
+            "sla_rule_name": log.sla_rule.name if log.sla_rule else None,
+        }
+        result.append(SLALogResponse(**log_dict))
+    
+    return result
 
 

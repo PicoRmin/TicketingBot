@@ -16,7 +16,7 @@ No 'Access-Control-Allow-Origin' header is present on the requested resource.
 در فایل `.env` مطمئن شوید که این خط وجود دارد:
 
 ```env
-CORS_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:8000,http://localhost:5173,http://127.0.0.1:5173
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080,http://localhost:8000,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:8000
 ```
 
 ### مرحله ۲: ری‌استارت Backend

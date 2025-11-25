@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from typing import Dict, List, Tuple, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func, cast, Date, text
 from app.models import Ticket, Branch, Department, SLALog, SLARule
 from app.core.enums import TicketStatus, TicketCategory, TicketPriority
 
@@ -78,12 +78,18 @@ def average_response_time_hours(db: Session) -> Optional[float]:
 
 def tickets_by_priority(db: Session) -> Dict[str, int]:
   """Report tickets by priority"""
-  rows = (
-    db.query(Ticket.priority, func.count(Ticket.id))
-    .group_by(Ticket.priority)
-    .all()
-  )
-  return {priority.value: count for priority, count in rows}
+  # بعضی دیتابیس‌ها مقدار enum را به صورت نام (MEDIUM) نگه می‌دارند، برخی به صورت مقدار (medium)
+  result: Dict[str, int] = {p.value: 0 for p in TicketPriority}
+  query = text("SELECT priority, COUNT(id) AS cnt FROM tickets GROUP BY priority")
+  rows = db.execute(query).fetchall()
+  for priority_value, count in rows:
+    normalized = str(priority_value or "").lower()
+    if normalized in result:
+      result[normalized] = count
+    else:
+      # fallback برای حالت‌های غیرمنتظره
+      result[priority_value] = count
+  return result
 
 
 def tickets_by_department(db: Session) -> List[Dict[str, any]]:

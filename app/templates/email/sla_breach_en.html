@@ -1,0 +1,51 @@
+{% extends "base_en.html" %}
+
+{% block content %}
+<h2 style="color: #dc3545; margin-top: 0;">🔴 SLA Breach - Ticket Past Deadline</h2>
+
+<p>Hello,</p>
+
+<p><strong style="color: #dc3545;">Important Alert:</strong> The following ticket has exceeded its SLA deadline:</p>
+
+<div class="ticket-details" style="border-color: #dc3545;">
+    <table>
+        <tr>
+            <td>Ticket Number:</td>
+            <td><strong style="color: #dc3545; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>Title:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>Breach Type:</td>
+            <td>
+                {% if breach_type == 'response' %}
+                    <span class="status-badge" style="background-color: #dc3545; color: #fff;">Response Time</span>
+                {% else %}
+                    <span class="status-badge" style="background-color: #dc3545; color: #fff;">Resolution Time</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>Delay Time:</td>
+            <td><strong style="color: #dc3545; font-size: 16px;">{{ delay_time }}</strong></td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box" style="background-color: #f8d7da; border-left-color: #dc3545;">
+    <p><strong>🚨 Critical Alert:</strong></p>
+    <p>This ticket has exceeded its SLA deadline. Please handle it <strong>immediately</strong>.</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">Handle Ticket Urgently</a>
+</div>
+
+<p>This is a critical situation and requires immediate attention.</p>
+
+<p>Best regards,<br>
+<strong>{{ app_name }} System</strong></p>
+{% endblock %}
+

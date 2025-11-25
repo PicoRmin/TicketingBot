@@ -1,0 +1,49 @@
+{% extends "base_en.html" %}
+
+{% block content %}
+<h2 style="color: #ff9800; margin-top: 0;">⚠️ SLA Warning - Time Remaining</h2>
+
+<p>Hello,</p>
+
+<p>This is a warning that your ticket is approaching its SLA deadline:</p>
+
+<div class="ticket-details">
+    <table>
+        <tr>
+            <td>Ticket Number:</td>
+            <td><strong style="color: #667eea; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>Title:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>Warning Type:</td>
+            <td>
+                {% if warning_type == 'response' %}
+                    <span class="status-badge status-in-progress">Response Time</span>
+                {% else %}
+                    <span class="status-badge status-in-progress">Resolution Time</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>Time Remaining:</td>
+            <td><strong style="color: #ff9800; font-size: 16px;">{{ remaining_time }}</strong></td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box" style="background-color: #fff3cd; border-left-color: #ffc107;">
+    <p><strong>🚨 Note:</strong></p>
+    <p>Please handle this ticket as soon as possible to avoid SLA breach.</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button">View and Handle Ticket</a>
+</div>
+
+<p>Best regards,<br>
+<strong>{{ app_name }} System</strong></p>
+{% endblock %}
+

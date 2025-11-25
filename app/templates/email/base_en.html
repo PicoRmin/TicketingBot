@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{ title or 'Iranmehr Ticketing System' }}</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            direction: ltr;
+            text-align: left;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .email-body {
+            padding: 30px 20px;
+            color: #333333;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        
+        .button:hover {
+            opacity: 0.9;
+        }
+        
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info-box strong {
+            color: #667eea;
+        }
+        
+        .ticket-details {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .ticket-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .ticket-details td {
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .ticket-details td:first-child {
+            font-weight: bold;
+            color: #667eea;
+            width: 40%;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-pending { background-color: #ffc107; color: #000; }
+        .status-in-progress { background-color: #17a2b8; color: #fff; }
+        .status-resolved { background-color: #28a745; color: #fff; }
+        .status-closed { background-color: #6c757d; color: #fff; }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .priority-critical { background-color: #dc3545; color: #fff; }
+        .priority-high { background-color: #fd7e14; color: #fff; }
+        .priority-medium { background-color: #ffc107; color: #000; }
+        .priority-low { background-color: #28a745; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>{{ app_name or 'Iranmehr Ticketing System' }}</h1>
+        </div>
+        
+        <div class="email-body">
+            {% block content %}{% endblock %}
+        </div>
+        
+        <div class="email-footer">
+            <p>This email was automatically sent from Iranmehr Ticketing System.</p>
+            <p>Please do not reply to this email.</p>
+            <p>&copy; {{ "now"|date("Y") }} {{ app_name or 'Iranmehr Ticketing System' }}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,39 @@
+{% extends "base_fa.html" %}
+
+{% block content %}
+<h2 style="color: #667eea; margin-top: 0;">📋 تیکت جدید به شما تخصیص داده شد</h2>
+
+<p>سلام،</p>
+
+<p>یک تیکت جدید به شما تخصیص داده شده است. لطفاً در اسرع وقت به آن رسیدگی کنید.</p>
+
+<div class="ticket-details">
+    <table>
+        <tr>
+            <td>شماره تیکت:</td>
+            <td><strong style="color: #667eea; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>عنوان:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>تخصیص داده شده توسط:</td>
+            <td>{{ assigned_by }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box">
+    <p><strong>⚠️ توجه:</strong></p>
+    <p>لطفاً در اسرع وقت به این تیکت رسیدگی کنید. زمان پاسخ شما در SLA محاسبه می‌شود.</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ ticket_url }}" class="button">مشاهده و رسیدگی به تیکت</a>
+</div>
+
+<p>با تشکر،<br>
+<strong>سیستم {{ app_name }}</strong></p>
+{% endblock %}
+

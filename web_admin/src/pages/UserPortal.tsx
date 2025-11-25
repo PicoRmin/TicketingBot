@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
+import CustomFieldRenderer from "../components/CustomFieldRenderer";
 import { Link } from "react-router-dom";
 
 type TicketItem = {
@@ -76,6 +77,10 @@ export default function UserPortal() {
   });
   const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Custom Fields states
+  const [customFields, setCustomFields] = useState<any[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -107,6 +112,46 @@ export default function UserPortal() {
       console.error("Error loading branches:", e);
     }
   };
+
+  /**
+   * بارگذاری فیلدهای سفارشی بر اساس دسته‌بندی انتخاب شده
+   * Load custom fields based on selected category
+   */
+  useEffect(() => {
+    const loadCustomFields = async () => {
+      if (!newTicket.category) {
+        setCustomFields([]);
+        setCustomFieldValues({});
+        return;
+      }
+      
+      try {
+        // بارگذاری فیلدهای سفارشی برای دسته‌بندی انتخاب شده
+        const fields = await apiGet(`/api/custom-fields?category=${newTicket.category}&is_active=true`) as any[];
+        
+        // فیلتر فیلدهای قابل مشاهده برای کاربر
+        const visibleFields = fields.filter((f) => f.is_visible_to_user);
+        setCustomFields(visibleFields);
+        
+        // مقداردهی اولیه با مقادیر پیش‌فرض
+        const values: Record<number, string | null> = {};
+        visibleFields.forEach((field) => {
+          if (field.default_value) {
+            values[field.id] = field.default_value;
+          } else {
+            values[field.id] = null;
+          }
+        });
+        setCustomFieldValues(values);
+      } catch (e: any) {
+        console.error("Error loading custom fields:", e);
+        setCustomFields([]);
+        setCustomFieldValues({});
+      }
+    };
+    
+    loadCustomFields();
+  }, [newTicket.category]);
 
   const loadTickets = async () => {
     setLoading(true);
@@ -151,8 +196,30 @@ export default function UserPortal() {
       }
 
       const ticket = await apiPost("/api/tickets", payload) as TicketItem;
+      
+      // ذخیره فیلدهای سفارشی (اگر وجود داشته باشند)
+      if (Object.keys(customFieldValues).length > 0) {
+        try {
+          const valuesToSave = Object.entries(customFieldValues)
+            .filter(([_, value]) => value !== null && value !== "")
+            .map(([fieldId, value]) => ({
+              custom_field_id: parseInt(fieldId),
+              value: value,
+            }));
+
+          if (valuesToSave.length > 0) {
+            await apiPost(`/api/custom-fields/ticket/${ticket.id}/values`, { values: valuesToSave });
+          }
+        } catch (e: any) {
+          console.error("Error saving custom fields:", e);
+          // خطا را نادیده می‌گیریم چون تیکت قبلاً ایجاد شده
+        }
+      }
+      
       setShowNewTicketForm(false);
       setNewTicket({ title: "", description: "", category: "other", priority: "medium", branch_id: "" });
+      setCustomFields([]);
+      setCustomFieldValues({});
       await loadTickets();
       // Navigate to ticket detail
       navigate(`/user-tickets/${ticket.id}`);
@@ -250,7 +317,35 @@ export default function UserPortal() {
                 </select>
               </label>
             )}
-            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+            
+            {/* فیلدهای سفارشی */}
+            {customFields.length > 0 && (
+              <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>
+                <h3 style={{ marginBottom: "15px", fontSize: "16px", fontWeight: "600" }}>
+                  📋 فیلدهای سفارشی
+                </h3>
+                <div style={{ display: "grid", gap: "15px" }}>
+                  {customFields
+                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                    .map((field) => (
+                      <CustomFieldRenderer
+                        key={field.id}
+                        field={field}
+                        value={customFieldValues[field.id] || null}
+                        onChange={(value) => {
+                          setCustomFieldValues((prev) => ({
+                            ...prev,
+                            [field.id]: value,
+                          }));
+                        }}
+                        disabled={submitting}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
+            
+            <div style={{ display: "flex", gap: "12", marginTop: "20px" }}>
               <button type="submit" disabled={submitting}>
                 {submitting ? "⏳ در حال ایجاد..." : "💾 ایجاد تیکت"}
               </button>

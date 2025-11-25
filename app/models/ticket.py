@@ -42,6 +42,7 @@ class Ticket(Base):
     history = relationship("TicketHistory", back_populates="ticket", cascade="all, delete-orphan", order_by="TicketHistory.created_at")
     sla_logs = relationship("SLALog", back_populates="ticket", cascade="all, delete-orphan")
     time_logs = relationship("TimeLog", back_populates="ticket", cascade="all, delete-orphan", order_by="TimeLog.start_time")
+    custom_field_values = relationship("TicketCustomFieldValue", back_populates="ticket", cascade="all, delete-orphan")
     
     # Indexes for better performance
     __table_args__ = (

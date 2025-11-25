@@ -29,7 +29,7 @@ async def add_comment(
   if data.is_internal and current_user.role not in (UserRole.ADMIN, UserRole.CENTRAL_ADMIN, UserRole.BRANCH_ADMIN):
     # only admin-level roles can add internal notes
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=translate("common.forbidden", resolve_lang(request, current_user)))
-  return create_comment(db, current_user.id, data)
+  return await create_comment(db, current_user.id, data)
 
 
 @router.get("/ticket/{ticket_id}", response_model=List[CommentResponse])

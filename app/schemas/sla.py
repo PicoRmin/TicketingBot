@@ -70,6 +70,10 @@ class SLALogResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
+    # Optional related data (برای نمایش در Frontend)
+    ticket_number: Optional[str] = None
+    sla_rule_name: Optional[str] = None
+    
     class Config:
         from_attributes = True
 

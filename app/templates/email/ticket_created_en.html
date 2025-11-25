@@ -1,0 +1,41 @@
+{% extends "base_en.html" %}
+
+{% block content %}
+<h2 style="color: #667eea; margin-top: 0;">✅ Your Ticket Has Been Created Successfully</h2>
+
+<p>Hello,</p>
+
+<p>Your ticket has been successfully registered in the system. Ticket details are below:</p>
+
+<div class="ticket-details">
+    <table>
+        <tr>
+            <td>Ticket Number:</td>
+            <td><strong style="color: #667eea; font-size: 18px;">{{ ticket_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>Title:</td>
+            <td>{{ ticket_title }}</td>
+        </tr>
+        <tr>
+            <td>Category:</td>
+            <td>{{ ticket_category }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box">
+    <p><strong>📌 Important Note:</strong></p>
+    <p>Please save your ticket number. You can use the ticket number to track the status of your ticket.</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ support_url }}" class="button">View My Tickets</a>
+</div>
+
+<p>If you need more information, you can contact us through the user panel.</p>
+
+<p>Best regards,<br>
+<strong>{{ app_name }} Support Team</strong></p>
+{% endblock %}
+

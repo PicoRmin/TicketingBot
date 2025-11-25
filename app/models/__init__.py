@@ -14,6 +14,7 @@ from app.models.department import Department
 from app.models.sla import SLARule, SLALog
 from app.models.automation_rule import AutomationRule
 from app.models.time_log import TimeLog
+from app.models.custom_field import CustomField, TicketCustomFieldValue, CustomFieldType
 
 __all__ = [
     "User",
@@ -30,4 +31,7 @@ __all__ = [
     "SLALog",
     "AutomationRule",
     "TimeLog",
+    "CustomField",
+    "TicketCustomFieldValue",
+    "CustomFieldType",
 ]

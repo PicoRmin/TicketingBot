@@ -24,6 +24,7 @@ class Department(Base):
     users = relationship("User", back_populates="department")
     tickets = relationship("Ticket", back_populates="department")
     sla_rules = relationship("SLARule", back_populates="department", cascade="all, delete-orphan")
+    custom_fields = relationship("CustomField", back_populates="department", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Department(id={self.id}, name='{self.name}', code='{self.code}')>"

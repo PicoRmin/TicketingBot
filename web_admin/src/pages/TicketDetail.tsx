@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { apiGet, apiPatch, apiUploadFile, isAuthenticated, API_BASE_URL } from "../services/api";
 import { apiPost } from "../services/api";
+import CustomFieldRenderer from "../components/CustomFieldRenderer";
 
 type Ticket = {
   id: number;
@@ -135,6 +136,11 @@ export default function TicketDetail() {
   const [timeSummary, setTimeSummary] = useState<{ total_minutes: number; total_hours: number; logs_count: number } | null>(null);
   const [timerDescription, setTimerDescription] = useState("");
   const [timerLoading, setTimerLoading] = useState(false);
+  
+  // Custom Fields states
+  const [customFields, setCustomFields] = useState<any[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<number, string | null>>({});
+  const [savingCustomFields, setSavingCustomFields] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -193,6 +199,9 @@ export default function TicketDetail() {
         
         // Load Time Tracker data
         loadTimeTrackerData();
+        
+        // Load Custom Fields
+        loadCustomFields();
       } catch (e: any) {
         setError(e?.message || "خطا در دریافت تیکت");
       } finally {
@@ -271,6 +280,64 @@ export default function TicketDetail() {
       setError(e?.message || "خطا در تخصیص تیکت");
     } finally {
       setAssigning(false);
+    }
+  };
+
+  /**
+   * بارگذاری فیلدهای سفارشی برای تیکت
+   * Load custom fields for the ticket
+   */
+  const loadCustomFields = async () => {
+    if (!id) return;
+    try {
+      const fields = await apiGet(`/api/custom-fields/ticket/${id}`) as any[];
+      setCustomFields(fields || []);
+      
+      // بارگذاری مقادیر فیلدها
+      const values: Record<number, string | null> = {};
+      fields.forEach((field) => {
+        if (field.value !== null && field.value !== undefined) {
+          values[field.id] = field.value;
+        } else if (field.default_value) {
+          values[field.id] = field.default_value;
+        } else {
+          values[field.id] = null;
+        }
+      });
+      setCustomFieldValues(values);
+    } catch (e: any) {
+      console.error("Error loading custom fields:", e);
+      // خطا را نمایش ندهیم چون فیلدهای سفارشی اختیاری هستند
+    }
+  };
+
+  /**
+   * ذخیره مقادیر فیلدهای سفارشی
+   * Save custom field values
+   */
+  const saveCustomFields = async () => {
+    if (!id) return;
+    setSavingCustomFields(true);
+    setError(null);
+    try {
+      // ساخت آرایه مقادیر برای ارسال
+      const valuesToSave = Object.entries(customFieldValues)
+        .filter(([_, value]) => value !== null && value !== "")
+        .map(([fieldId, value]) => ({
+          custom_field_id: parseInt(fieldId),
+          value: value,
+        }));
+
+      if (valuesToSave.length > 0) {
+        await apiPost(`/api/custom-fields/ticket/${id}/values`, { values: valuesToSave });
+        // بارگذاری مجدد فیلدها
+        await loadCustomFields();
+        setError(null);
+      }
+    } catch (e: any) {
+      setError(e?.message || "خطا در ذخیره فیلدهای سفارشی");
+    } finally {
+      setSavingCustomFields(false);
     }
   };
 
@@ -482,6 +549,52 @@ export default function TicketDetail() {
                   {ticket.description}
                 </div>
               </div>
+              
+              {/* فیلدهای سفارشی */}
+              {customFields.length > 0 && (
+                <div style={{ gridColumn: "1 / -1", marginTop: "20px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>
+                  <h3 style={{ marginBottom: "15px", fontSize: "16px", fontWeight: "600" }}>
+                    📋 فیلدهای سفارشی
+                  </h3>
+                  <div style={{ display: "grid", gap: "15px" }}>
+                    {customFields
+                      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                      .map((field) => (
+                        <CustomFieldRenderer
+                          key={field.id}
+                          field={field}
+                          value={customFieldValues[field.id] || null}
+                          onChange={(value) => {
+                            setCustomFieldValues((prev) => ({
+                              ...prev,
+                              [field.id]: value,
+                            }));
+                          }}
+                          disabled={savingCustomFields}
+                        />
+                      ))}
+                  </div>
+                  <button
+                    onClick={saveCustomFields}
+                    disabled={savingCustomFields}
+                    style={{
+                      marginTop: "15px",
+                      padding: "10px 20px",
+                      background: "var(--accent)",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: savingCustomFields ? "not-allowed" : "pointer",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      opacity: savingCustomFields ? 0.6 : 1,
+                    }}
+                  >
+                    {savingCustomFields ? "💾 در حال ذخیره..." : "💾 ذخیره فیلدهای سفارشی"}
+                  </button>
+                </div>
+              )}
+              
               <div>
                 <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>تاریخ ایجاد</div>
                 <div>{ticket.created_at ? new Date(ticket.created_at).toLocaleString("fa-IR") : "-"}</div>

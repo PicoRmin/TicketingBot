@@ -21,6 +21,7 @@ class User(Base):
     branch_id = Column(Integer, ForeignKey("branches.id", ondelete="SET NULL"), nullable=True, index=True)
     department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
     telegram_chat_id = Column(String, unique=True, nullable=True)
+    email = Column(String, nullable=True, index=True)  # آدرس ایمیل کاربر برای ارسال اعلان‌ها
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

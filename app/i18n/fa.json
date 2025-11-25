@@ -92,6 +92,26 @@
     "created": "قانون اتوماسیون با موفقیت ایجاد شد",
     "updated": "قانون اتوماسیون با موفقیت به‌روزرسانی شد",
     "deleted": "قانون اتوماسیون حذف شد"
+  },
+  "emails": {
+    "ticket_created": {
+      "subject": "تیکت جدید ایجاد شد - {{ ticket_number }}"
+    },
+    "ticket_status_changed": {
+      "subject": "وضعیت تیکت تغییر کرد - {{ ticket_number }}"
+    },
+    "ticket_assigned": {
+      "subject": "تیکت جدید به شما تخصیص داده شد - {{ ticket_number }}"
+    },
+    "comment_added": {
+      "subject": "پیام جدید در تیکت - {{ ticket_number }}"
+    },
+    "sla_warning": {
+      "subject": "هشدار SLA - تیکت {{ ticket_number }}"
+    },
+    "sla_breach": {
+      "subject": "نقض SLA - تیکت {{ ticket_number }}"
+    }
   }
 }
 

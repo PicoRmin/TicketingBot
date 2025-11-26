@@ -86,6 +86,18 @@ tags_metadata = [
         "name": "Priorities",
         "description": "تعریف اولویت‌ها و برچسب‌های مرتبط برای SLA."
     },
+    {
+        "name": "Notifications",
+        "description": "فید اعلان درون‌برنامه‌ای برای موبایل و وب، خواندن/علامت‌گذاری."
+    },
+    {
+        "name": "Profile",
+        "description": "مدیریت اطلاعات تکمیلی و مرحله onboarding کاربران."
+    },
+    {
+        "name": "Knowledge Base",
+        "description": "مقالات آموزشی و پیشنهادات هوشمند برای کاربران و کارشناسان."
+    },
 ]
 
 # Create FastAPI app with richer Swagger metadata
@@ -215,6 +227,15 @@ async def startup_event():
         logger.info("SLA monitoring scheduler started")
     except Exception as e:
         logger.warning(f"Failed to start SLA scheduler: {e}")
+
+    # Start Telegram daily report scheduler
+    try:
+        from app.tasks.telegram_report_tasks import start_daily_report_scheduler
+
+        start_daily_report_scheduler()
+        logger.info("Telegram daily report scheduler initialization attempted")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Telegram daily report scheduler: {e}")
     
     # Start Telegram Bot if token is provided
     if settings.TELEGRAM_BOT_TOKEN:
@@ -317,6 +338,9 @@ from app.api import sla
 from app.api import automation
 from app.api import time_tracker
 from app.api import custom_fields
+from app.api import notifications
+from app.api import profile
+from app.api import knowledge_base
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["Tickets"])
@@ -333,6 +357,9 @@ app.include_router(sla.router, prefix="/api/sla", tags=["SLA"])
 app.include_router(automation.router, prefix="/api/automation", tags=["Automation"])
 app.include_router(time_tracker.router, prefix="/api/time-tracker", tags=["Time Tracker"])
 app.include_router(custom_fields.router, prefix="/api/custom-fields", tags=["Custom Fields"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
+app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
+app.include_router(knowledge_base.router, prefix="/api/knowledge-base", tags=["Knowledge Base"])
 
 if __name__ == "__main__":
     import uvicorn

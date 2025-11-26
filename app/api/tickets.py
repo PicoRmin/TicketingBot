@@ -7,6 +7,7 @@ from typing import Optional, List
 from datetime import date
 from app.database import get_db
 from app.models import Ticket, User
+from app.schemas.comment import CommentCreate
 from app.schemas.ticket import (
     TicketCreate,
     TicketUpdate,
@@ -29,6 +30,7 @@ from app.services.ticket_service import (
     get_all_tickets,
     can_user_access_ticket,
 )
+from app.services.comment_service import create_comment
 from app.services.ticket_history_service import (
     create_ticket_history,
     get_ticket_history,
@@ -418,16 +420,33 @@ async def update_ticket_status_by_id(
     
     previous_status = ticket.status
     updated_ticket = update_ticket_status(db, ticket, status_data.status)
+
+    comment_text = (
+        status_data.comment.strip()
+        if status_data.comment and status_data.comment.strip()
+        else None
+    )
+    if comment_text:
+        await create_comment(
+            db,
+            current_user.id,
+            CommentCreate(
+                ticket_id=updated_ticket.id,
+                comment=comment_text,
+                is_internal=status_data.is_internal,
+            ),
+        )
     
     # Create history entry
     from app.schemas.ticket_history import TicketHistoryCreate
+    history_comment = comment_text or None
     create_ticket_history(
         db,
         TicketHistoryCreate(
             ticket_id=updated_ticket.id,
             status=updated_ticket.status,
             changed_by_id=current_user.id,
-            comment=None,
+            comment=history_comment,
         ),
     )
     await notify_ticket_status_changed(updated_ticket, previous_status, db)

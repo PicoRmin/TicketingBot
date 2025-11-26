@@ -11,7 +11,8 @@ from app.models import SLALog, Ticket, User, SLARule
 from app.core.enums import TicketStatus, UserRole
 from app.services.notification_service import (
     send_telegram_notification_to_user,
-    send_telegram_notification_to_role
+    send_telegram_notification_to_role,
+    notify_admin_group,
 )
 import asyncio
 
@@ -357,6 +358,7 @@ async def _send_response_warning_notification(ticket: Ticket, sla_log: SLALog, s
         finally:
             db.close()
         
+        await notify_admin_group(message)
         logger.info(f"Response warning sent for ticket {ticket.ticket_number}")
         
     except Exception as e:
@@ -441,6 +443,7 @@ async def _send_response_breach_notification(ticket: Ticket, sla_log: SLALog, sl
         finally:
             db.close()
         
+        await notify_admin_group(message)
         logger.info(f"Response breach notification sent for ticket {ticket.ticket_number}")
         
     except Exception as e:
@@ -525,6 +528,7 @@ async def _send_resolution_warning_notification(ticket: Ticket, sla_log: SLALog,
         finally:
             db.close()
         
+        await notify_admin_group(message)
         logger.info(f"Resolution warning sent for ticket {ticket.ticket_number}")
         
     except Exception as e:
@@ -609,6 +613,7 @@ async def _send_resolution_breach_notification(ticket: Ticket, sla_log: SLALog, 
         finally:
             db.close()
         
+        await notify_admin_group(message)
         logger.info(f"Resolution breach notification sent for ticket {ticket.ticket_number}")
         
     except Exception as e:
@@ -636,6 +641,7 @@ async def _send_escalation_notification(ticket: Ticket, sla_log: SLALog, sla_rul
         finally:
             db.close()
         
+        await notify_admin_group(message)
         logger.info(f"Escalation notification sent for ticket {ticket.ticket_number}")
         
     except Exception as e:

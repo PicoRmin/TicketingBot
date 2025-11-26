@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
 import { Link } from "react-router-dom";
+import { KnowledgeSuggestions } from "../components/KnowledgeSuggestions";
 
 type TicketItem = {
   id: number;
@@ -344,6 +345,7 @@ export default function UserPortal() {
                 </div>
               </div>
             )}
+            <KnowledgeSuggestions category={newTicket.category} query={newTicket.title} />
             
             <div style={{ display: "flex", gap: "12", marginTop: "20px" }}>
               <button type="submit" disabled={submitting}>

@@ -15,6 +15,9 @@ from app.models.sla import SLARule, SLALog
 from app.models.automation_rule import AutomationRule
 from app.models.time_log import TimeLog
 from app.models.custom_field import CustomField, TicketCustomFieldValue, CustomFieldType
+from app.models.notification import Notification
+from app.models.user_profile import UserProfile
+from app.models.knowledge_article import KnowledgeArticle
 
 __all__ = [
     "User",
@@ -34,4 +37,7 @@ __all__ = [
     "CustomField",
     "TicketCustomFieldValue",
     "CustomFieldType",
+    "Notification",
+    "UserProfile",
+    "KnowledgeArticle",
 ]

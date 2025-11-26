@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiGet, isAuthenticated, getStoredProfile } from "../services/api";
+import { OnboardingWizard } from "../components/OnboardingWizard";
 
 type TicketStats = {
   total: number;
@@ -22,6 +23,19 @@ export default function UserDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem("imehr_onboarding_state");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return !parsed.completed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return true;
+  });
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -80,6 +94,24 @@ export default function UserDashboard() {
       <h1 className="page-title">📊 داشبورد کاربری</h1>
 
       {error && <div className="alert error fade-in">{error}</div>}
+
+      {showOnboarding && (
+        <OnboardingWizard
+          onComplete={() => {
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+
+      {!showOnboarding && (
+        <div className="onboarding-card slim">
+          <div>
+            <strong>🎯 اطلاعات تکمیلی شما آماده است</strong>
+            <p style={{ margin: 0, color: "var(--fg-secondary)" }}>برای به‌روزرسانی یا تغییر اهداف می‌توانید دوباره فرم را باز کنید.</p>
+          </div>
+          <button className="secondary" onClick={() => setShowOnboarding(true)}>ویرایش اطلاعات</button>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="card" style={{ marginBottom: 24 }}>

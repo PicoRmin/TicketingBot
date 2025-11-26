@@ -3,11 +3,19 @@ import { useEffect, useState, ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { getToken, logout, getStoredProfile, fetchProfile, setProfile, clearProfile } from "./services/api";
 import logoUrl from "./assets/brand-logo.svg";
+import { MobileNavigation } from "./components/MobileNavigation";
+import { NotificationBell } from "./components/NotificationBell";
 
 export default function App() {
   const navigate = useNavigate();
   const token = getToken();
   const [profile, setProfileState] = useState<any | null>(() => getStoredProfile());
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.innerWidth <= 900;
+  });
   const [dark, setDark] = useState<boolean>(() => {
     return localStorage.getItem("imehr_dark") === "1";
   });
@@ -52,6 +60,15 @@ export default function App() {
         // ignore
       });
   }, [token, navigate]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 900);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const cls = document.documentElement.classList;
@@ -129,6 +146,7 @@ export default function App() {
           >
             {dark ? t("actions.light") : t("actions.dark")}
           </button>
+          {token && <NotificationBell />}
           <select
             value={i18n.language}
             onChange={handleLangChange}
@@ -159,6 +177,9 @@ export default function App() {
       <main>
         <Outlet />
       </main>
+      {isMobile && token && (
+        <MobileNavigation role={profile?.role} />
+      )}
       <footer>
         <div>{t("layout.footer")}</div>
         <div style={{ marginTop: 4, fontSize: 11 }}>

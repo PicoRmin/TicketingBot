@@ -126,7 +126,14 @@ scripts\check_production.bat  # Windows
 
 ## مستندات / Documentation
 
-### 📚 مستندات کامل:
+### 📚 مستندات کاربری و راهنماها:
+- **[راهنمای کامل نقش‌ها](./docs/ROLES_GUIDE.md)** - راهنمای کامل تمام نقش‌ها، دسترسی‌ها و تب‌های سیستم
+- **[راهنمای کاربران تلگرام](./docs/TELEGRAM_USER_GUIDE.md)** - راهنمای کامل استفاده از ربات تلگرام
+- **[راهنمای دیپلوی اوبونتو 24.04](./docs/DEPLOYMENT_UBUNTU_24.md)** - راهنمای قدم به قدم دیپلوی روی سرور اوبونتو با دامنه corlink.ir
+- [User Guide](./docs/USER_GUIDE.md) - راهنمای کاربران نهایی (پورتال وب)
+- [Admin Guide](./docs/ADMIN_GUIDE.md) - راهنمای مدیران و کارشناسان (پنل مدیریتی)
+
+### 📚 مستندات فنی:
 - [Roadmap](./roadmap.md) - راهنمای کامل توسعه پروژه
 - [Custom Fields Guide](./docs/CUSTOM_FIELDS.md) - راهنمای فیلدهای سفارشی
 - [Email Notifications Guide](./docs/EMAIL_NOTIFICATIONS.md) - راهنمای اعلان‌رسانی ایمیل
@@ -135,20 +142,20 @@ scripts\check_production.bat  # Windows
 - [Performance Tests Guide](./docs/PERFORMANCE_TESTS.md) - تست‌های Load/Stress
 - [Integration Tests Guide](./docs/INTEGRATION_TESTS.md) - راهنمای تست‌های یکپارچه‌سازی
 - [End-to-End Tests Guide](./docs/END_TO_END_TESTS.md) - راهنمای تست‌های سرتاسری
-- [Production Setup Guide](./docs/PRODUCTION_SETUP.md) - راهنمای کامل استقرار Production
+- [Production Setup Guide](./docs/PRODUCTION_SETUP.md) - راهنمای کامل استقرار Production (عمومی)
 - [Monitoring Guide](./docs/MONITORING.md) - راهنمای Monitoring و Logging
+- [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) - معماری کلان و روابط دیتابیس
+
+### 📋 راهنماهای نصب و راه‌اندازی:
+- [Quick Start](./QUICK_START.md) - راهنمای سریع
+- [Setup Guide](./SETUP.md) - راهنمای کامل نصب
+- [Telegram Bot Setup](./TELEGRAM_BOT_SETUP.md) - راهنمای راه‌اندازی ربات تلگرام
+
+### 📊 مستندات پروژه:
 - [Project Complete Features](./docs/PROJECT_COMPLETE_FEATURES.md) - فهرست کامل ویژگی‌ها
 - [Remaining Work](./REMAINING_WORK.md) - کارهای باقی‌مانده
 - [FAQ](./docs/FAQ.md) - پرسش‌های پرتکرار کاربران و کارشناسان
 - [Future Enhancements](./docs/FUTURE_ENHANCEMENTS.md) - مسیر توسعه نسخه‌های بعدی
-- [User Guide](./docs/USER_GUIDE.md) - راهنمای کاربران نهایی
-- [Admin Guide](./docs/ADMIN_GUIDE.md) - راهنمای مدیران و کارشناسان
-- [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) - معماری کلان و روابط دیتابیس
-
-### 📋 راهنماهای نصب:
-- [Quick Start](./QUICK_START.md) - راهنمای سریع
-- [Setup Guide](./SETUP.md) - راهنمای کامل نصب
-- [Telegram Bot Setup](./TELEGRAM_BOT_SETUP.md) - راهنمای راه‌اندازی ربات تلگرام
 
 ## مجوز / License
 

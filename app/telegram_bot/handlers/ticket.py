@@ -27,10 +27,11 @@ from app.telegram_bot.callbacks import (
     CALLBACK_MY_TICKETS,
     CALLBACK_NEW_TICKET,
     CALLBACK_SKIP_ATTACHMENTS,
+    CALLBACK_FINISH_ATTACHMENTS,
 )
 from app.telegram_bot.handlers.common import cancel_command, require_token, send_main_menu
 from app.telegram_bot.i18n import get_category_name, get_message, get_status_name
-from app.telegram_bot.keyboards import branch_keyboard, category_keyboard, skip_attachments_keyboard
+from app.telegram_bot.keyboards import branch_keyboard, category_keyboard, skip_attachments_keyboard, finish_attachments_keyboard
 from app.telegram_bot.runtime import api_client
 from app.telegram_bot.states import TicketState
 from app.telegram_bot.utils import get_chat_id, get_user_id
@@ -406,7 +407,8 @@ async def ticket_attachment(update, context: ContextTypes.DEFAULT_TYPE):
 
             logger.info(f"File uploaded successfully: user_id={user_id}, ticket_id={ticket_id}, file_name={file_name}")
             await update.message.reply_text(
-                get_message("attachment_saved", language).format(file_name=file_name)
+                get_message("attachment_saved", language).format(file_name=file_name),
+                reply_markup=finish_attachments_keyboard(language)
             )
             return TicketState.ATTACHMENTS
         except Exception as upload_error:
@@ -442,6 +444,17 @@ async def skip_attachments_command(update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def skip_attachments_callback(update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    try:
+        await query.edit_message_reply_markup(None)
+    except Exception:
+        pass
+    return await finish_ticket_creation(update, context)
+
+
+async def finish_attachments_callback(update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle finish attachments callback."""
     query = update.callback_query
     await query.answer()
     try:
@@ -490,6 +503,7 @@ def get_handlers():
                 MessageHandler(filters.TEXT & ~filters.COMMAND, ticket_attachment_text),
                 CommandHandler("skip", skip_attachments_command),
                 CallbackQueryHandler(skip_attachments_callback, pattern=f"^{CALLBACK_SKIP_ATTACHMENTS}$"),
+                CallbackQueryHandler(finish_attachments_callback, pattern=f"^{CALLBACK_FINISH_ATTACHMENTS}$"),
             ],
         },
         fallbacks=[
@@ -519,6 +533,7 @@ __all__ = [
     "ticket_attachment_text",
     "skip_attachments_command",
     "skip_attachments_callback",
+    "finish_attachments_callback",
     "finish_ticket_creation",
 ]
 

@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_WEBHOOK_URL: str | None = None
     TELEGRAM_WEBHOOK_SECRET: str | None = None
+    TELEGRAM_ADMIN_GROUP_ID: str | None = None
+    TELEGRAM_ADMIN_DAILY_REPORT_ENABLED: bool = False
+    TELEGRAM_ADMIN_DAILY_REPORT_HOUR: int = 8
     
     # Email Configuration (SMTP)
     EMAIL_ENABLED: bool = False

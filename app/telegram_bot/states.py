@@ -21,10 +21,27 @@ class TrackState(Enum):
     NUMBER = auto()
 
 
+class InfrastructureState(Enum):
+    ACTION = auto()
+    BRANCH = auto()
+    TYPE = auto()
+    NAME = auto()
+    DESCRIPTION = auto()
+    METADATA = auto()
+    UPDATE_ID = auto()
+    CONFIRM = auto()
+
+
 class ChangeStatusState(Enum):
     TICKET_NUMBER = auto()
     STATUS = auto()
 
 
-__all__ = ["LoginState", "TicketState", "TrackState", "ChangeStatusState"]
+__all__ = [
+    "LoginState",
+    "TicketState",
+    "TrackState",
+    "ChangeStatusState",
+    "InfrastructureState",
+]
 

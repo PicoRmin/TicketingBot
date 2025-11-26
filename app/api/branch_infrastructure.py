@@ -11,7 +11,7 @@ from app.schemas.branch_infrastructure import (
     BranchInfrastructureUpdate,
     BranchInfrastructureResponse
 )
-from app.api.deps import get_current_active_user, require_central_admin
+from app.api.deps import get_current_active_user, require_roles, require_central_admin
 from app.services.branch_infrastructure_service import (
     create_infrastructure,
     get_infrastructure,
@@ -22,6 +22,7 @@ from app.services.branch_infrastructure_service import (
 from app.services.branch_service import get_branch
 from app.i18n.translator import translate
 from app.i18n.fastapi_utils import resolve_lang
+from app.core.enums import UserRole
 
 router = APIRouter()
 
@@ -31,9 +32,9 @@ async def create_branch_infrastructure(
     request: Request,
     infrastructure_data: BranchInfrastructureCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_central_admin)
+    current_user: User = Depends(require_roles(UserRole.CENTRAL_ADMIN, UserRole.ADMIN, UserRole.IT_SPECIALIST))
 ):
-    """Create new branch infrastructure (Central Admin only)"""
+    """Create new branch infrastructure (central, admin, IT specialist)"""
     lang = resolve_lang(request, current_user)
     
     # Verify branch exists
@@ -44,6 +45,12 @@ async def create_branch_infrastructure(
             detail=translate("branches.not_found", lang)
         )
     
+    if current_user.role == UserRole.IT_SPECIALIST:
+        if not current_user.branch_id or current_user.branch_id != infrastructure_data.branch_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", resolve_lang(request, current_user))
+            )
     infrastructure = create_infrastructure(db, infrastructure_data, current_user.id)
     return infrastructure
 
@@ -54,9 +61,23 @@ async def list_branch_infrastructure(
     branch_id: Optional[int] = Query(None, description="فیلتر بر اساس شعبه"),
     infrastructure_type: Optional[str] = Query(None, description="فیلتر بر اساس نوع"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_central_admin)
+    current_user: User = Depends(require_roles(UserRole.CENTRAL_ADMIN, UserRole.ADMIN, UserRole.IT_SPECIALIST))
 ):
-    """List branch infrastructure (Central Admin only)"""
+    """List branch infrastructure (central/admin/IT specialist)"""
+    lang = resolve_lang(request, current_user)
+    if current_user.role == UserRole.IT_SPECIALIST:
+        if not current_user.branch_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", lang)
+            )
+        if branch_id and branch_id != current_user.branch_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", lang)
+            )
+        branch_id = current_user.branch_id
+
     if branch_id:
         infrastructure_list = get_branch_infrastructure(db, branch_id, infrastructure_type)
     else:
@@ -74,15 +95,20 @@ async def get_branch_infrastructure_by_id(
     request: Request,
     infrastructure_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_central_admin)
+    current_user: User = Depends(require_roles(UserRole.CENTRAL_ADMIN, UserRole.ADMIN, UserRole.IT_SPECIALIST))
 ):
-    """Get infrastructure by ID (Central Admin only)"""
+    """Get infrastructure by ID (central/admin/IT specialist)"""
     infrastructure = get_infrastructure(db, infrastructure_id)
     if not infrastructure:
         lang = resolve_lang(request, current_user)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=translate("common.not_found", lang)
+        )
+    if current_user.role == UserRole.IT_SPECIALIST and current_user.branch_id != infrastructure.branch_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
         )
     return infrastructure
 
@@ -93,9 +119,9 @@ async def update_branch_infrastructure_by_id(
     infrastructure_id: int,
     infrastructure_data: BranchInfrastructureUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_central_admin)
+    current_user: User = Depends(require_roles(UserRole.CENTRAL_ADMIN, UserRole.ADMIN, UserRole.IT_SPECIALIST))
 ):
-    """Update infrastructure (Central Admin only)"""
+    """Update infrastructure (central/admin/IT specialist)"""
     lang = resolve_lang(request, current_user)
     
     infrastructure = get_infrastructure(db, infrastructure_id)
@@ -114,6 +140,17 @@ async def update_branch_infrastructure_by_id(
                 detail=translate("branches.not_found", lang)
             )
     
+    if current_user.role == UserRole.IT_SPECIALIST and current_user.branch_id != infrastructure.branch_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=translate("common.forbidden", resolve_lang(request, current_user))
+        )
+    if infrastructure_data.branch_id and current_user.role == UserRole.IT_SPECIALIST:
+        if infrastructure_data.branch_id != current_user.branch_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=translate("common.forbidden", resolve_lang(request, current_user))
+            )
     updated = update_infrastructure(db, infrastructure, infrastructure_data, current_user.id)
     return updated
 
@@ -125,7 +162,7 @@ async def delete_branch_infrastructure_by_id(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_central_admin)
 ):
-    """Delete infrastructure (Central Admin only)"""
+    """Delete infrastructure (central admin only)"""
     lang = resolve_lang(request, current_user)
     
     infrastructure = get_infrastructure(db, infrastructure_id)

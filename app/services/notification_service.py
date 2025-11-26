@@ -13,6 +13,7 @@ from app.core.enums import Language, TicketStatus, UserRole
 from app.i18n.translator import translate
 from app.models import Ticket, User
 from app.services.email_service import email_service
+from app.services.notification_feed_service import create_notifications
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,19 @@ def _normalize_language(value: Language | str | None) -> Language:
     return Language.FA
 
 
+def _ticket_reference(ticket: Ticket) -> str:
+    return f"{ticket.ticket_number} · {ticket.title}"
+
+
+def _persist_feed_notifications(db: Session, entries: List[dict]) -> None:
+    if not entries:
+        return
+    try:
+        create_notifications(db, entries)
+    except Exception as exc:
+        logger.warning("Failed to persist feed notifications: %s", exc)
+
+
 async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
     """
     اطلاع‌رسانی ایجاد تیکت به صاحب تیکت و ادمین‌ها
@@ -84,6 +98,7 @@ async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
         messages: List[Tuple[str, str]] = []
 
         creator = ticket.user
+        feed_entries: List[dict] = []
         creator_language = _normalize_language(creator.language if creator else None)
         
         # ارسال اعلان تلگرام به کاربر
@@ -98,6 +113,14 @@ async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
                 f"\n{_ticket_category_label(ticket.category.value if hasattr(ticket.category, 'value') else ticket.category, creator_language)}"
             )
             messages.append((creator.telegram_chat_id, text))
+            feed_entries.append(
+                {
+                    "user_id": creator.id,
+                    "title": translate("notifications.feed.ticket_created_user", creator_language) or "ثبت تیکت جدید",
+                    "body": _ticket_reference(ticket),
+                    "severity": "info",
+                }
+            )
         
         # ارسال ایمیل به کاربر (اگر ایمیل داشته باشد)
         if creator and creator.email:
@@ -131,6 +154,14 @@ async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
                 f"\n👤 {creator.full_name if creator else '-'}"
             )
             messages.append((admin.telegram_chat_id, text))
+            feed_entries.append(
+                {
+                    "user_id": admin.id,
+                    "title": translate("notifications.feed.ticket_created_admin", lang) or "تیکت جدید ثبت شد",
+                    "body": _ticket_reference(ticket),
+                    "severity": "info",
+                }
+            )
             
             # ارسال ایمیل به ادمین (اگر ایمیل داشته باشد)
             if admin.email:
@@ -151,6 +182,7 @@ async def notify_ticket_created(ticket: Ticket, db: Session) -> None:
 
         if messages:
             await _send_telegram_messages(messages)
+        _persist_feed_notifications(db, feed_entries)
     except Exception as exc:
         logger.exception("Error in notify_ticket_created: %s", exc)
 
@@ -168,6 +200,7 @@ async def notify_ticket_status_changed(
         messages: List[Tuple[str, str]] = []
 
         creator = ticket.user
+        feed_entries: List[dict] = []
         if creator and creator.telegram_chat_id:
             lang = _normalize_language(creator.language)
             text = translate(
@@ -180,6 +213,14 @@ async def notify_ticket_status_changed(
                 f"\n{_status_label(previous_status, lang)} ➡️ {_status_label(ticket.status, lang)}"
             )
             messages.append((creator.telegram_chat_id, text))
+            feed_entries.append(
+                {
+                    "user_id": creator.id,
+                    "title": translate("notifications.feed.ticket_status_user", lang) or "وضعیت تیکت به‌روز شد",
+                    "body": f"{_ticket_reference(ticket)}\n{_status_label(previous_status, lang)} ➡️ {_status_label(ticket.status, lang)}",
+                    "severity": "warning" if ticket.status != TicketStatus.RESOLVED else "info",
+                }
+            )
         
         # ارسال ایمیل به کاربر (اگر ایمیل داشته باشد)
         if creator and creator.email:
@@ -212,6 +253,14 @@ async def notify_ticket_status_changed(
                 f"\n👤 {creator.full_name if creator else '-'}"
             )
             messages.append((admin.telegram_chat_id, text))
+            feed_entries.append(
+                {
+                    "user_id": admin.id,
+                    "title": translate("notifications.feed.ticket_status_admin", lang) or "تغییر وضعیت تیکت",
+                    "body": f"{_ticket_reference(ticket)}\n{_status_label(previous_status, lang)} ➡️ {_status_label(ticket.status, lang)}",
+                    "severity": "warning",
+                }
+            )
             
             # ارسال ایمیل به ادمین (اگر ایمیل داشته باشد)
             if admin.email:
@@ -231,6 +280,7 @@ async def notify_ticket_status_changed(
 
         if messages:
             await _send_telegram_messages(messages)
+        _persist_feed_notifications(db, feed_entries)
     except Exception as exc:
         logger.exception("Error in notify_ticket_status_changed: %s", exc)
 
@@ -252,6 +302,30 @@ async def send_telegram_notification_to_user(chat_id: str, message: str) -> None
         logger.exception("Error sending telegram notification to user: %s", exc)
 
 
+async def send_telegram_notification_to_group(chat_id: str, message: str) -> None:
+    """
+    ارسال اعلان تلگرام به یک گروه یا کانال مشخص
+
+    Args:
+        chat_id: شناسه گروه یا کانال
+        message: متن پیام
+    """
+    if not chat_id or not message:
+        return
+
+    try:
+        await _send_telegram_messages([(chat_id, message)])
+    except Exception as exc:
+        logger.exception("Error sending telegram notification to group: %s", exc)
+
+
+async def notify_admin_group(message: str) -> None:
+    group_id = settings.TELEGRAM_ADMIN_GROUP_ID
+    if not group_id:
+        return
+    await send_telegram_notification_to_group(str(group_id), message)
+
+
 async def notify_ticket_assigned(
     ticket: Ticket,
     assigned_by: User,
@@ -269,6 +343,7 @@ async def notify_ticket_assigned(
         lang = _normalize_language(assigned_user.language)
         
         # ارسال اعلان تلگرام
+        feed_entries: List[dict] = []
         if assigned_user.telegram_chat_id:
             text = translate(
                 "notifications.ticket_assigned",
@@ -280,6 +355,14 @@ async def notify_ticket_assigned(
                 f"\n👤 تخصیص داده شده توسط: {assigned_by.full_name if assigned_by else 'سیستم'}"
             )
             await _send_telegram_messages([(assigned_user.telegram_chat_id, text)])
+        feed_entries.append(
+            {
+                "user_id": assigned_user.id,
+                "title": translate("notifications.feed.ticket_assigned", lang) or "تیکت به شما تخصیص یافت",
+                "body": f"{_ticket_reference(ticket)}",
+                "severity": "info",
+            }
+        )
         
         # ارسال ایمیل
         if assigned_user.email:
@@ -293,6 +376,7 @@ async def notify_ticket_assigned(
                 )
             except Exception as e:
                 logger.error(f"Failed to send email notification to assigned user {assigned_user.id}: {e}")
+        _persist_feed_notifications(db, feed_entries)
     except Exception as exc:
         logger.exception("Error in notify_ticket_assigned: %s", exc)
 

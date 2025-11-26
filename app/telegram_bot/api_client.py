@@ -394,12 +394,80 @@ class APIClient:
             return response.status_code in (200, 201)
         except Exception:
             return False
+
+    async def get_infrastructure(self, token: str, infrastructure_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single infrastructure record."""
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/branch-infrastructure/{infrastructure_id}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if response.status_code == 200:
+                return response.json()
+            logger.warning("Failed to fetch infrastructure %s: status=%s", infrastructure_id, response.status_code)
+            return None
+        except Exception as exc:
+            logger.error("Error fetching infrastructure %s: %s", infrastructure_id, exc)
+            return None
+
+    async def list_infrastructure(self, token: str, branch_id: Optional[int] = None) -> Optional[List[Dict[str, Any]]]:
+        """List infrastructure entries, optionally filtered by branch."""
+        try:
+            params = {}
+            if branch_id:
+                params["branch_id"] = branch_id
+            response = await self.client.get(
+                f"{self.base_url}/api/branch-infrastructure",
+                headers={"Authorization": f"Bearer {token}"},
+                params=params or None,
+            )
+            if response.status_code == 200:
+                return response.json()
+            logger.warning("Failed to list infrastructure: status=%s", response.status_code)
+            return None
+        except Exception as exc:
+            logger.error("Error listing infrastructure: %s", exc)
+            return None
+
+    async def create_infrastructure(self, token: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Create new infrastructure record."""
+        try:
+            response = await self.client.post(
+                f"{self.base_url}/api/branch-infrastructure",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            if response.status_code in (200, 201):
+                return response.json()
+            logger.warning("Failed to create infrastructure: status=%s detail=%s", response.status_code, response.text)
+            return None
+        except Exception as exc:
+            logger.error("Error creating infrastructure: %s", exc)
+            return None
+
+    async def update_infrastructure(self, token: str, infrastructure_id: int, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update existing infrastructure record."""
+        try:
+            response = await self.client.put(
+                f"{self.base_url}/api/branch-infrastructure/{infrastructure_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+            if response.status_code == 200:
+                return response.json()
+            logger.warning("Failed to update infrastructure %s: status=%s detail=%s", infrastructure_id, response.status_code, response.text)
+            return None
+        except Exception as exc:
+            logger.error("Error updating infrastructure %s: %s", infrastructure_id, exc)
+            return None
     
     async def update_ticket_status(
         self,
         token: str,
         ticket_id: int,
-        status: str
+        status: str,
+        comment: Optional[str] = None,
+        is_internal: bool = True,
     ) -> Optional[Dict[str, Any]]:
         """
         Update ticket status
@@ -413,10 +481,15 @@ class APIClient:
             Updated ticket data or None if failed
         """
         try:
+            payload: Dict[str, Any] = {"status": status}
+            if comment:
+                payload["comment"] = comment
+                payload["is_internal"] = is_internal
+
             response = await self.client.patch(
                 f"{self.base_url}/api/tickets/{ticket_id}/status",
                 headers={"Authorization": f"Bearer {token}"},
-                json={"status": status}
+                json=payload,
             )
             if response.status_code == 200:
                 return response.json()

@@ -108,6 +108,7 @@ MESSAGES_FA: Dict[str, str] = {
     "attachments_prompt": "📎 می‌توانید فایل‌های مرتبط با تیکت را ارسال کنید (تصاویر یا اسناد).\n"
                           "برای پایان، گزینه «تمام» را بفرستید یا دکمه زیر را بزنید.",
     "attachments_skip_button": "⏩ بدون فایل",
+    "attachments_finish_button": "✅ پایان آپلود",
     "attachments_done": "✅ فرآیند ایجاد تیکت به پایان رسید.",
     "attachments_text_hint": "ℹ️ اگر می‌خواهید بدون فایل ادامه دهید، «تمام» را ارسال کنید یا از دستور /skip استفاده کنید.",
     "attachment_saved": "✅ فایل {file_name} با موفقیت ذخیره شد.",
@@ -251,6 +252,7 @@ MESSAGES_EN: Dict[str, str] = {
     "attachments_prompt": "📎 You can send related files (images or documents).\n"
                           "Send \"done\" or use the button below when finished.",
     "attachments_skip_button": "⏩ Skip Attachments",
+    "attachments_finish_button": "✅ Finish Upload",
     "attachments_done": "✅ Ticket creation completed.",
     "attachments_text_hint": "ℹ️ To finish without files, send \"done\" or use /skip.",
     "attachment_saved": "✅ File {file_name} saved successfully.",

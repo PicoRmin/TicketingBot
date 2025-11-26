@@ -41,6 +41,15 @@ class TicketUpdate(BaseModel):
 class TicketStatusUpdate(BaseModel):
     """Schema for updating ticket status"""
     status: TicketStatus = Field(..., description="وضعیت جدید تیکت")
+    comment: Optional[str] = Field(
+        None,
+        description="توضیح یا یادداشت تکمیلی درباره تغییر وضعیت",
+        min_length=1,
+    )
+    is_internal: bool = Field(
+        True,
+        description="مشخص می‌کند آیا توضیح صرفاً برای داخل سیستم باشد یا برای کاربر نهایی هم قابل دیدن است",
+    )
 
 
 class TicketAssignUpdate(BaseModel):

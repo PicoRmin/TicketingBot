@@ -11,6 +11,7 @@ from app.core.enums import Language, TicketCategory, TicketStatus
 from app.telegram_bot.callbacks import (
     CALLBACK_BRANCH_PREFIX,
     CALLBACK_CATEGORY_PREFIX,
+    CALLBACK_CHANGE_STATUS,
     CALLBACK_HELP,
     CALLBACK_LANGUAGE,
     CALLBACK_LANGUAGE_PREFIX,
@@ -19,6 +20,7 @@ from app.telegram_bot.callbacks import (
     CALLBACK_MY_TICKETS,
     CALLBACK_NEW_TICKET,
     CALLBACK_SKIP_ATTACHMENTS,
+    CALLBACK_FINISH_ATTACHMENTS,
     CALLBACK_TRACK_TICKET,
     CALLBACK_STATUS_PREFIX,
 )
@@ -137,6 +139,26 @@ def skip_attachments_keyboard(language: Language) -> InlineKeyboardMarkup:
     )
 
 
+def finish_attachments_keyboard(language: Language) -> InlineKeyboardMarkup:
+    """Keyboard for finishing attachment upload (shown after each upload)."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                _button(
+                    get_message("attachments_finish_button", language),
+                    CALLBACK_FINISH_ATTACHMENTS,
+                )
+            ],
+            [
+                _button(
+                    get_message("attachments_skip_button", language),
+                    CALLBACK_SKIP_ATTACHMENTS,
+                )
+            ]
+        ]
+    )
+
+
 def status_keyboard(language: Language) -> InlineKeyboardMarkup:
     """Return a keyboard for selecting ticket status."""
     statuses = [
@@ -164,6 +186,7 @@ __all__ = [
     "branch_keyboard",
     "language_keyboard",
     "skip_attachments_keyboard",
+    "finish_attachments_keyboard",
     "status_keyboard",
 ]
 

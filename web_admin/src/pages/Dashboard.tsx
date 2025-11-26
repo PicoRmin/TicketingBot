@@ -24,6 +24,7 @@ import {
   PolarRadiusAxis,
   Radar
 } from "recharts";
+import { useNotifications } from "../hooks/useNotifications";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -47,6 +48,12 @@ export default function Dashboard() {
   const [responseHours, setResponseHours] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const {
+    notifications: latestNotifications,
+    unreadCount,
+    loading: notificationsLoading,
+    refresh: refreshNotifications,
+  } = useNotifications(120000);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -308,7 +315,7 @@ export default function Dashboard() {
       {overview && (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-4" style={{ marginBottom: 24 }}>
+          <div className="dashboard-grid dashboard-grid--stats" style={{ marginBottom: 24 }}>
             <div className="stat-card" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
               <div className="stat-label">{t("dashboard.stats.total")}</div>
               <div className="stat-value">{overview.total || 0}</div>
@@ -327,17 +334,57 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Response Time Card */}
-          {responseHours !== null && (
-            <div className="card" style={{ marginBottom: 24 }}>
+          <div className="dashboard-grid dashboard-grid--two" style={{ marginBottom: 24 }}>
+            <div className="card" style={{ minHeight: 180 }}>
               <div className="card-header">
                 <h2 className="card-title">{t("dashboard.cards.responseTime")}</h2>
               </div>
               <div style={{ fontSize: 48, fontWeight: 700, color: "var(--primary)", textAlign: "center", padding: "20px 0" }}>
-                {responseHours.toFixed(2)} <span style={{ fontSize: 24, color: "var(--fg-secondary)" }}>{t("dashboard.cards.hours")}</span>
+                {responseHours !== null ? (
+                  <>
+                    {responseHours.toFixed(2)} <span style={{ fontSize: 24, color: "var(--fg-secondary)" }}>{t("dashboard.cards.hours")}</span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: 18, color: "var(--fg-secondary)" }}>داده‌ای موجود نیست</span>
+                )}
               </div>
             </div>
-          )}
+            <div className="card notifications-card">
+              <div className="card-header">
+                <h2 className="card-title">اعلان‌ها</h2>
+                <button className="secondary" style={{ padding: "6px 12px" }} onClick={refreshNotifications} disabled={notificationsLoading}>
+                  {notificationsLoading ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
+                </button>
+              </div>
+              <div className="notifications-panel">
+                {notificationsLoading && (
+                  <div className="notification-bell__loading">
+                    <div className="loading" />
+                  </div>
+                )}
+                {!notificationsLoading && latestNotifications.length === 0 && (
+                  <p className="notification-bell__empty">اعلان فعالی وجود ندارد.</p>
+                )}
+                {latestNotifications.slice(0, 4).map((notif) => (
+                  <div key={notif.id} className={`notification-item notification-item--${notif.severity || "info"}`}>
+                    <div className="notification-item__title">
+                      {notif.title}
+                      {!notif.read && <span className="notification-item__dot" />}
+                    </div>
+                    <div className="notification-item__body">{notif.body}</div>
+                    <div className="notification-item__time">
+                      {new Date(notif.created_at).toLocaleString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                ))}
+                {unreadCount > 0 && (
+                  <div className="notification-panel__footer">
+                    <span>{unreadCount} اعلان خوانده‌نشده</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Status Charts - Bar and Pie */}
           <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>

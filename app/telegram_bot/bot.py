@@ -41,7 +41,6 @@ async def post_shutdown(application: Application):
 
 def create_bot() -> Application:
     """Create and configure Telegram Bot application"""
-    from telegram import Request
     from telegram.request import HTTPXRequest
     
     if not BOT_TOKEN:
@@ -97,11 +96,11 @@ async def start_bot():
             )
             if response.status_code == 200:
                 bot_info = response.json()
-                logger.info(f"✅ Connection successful! Bot: @{bot_info.get('result', {}).get('username', 'unknown')}")
+                logger.info(f"Connection successful! Bot: @{bot_info.get('result', {}).get('username', 'unknown')}")
             else:
-                logger.warning(f"⚠️ Telegram API returned status {response.status_code}")
+                logger.warning(f"Telegram API returned status {response.status_code}")
     except httpx.ConnectError as e:
-        logger.error(f"❌ Cannot connect to Telegram API: {e}")
+        logger.error(f"Cannot connect to Telegram API: {e}")
         logger.error("Please check your internet connection or proxy settings")
         raise
     except Exception as e:
@@ -118,8 +117,7 @@ async def start_bot():
                 # But we run it in a background task so it doesn't block
                 await bot.updater.start_polling(
                     drop_pending_updates=True,
-                    allowed_updates=None,  # Get all update types
-                    stop_signals=None  # Don't handle signals, let FastAPI handle them
+                    allowed_updates=None  # Get all update types
                 )
             except asyncio.CancelledError:
                 logger.info("Polling task was cancelled")

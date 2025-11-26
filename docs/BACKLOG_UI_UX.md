@@ -12,508 +12,581 @@
 
 ---
 
-## 🎨 EPIC 1 — راه‌اندازی زیرساخت Frontend (Core Setup)
+## 📊 خلاصه وضعیت Backlog
+
+**تاریخ آخرین بررسی:** 2025-01-26  
+**وضعیت کلی:** ⚠️ **حدود 40% از Backlog تکمیل شده**
+
+### ✅ قابلیت‌های پیاده‌سازی شده:
+- پروژه React + Vite + TypeScript
+- Dark Mode کامل
+- i18n با react-i18next (فارسی/انگلیسی)
+- Dashboard با نمودارهای Recharts
+- صفحات مدیریتی کامل (Tickets, Users, Branches, Departments, SLA, Automation, Custom Fields)
+- Mobile Navigation
+- Notification Bell
+- Onboarding Wizard
+- User Portal
+- Custom Fields Integration
+- Time Tracker در TicketDetail
+- Knowledge Suggestions
+- Export به PDF/Excel/CSV
+- انیمیشن‌های ساده (fade-in)
+
+### ❌ قابلیت‌های اصلی کمبود:
+- GSAP و Framer Motion (انیمیشن‌های پیشرفته)
+- React Query (مدیریت state و caching)
+- TailwindCSS (استفاده از CSS Variables)
+- ECharts (Recharts استفاده شده)
+- Headless UI
+- Drag & Drop برای داشبورد
+- Web Push Notifications
+- Asset Management UI
+- Monitoring UI کامل
+- Omni Search
+- Multi-Step Forms پیشرفته
+- Performance Optimizations
+
+---
+
+## 🎨 EPIC 1 — راه‌اندازی زیرساخت Frontend (Core Setup) ⚠️ **50% تکمیل شده**
 
 هدف: راه‌اندازی پروژه React/Next.js با تمام کتابخانه‌های ضروری و تنظیمات اولیه.
 
-### Story EP1-S1 — راه‌اندازی پروژه Next.js با TypeScript
+**نکته:** پروژه با **Vite + React + TypeScript** راه‌اندازی شده است (نه Next.js).
+
+### Story EP1-S1 — راه‌اندازی پروژه Next.js با TypeScript ⚠️ **با Vite پیاده‌سازی شده**
 
 **As a** developer  
 **I want to** set up a Next.js project with TypeScript  
 **So that I can** build a scalable and type-safe frontend application
 
 - **Tasks**
-  - **Task 1**: ایجاد پروژه Next.js با `npx create-next-app@latest` با تنظیمات TypeScript
-  - **Task 2**: تنظیم ESLint و Prettier برای کدهای یکپارچه
-  - **Task 3**: پیکربندی `tsconfig.json` با strict mode
-  - **Task 4**: ساختاردهی پوشه‌ها (components, pages, hooks, utils, types)
-  - **Task 5**: تنظیم محیط‌های توسعه و تولید (`.env.local`, `.env.production`)
-  - **Task 6**: راه‌اندازی Git hooks با Husky برای pre-commit checks
+  - ✅ **Task 1**: پروژه با Vite + React + TypeScript راه‌اندازی شده
+  - ❌ **Task 2**: ESLint و Prettier تنظیم نشده
+  - ✅ **Task 3**: `tsconfig.json` با تنظیمات مناسب موجود است
+  - ✅ **Task 4**: ساختار پوشه‌ها منطقی است (components, pages, hooks, services, routes)
+  - ⚠️ **Task 5**: تنظیمات محیطی موجود است اما کامل نیست
+  - ❌ **Task 6**: Git hooks با Husky راه‌اندازی نشده
 
 - **Acceptance Criteria**
-  - پروژه Next.js با TypeScript راه‌اندازی شده باشد.
-  - ESLint و Prettier به‌درستی کار کنند.
-  - ساختار پوشه‌ها منطقی و قابل توسعه باشد.
-  - پروژه بدون خطا build شود (`npm run build`).
+  - ✅ پروژه React + Vite + TypeScript راه‌اندازی شده است.
+  - ❌ ESLint و Prettier تنظیم نشده‌اند.
+  - ✅ ساختار پوشه‌ها منطقی و قابل توسعه است.
+  - ✅ پروژه بدون خطا build می‌شود (`npm run build`).
 
 ---
 
-### Story EP1-S2 — نصب و پیکربندی TailwindCSS
+### Story EP1-S2 — نصب و پیکربندی TailwindCSS ❌ **انجام نشده - از CSS Variables استفاده شده**
 
 **As a** developer  
 **I want to** configure TailwindCSS with custom theme  
 **So that I can** build responsive and consistent UI components
 
+**نکته:** به جای TailwindCSS از **CSS Variables** برای styling استفاده شده است که کار می‌کند اما TailwindCSS نیست.
+
 - **Tasks**
-  - **Task 1**: نصب TailwindCSS و dependencies (`tailwindcss`, `postcss`, `autoprefixer`)
-  - **Task 2**: ایجاد فایل `tailwind.config.js` با رنگ‌های سفارشی سیستم
-  - **Task 3**: تعریف رنگ‌های تم روشن و تاریک (light/dark mode)
-  - **Task 4**: تنظیم breakpoints برای موبایل، تبلت و دسکتاپ
-  - **Task 5**: اضافه کردن فونت‌های فارسی (Vazir یا Shabnam)
-  - **Task 6**: ایجاد utility classes سفارشی برای spacing و typography
+  - ❌ **Task 1**: TailwindCSS نصب نشده
+  - ⚠️ **Task 2**: CSS Variables با رنگ‌های سفارشی تعریف شده
+  - ✅ **Task 3**: رنگ‌های تم روشن و تاریک با CSS Variables پیاده‌سازی شده
+  - ✅ **Task 4**: Responsive با media queries پیاده‌سازی شده
+  - ❌ **Task 5**: فونت‌های فارسی اضافه نشده (از فونت‌های سیستم استفاده می‌شود)
+  - ⚠️ **Task 6**: Utility classes با CSS Variables موجود است اما محدود
 
 - **Acceptance Criteria**
-  - TailwindCSS به‌درستی در پروژه کار کند.
-  - تم روشن و تاریک قابل تعویض باشد.
-  - فونت‌های فارسی به‌درستی نمایش داده شوند.
-  - تمام breakpoints تست شده باشند.
+  - ❌ TailwindCSS استفاده نشده (CSS Variables استفاده شده).
+  - ✅ تم روشن و تاریک قابل تعویض است.
+  - ❌ فونت‌های فارسی اضافه نشده.
+  - ✅ Responsive در موبایل و دسکتاپ کار می‌کند.
 
 ---
 
-### Story EP1-S3 — راه‌اندازی React Query (TanStack Query)
+### Story EP1-S3 — راه‌اندازی React Query (TanStack Query) ❌ **انجام نشده - از fetch مستقیم استفاده شده**
 
 **As a** developer  
 **I want to** set up React Query for data fetching  
 **So that I can** manage API calls efficiently with caching and auto-refresh
 
+**نکته:** از **fetch مستقیم** با custom hooks استفاده شده است. React Query نصب نشده.
+
 - **Tasks**
-  - **Task 1**: نصب `@tanstack/react-query` و `@tanstack/react-query-devtools`
-  - **Task 2**: ایجاد `QueryClient` با تنظیمات پیش‌فرض (staleTime, cacheTime, retry)
-  - **Task 3**: ساخت custom hooks برای API calls (مثل `useTickets`, `useBranches`)
-  - **Task 4**: پیکربندی React Query DevTools برای محیط توسعه
-  - **Task 5**: ایجاد error boundary برای مدیریت خطاهای React Query
-  - **Task 6**: مستندسازی pattern استفاده از React Query در پروژه
+  - ❌ **Task 1**: React Query نصب نشده
+  - ❌ **Task 2**: QueryClient ایجاد نشده
+  - ⚠️ **Task 3**: Custom hooks برای API calls موجود است (`useNotifications`) اما محدود
+  - ❌ **Task 4**: React Query DevTools وجود ندارد
+  - ⚠️ **Task 5**: Error Boundary موجود است اما برای React Query نیست
+  - ❌ **Task 6**: مستندسازی pattern وجود ندارد
 
 - **Acceptance Criteria**
-  - React Query به‌درستی پیکربندی شده باشد.
-  - تمام API calls از React Query استفاده کنند.
-  - کش هوشمند برای لیست تیکت‌ها، وضعیت شعب و روترها کار کند.
-  - Auto-refresh برای داده‌های real-time (مثل وضعیت شبکه) فعال باشد.
+  - ❌ React Query استفاده نشده (fetch مستقیم استفاده شده).
+  - ❌ API calls از React Query استفاده نمی‌کنند.
+  - ❌ کش هوشمند وجود ندارد.
+  - ⚠️ Auto-refresh فقط برای notifications موجود است (polling).
 
 ---
 
-### Story EP1-S4 — نصب و پیکربندی GSAP + ScrollTrigger
+### Story EP1-S4 — نصب و پیکربندی GSAP + ScrollTrigger ❌ **انجام نشده**
 
 **As a** developer  
 **I want to** integrate GSAP for advanced animations  
 **So that I can** create smooth and professional UI animations
 
+**نکته:** فقط انیمیشن‌های ساده CSS (fade-in) موجود است. GSAP استفاده نشده.
+
 - **Tasks**
-  - **Task 1**: نصب `gsap` و `@gsap/react`
-  - **Task 2**: ایجاد utility functions برای انیمیشن‌های رایج (fadeIn, slideUp, stagger)
-  - **Task 3**: پیکربندی ScrollTrigger برای انیمیشن‌های اسکرول
-  - **Task 4**: ایجاد custom hooks برای استفاده از GSAP در کامپوننت‌ها
-  - **Task 5**: تست performance انیمیشن‌ها در مرورگرهای مختلف
-  - **Task 6**: مستندسازی best practices برای استفاده از GSAP
+  - ❌ **Task 1**: GSAP نصب نشده
+  - ⚠️ **Task 2**: فقط fade-in animation با CSS موجود است
+  - ❌ **Task 3**: ScrollTrigger وجود ندارد
+  - ❌ **Task 4**: Custom hooks برای GSAP وجود ندارد
+  - ❌ **Task 5**: تست performance انجام نشده
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - GSAP به‌درستی در پروژه نصب و پیکربندی شده باشد.
-  - ScrollTrigger برای انیمیشن‌های اسکرول کار کند.
-  - انیمیشن‌ها smooth و بدون lag باشند.
-  - Performance در Chrome DevTools قابل قبول باشد (60 FPS).
+  - ❌ GSAP استفاده نشده.
+  - ❌ ScrollTrigger وجود ندارد.
+  - ⚠️ انیمیشن‌های ساده موجود است (fade-in).
+  - ❌ Performance تست نشده.
 
 ---
 
-### Story EP1-S5 — نصب و پیکربندی Framer Motion
+### Story EP1-S5 — نصب و پیکربندی Framer Motion ❌ **انجام نشده**
 
 **As a** developer  
 **I want to** set up Framer Motion for component animations  
 **So that I can** create smooth page transitions and micro-interactions
 
+**نکته:** Framer Motion استفاده نشده. فقط CSS transitions ساده موجود است.
+
 - **Tasks**
-  - **Task 1**: نصب `framer-motion`
-  - **Task 2**: ایجاد wrapper component برای page transitions
-  - **Task 3**: تعریف preset animations (fade, slide, scale)
-  - **Task 4**: ساخت custom variants برای انیمیشن‌های رایج
-  - **Task 5**: تست compatibility با GSAP (استفاده همزمان)
-  - **Task 6**: مستندسازی pattern استفاده از Framer Motion
+  - ❌ **Task 1**: Framer Motion نصب نشده
+  - ❌ **Task 2**: Wrapper component برای page transitions وجود ندارد
+  - ⚠️ **Task 3**: فقط fade-in animation با CSS موجود است
+  - ❌ **Task 4**: Custom variants وجود ندارد
+  - ❌ **Task 5**: تست compatibility انجام نشده
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - Framer Motion به‌درستی کار کند.
-  - Page transitions smooth باشند.
-  - Micro-interactions (hover, click) با Framer Motion پیاده‌سازی شوند.
-  - Performance قابل قبول باشد.
+  - ❌ Framer Motion استفاده نشده.
+  - ❌ Page transitions پیشرفته وجود ندارد.
+  - ⚠️ Micro-interactions ساده با CSS موجود است (hover effects).
+  - ❌ Performance تست نشده.
 
 ---
 
-### Story EP1-S6 — نصب و پیکربندی ECharts برای نمودارها
+### Story EP1-S6 — نصب و پیکربندی ECharts برای نمودارها ⚠️ **Recharts استفاده شده (نه ECharts)**
 
 **As a** developer  
 **I want to** integrate ECharts for data visualization  
 **So that I can** display professional charts and graphs in dashboards
 
+**نکته:** به جای ECharts از **Recharts** استفاده شده است که کار می‌کند اما ECharts نیست.
+
 - **Tasks**
-  - **Task 1**: نصب `echarts` و `echarts-for-react`
-  - **Task 2**: ایجاد wrapper component برای نمودارهای رایج (Line, Bar, Pie, Gauge)
-  - **Task 3**: تعریف theme سفارشی برای نمودارها (رنگ‌های سیستم)
-  - **Task 4**: پیکربندی responsive charts برای موبایل
-  - **Task 5**: ایجاد custom chart components (KPI Box, Uptime Chart, SLA Chart)
-  - **Task 6**: تست performance با داده‌های بزرگ (1000+ نقطه)
+  - ⚠️ **Task 1**: Recharts نصب شده (نه ECharts)
+  - ✅ **Task 2**: نمودارهای مختلف پیاده‌سازی شده (Bar, Pie, Line, Area, Radar)
+  - ✅ **Task 3**: Theme با CSS Variables هماهنگ است
+  - ✅ **Task 4**: نمودارها responsive هستند
+  - ✅ **Task 5**: نمودارهای KPI و SLA موجود است
+  - ❌ **Task 6**: تست performance با داده‌های بزرگ انجام نشده
 
 - **Acceptance Criteria**
-  - ECharts به‌درستی در پروژه کار کند.
-  - نمودارها responsive باشند.
-  - Theme با رنگ‌های سیستم هماهنگ باشد.
-  - Performance با داده‌های بزرگ قابل قبول باشد.
+  - ⚠️ Recharts استفاده شده (نه ECharts).
+  - ✅ نمودارها responsive هستند.
+  - ✅ Theme با رنگ‌های سیستم هماهنگ است.
+  - ❌ Performance با داده‌های بزرگ تست نشده.
 
 ---
 
-### Story EP1-S7 — نصب و پیکربندی Headless UI
+### Story EP1-S7 — نصب و پیکربندی Headless UI ❌ **انجام نشده**
 
 **As a** developer  
 **I want to** set up Headless UI components  
 **So that I can** build accessible and customizable UI components
 
+**نکته:** Headless UI استفاده نشده. کامپوننت‌ها با HTML/CSS ساده ساخته شده‌اند.
+
 - **Tasks**
-  - **Task 1**: نصب `@headlessui/react`
-  - **Task 2**: ایجاد wrapper components برای Dialog, Dropdown, Menu, Tabs
-  - **Task 3**: اضافه کردن انیمیشن‌های Framer Motion به Headless UI components
-  - **Task 4**: تست accessibility با screen readers
-  - **Task 5**: مستندسازی استفاده از Headless UI components
-  - **Task 6**: ایجاد Storybook (اختیاری) برای نمایش کامپوننت‌ها
+  - ❌ **Task 1**: Headless UI نصب نشده
+  - ⚠️ **Task 2**: کامپوننت‌های ساده موجود است اما Headless UI نیست
+  - ❌ **Task 3**: انیمیشن‌های Framer Motion وجود ندارد
+  - ❌ **Task 4**: تست accessibility انجام نشده
+  - ❌ **Task 5**: مستندسازی وجود ندارد
+  - ❌ **Task 6**: Storybook وجود ندارد
 
 - **Acceptance Criteria**
-  - Headless UI به‌درستی کار کند.
-  - تمام کامپوننت‌ها accessible باشند (WCAG 2.1 AA).
-  - انیمیشن‌ها smooth باشند.
-  - کامپوننت‌ها قابل استفاده مجدد باشند.
+  - ❌ Headless UI استفاده نشده.
+  - ❌ Accessibility تست نشده.
+  - ⚠️ انیمیشن‌های ساده موجود است.
+  - ✅ کامپوننت‌ها قابل استفاده مجدد هستند.
 
 ---
 
-## 🎯 EPIC 2 — سیستم احراز هویت و Onboarding (Auth UI/UX)
+## 🎯 EPIC 2 — سیستم احراز هویت و Onboarding (Auth UI/UX) ⚠️ **67% تکمیل شده**
 
 هدف: طراحی و پیاده‌سازی رابط کاربری احراز هویت با انیمیشن‌های حرفه‌ای و تجربه کاربری عالی.
 
-### Story EP2-S1 — صفحه لاگین با انیمیشن‌های GSAP
+### Story EP2-S1 — صفحه لاگین با انیمیشن‌های GSAP ⚠️ **صفحه لاگین موجود است اما GSAP نیست**
 
 **As a** user  
 **I want to** see a beautiful login page with smooth animations  
 **So that I can** have a pleasant first impression of the system
 
 - **Tasks**
-  - **Task 1**: طراحی UI صفحه لاگین با TailwindCSS
-  - **Task 2**: پیاده‌سازی انیمیشن fade-in برای فرم با GSAP
-  - **Task 3**: اضافه کردن انیمیشن stagger برای input fields
-  - **Task 4**: پیاده‌سازی validation با نمایش خطا به صورت انیمیشن slide-down
-  - **Task 5**: اضافه کردن loading state با spinner انیمیشن‌دار
-  - **Task 6**: تست responsive در موبایل و دسکتاپ
+  - ✅ **Task 1**: UI صفحه لاگین با CSS Variables طراحی شده
+  - ⚠️ **Task 2**: انیمیشن fade-in با CSS موجود است (نه GSAP)
+  - ❌ **Task 3**: انیمیشن stagger برای input fields وجود ندارد
+  - ⚠️ **Task 4**: Validation موجود است اما انیمیشن slide-down نیست
+  - ✅ **Task 5**: Loading state با spinner موجود است
+  - ✅ **Task 6**: Responsive در موبایل و دسکتاپ کار می‌کند
 
 - **Acceptance Criteria**
-  - صفحه لاگین با انیمیشن fade-in نمایش داده شود.
-  - Input fields به ترتیب با stagger animation ظاهر شوند.
-  - پیام‌های خطا با انیمیشن slide-down نمایش یابند.
-  - Loading state با spinner نمایش داده شود.
-  - صفحه در موبایل و دسکتاپ به‌درستی کار کند.
+  - ✅ صفحه لاگین با انیمیشن fade-in نمایش داده می‌شود.
+  - ❌ Input fields با stagger animation ظاهر نمی‌شوند.
+  - ⚠️ پیام‌های خطا نمایش داده می‌شوند اما انیمیشن slide-down نیست.
+  - ✅ Loading state با spinner نمایش داده می‌شود.
+  - ✅ صفحه در موبایل و دسکتاپ به‌درستی کار می‌کند.
 
 ---
 
-### Story EP2-S2 — صفحه ثبت‌نام با Multi-Step Form
+### Story EP2-S2 — صفحه ثبت‌نام با Multi-Step Form ❌ **انجام نشده**
 
 **As a** new user  
 **I want to** register through a multi-step form with progress animation  
 **So that I can** complete registration easily and see my progress
 
+**نکته:** صفحه ثبت‌نام وجود ندارد. کاربران از طریق Admin ایجاد می‌شوند.
+
 - **Tasks**
-  - **Task 1**: طراحی Multi-Step Form با 3 مرحله (اطلاعات شخصی، تأیید کد، تنظیم رمز)
-  - **Task 2**: پیاده‌سازی Progress Bar با انیمیشن GSAP (counter animation)
-  - **Task 3**: اضافه کردن انیمیشن slide بین مراحل با Framer Motion
-  - **Task 4**: پیاده‌سازی validation برای هر مرحله
-  - **Task 5**: اضافه کردن انیمیشن success state پس از تکمیل هر مرحله
-  - **Task 6**: تست UX در موبایل (تجربه touch-friendly)
+  - ❌ **Task 1**: صفحه ثبت‌نام وجود ندارد
+  - ❌ **Task 2**: Progress Bar وجود ندارد
+  - ❌ **Task 3**: انیمیشن slide وجود ندارد
+  - ❌ **Task 4**: Validation برای ثبت‌نام وجود ندارد
+  - ❌ **Task 5**: انیمیشن success وجود ندارد
+  - ❌ **Task 6**: تست UX انجام نشده
 
 - **Acceptance Criteria**
-  - فرم Multi-Step با 3 مرحله کار کند.
-  - Progress Bar با انیمیشن counter نمایش داده شود.
-  - ترنزیشن بین مراحل smooth باشد (slide animation).
-  - Validation برای هر مرحله به‌درستی کار کند.
-  - پس از تکمیل، انیمیشن success نمایش یابد.
+  - ❌ فرم Multi-Step وجود ندارد.
+  - ❌ Progress Bar وجود ندارد.
+  - ❌ ترنزیشن بین مراحل وجود ندارد.
+  - ❌ Validation برای ثبت‌نام وجود ندارد.
+  - ❌ انیمیشن success وجود ندارد.
 
 ---
 
-### Story EP2-S3 — Onboarding با Tooltips انیمیشن‌دار
+### Story EP2-S3 — Onboarding با Tooltips انیمیشن‌دار ⚠️ **Onboarding Wizard موجود است اما Tooltips نیست**
 
 **As a** new user  
 **I want to** see guided tooltips that explain the system  
 **So that I can** learn how to use the system effectively
 
+**نکته:** **OnboardingWizard** پیاده‌سازی شده است اما Tooltips انیمیشن‌دار نیست. یک Multi-Step Form برای جمع‌آوری اطلاعات کاربر است.
+
 - **Tasks**
-  - **Task 1**: طراحی سیستم Onboarding با Tooltips
-  - **Task 2**: پیاده‌سازی انیمیشن fade-in برای هر Tooltip با GSAP Timeline
-  - **Task 3**: اضافه کردن highlight effect برای عناصر مورد اشاره
-  - **Task 4**: پیاده‌سازی navigation بین Tooltips (قبلی/بعدی)
-  - **Task 5**: ذخیره وضعیت Onboarding در localStorage
-  - **Task 6**: اضافه کردن skip option برای کاربران باتجربه
+  - ✅ **Task 1**: OnboardingWizard موجود است (اما Tooltips نیست)
+  - ❌ **Task 2**: انیمیشن fade-in با GSAP Timeline وجود ندارد
+  - ❌ **Task 3**: Highlight effect برای عناصر وجود ندارد
+  - ✅ **Task 4**: Navigation بین مراحل موجود است
+  - ✅ **Task 5**: وضعیت Onboarding در localStorage ذخیره می‌شود
+  - ⚠️ **Task 6**: Skip option موجود است اما کامل نیست
 
 - **Acceptance Criteria**
-  - Tooltips به ترتیب با انیمیشن fade-in نمایش داده شوند.
-  - عناصر مورد اشاره با highlight effect برجسته شوند.
-  - Navigation بین Tooltips کار کند.
-  - وضعیت Onboarding ذخیره شود (کاربر دوباره نبینید).
-  - امکان skip کردن Onboarding وجود داشته باشد.
+  - ⚠️ Onboarding Wizard موجود است اما Tooltips نیست.
+  - ❌ انیمیشن fade-in با GSAP Timeline وجود ندارد.
+  - ❌ Highlight effect وجود ندارد.
+  - ✅ Navigation بین مراحل کار می‌کند.
+  - ✅ وضعیت Onboarding ذخیره می‌شود.
+  - ⚠️ امکان skip موجود است.
 
 ---
 
-## 📊 EPIC 3 — داشبورد اصلی (Main Dashboard)
+## 📊 EPIC 3 — داشبورد اصلی (Main Dashboard) ✅ **75% تکمیل شده**
 
 هدف: ساخت داشبورد پویا و تعاملی با انیمیشن‌های حرفه‌ای و نمایش real-time data.
 
-### Story EP3-S1 — داشبورد با کارت‌های KPI انیمیشن‌دار
+### Story EP3-S1 — داشبورد با کارت‌های KPI انیمیشن‌دار ⚠️ **کارت‌های KPI موجود است اما انیمیشن‌های پیشرفته نیست**
 
 **As a** user  
 **I want to** see animated KPI cards on the dashboard  
 **So that I can** quickly understand system status
 
 - **Tasks**
-  - **Task 1**: طراحی کارت‌های KPI (Total Tickets, Open Tickets, SLA Status, Network Uptime)
-  - **Task 2**: پیاده‌سازی انیمیشن stagger برای نمایش کارت‌ها با GSAP
-  - **Task 3**: اضافه کردن counter animation برای اعداد (0 تا مقدار نهایی)
-  - **Task 4**: پیاده‌سازی pulse animation برای کارت‌های با وضعیت هشدار
-  - **Task 5**: اضافه کردن hover effect با scale animation (Framer Motion)
-  - **Task 6**: اتصال به API با React Query برای real-time updates
+  - ✅ **Task 1**: کارت‌های KPI موجود است (Total Tickets, Open Tickets, SLA Status)
+  - ❌ **Task 2**: انیمیشن stagger با GSAP وجود ندارد
+  - ❌ **Task 3**: Counter animation برای اعداد وجود ندارد
+  - ❌ **Task 4**: Pulse animation برای کارت‌های هشدار وجود ندارد
+  - ⚠️ **Task 5**: Hover effect ساده با CSS موجود است (نه Framer Motion)
+  - ⚠️ **Task 6**: اتصال به API موجود است اما React Query نیست (fetch مستقیم)
 
 - **Acceptance Criteria**
-  - کارت‌های KPI با انیمیشن stagger نمایش داده شوند.
-  - اعداد با counter animation از 0 تا مقدار نهایی شمارش شوند.
-  - کارت‌های با وضعیت هشدار pulse animation داشته باشند.
-  - Hover effect با scale animation کار کند.
-  - داده‌ها به صورت real-time به‌روزرسانی شوند (هر 30 ثانیه).
+  - ✅ کارت‌های KPI نمایش داده می‌شوند.
+  - ❌ انیمیشن stagger وجود ندارد.
+  - ❌ Counter animation وجود ندارد.
+  - ❌ Pulse animation وجود ندارد.
+  - ⚠️ Hover effect ساده موجود است.
+  - ⚠️ داده‌ها به‌روزرسانی می‌شوند اما real-time نیست (manual refresh).
 
 ---
 
-### Story EP3-S2 — نمودارهای Real-Time با ECharts
+### Story EP3-S2 — نمودارهای Real-Time با ECharts ⚠️ **نمودارها با Recharts موجود است اما Real-Time نیست**
 
 **As a** user  
 **I want to** see real-time charts that update smoothly  
 **So that I can** monitor system metrics visually
 
+**نکته:** نمودارها با **Recharts** پیاده‌سازی شده‌اند (نه ECharts) و Real-Time نیستند.
+
 - **Tasks**
-  - **Task 1**: طراحی نمودار Line Chart برای Uptime (24 ساعت گذشته)
-  - **Task 2**: طراحی نمودار Bar Chart برای تعداد تیکت‌ها بر اساس اولویت
-  - **Task 3**: طراحی نمودار Pie Chart برای توزیع تیکت‌ها بر اساس وضعیت
-  - **Task 4**: پیاده‌سازی انیمیشن ورودی برای نمودارها با GSAP (fade-in + scale)
-  - **Task 5**: اضافه کردن انیمیشن داده‌ها هنگام به‌روزرسانی (smooth transition)
-  - **Task 6**: پیکربندی ECharts برای responsive و dark mode
+  - ⚠️ **Task 1**: نمودار Line Chart موجود است (نه برای Uptime)
+  - ✅ **Task 2**: نمودار Bar Chart برای تیکت‌ها بر اساس اولویت موجود است
+  - ✅ **Task 3**: نمودار Pie Chart برای توزیع تیکت‌ها بر اساس وضعیت موجود است
+  - ⚠️ **Task 4**: انیمیشن fade-in ساده با CSS موجود است (نه GSAP)
+  - ❌ **Task 5**: انیمیشن داده‌ها هنگام به‌روزرسانی وجود ندارد
+  - ✅ **Task 6**: نمودارها responsive و dark mode را پشتیبانی می‌کنند
 
 - **Acceptance Criteria**
-  - نمودارها با انیمیشن fade-in + scale نمایش داده شوند.
-  - داده‌ها به صورت real-time به‌روزرسانی شوند.
-  - ترنزیشن داده‌ها smooth باشد (بدون jump).
-  - نمودارها responsive باشند (موبایل و دسکتاپ).
-  - نمودارها در dark mode به‌درستی نمایش داده شوند.
+  - ⚠️ نمودارها با fade-in ساده نمایش داده می‌شوند (نه fade-in + scale).
+  - ❌ داده‌ها real-time به‌روزرسانی نمی‌شوند (manual refresh).
+  - ❌ ترنزیشن داده‌ها smooth نیست.
+  - ✅ نمودارها responsive هستند.
+  - ✅ نمودارها در dark mode به‌درستی نمایش داده می‌شوند.
 
 ---
 
-### Story EP3-S3 — Drag & Drop برای کارت‌های داشبورد
+### Story EP3-S3 — Drag & Drop برای کارت‌های داشبورد ❌ **انجام نشده**
 
 **As a** user  
 **I want to** rearrange dashboard cards by dragging  
 **So that I can** customize my dashboard layout
 
 - **Tasks**
-  - **Task 1**: نصب `@dnd-kit/core` و `@dnd-kit/sortable`
-  - **Task 2**: پیاده‌سازی drag & drop برای کارت‌های KPI
-  - **Task 3**: اضافه کردن انیمیشن هنگام drag با Framer Motion
-  - **Task 4**: ذخیره ترتیب کارت‌ها در localStorage یا API
-  - **Task 5**: اضافه کردن visual feedback هنگام drag (opacity, scale)
-  - **Task 6**: تست UX در موبایل (touch events)
+  - ❌ **Task 1**: @dnd-kit نصب نشده
+  - ❌ **Task 2**: Drag & drop پیاده‌سازی نشده
+  - ❌ **Task 3**: انیمیشن هنگام drag وجود ندارد
+  - ❌ **Task 4**: ذخیره ترتیب کارت‌ها وجود ندارد
+  - ❌ **Task 5**: Visual feedback وجود ندارد
+  - ❌ **Task 6**: تست UX انجام نشده
 
 - **Acceptance Criteria**
-  - کاربر بتواند کارت‌ها را drag & drop کند.
-  - انیمیشن هنگام drag smooth باشد.
-  - ترتیب کارت‌ها ذخیره شود و بعد از refresh حفظ شود.
-  - Visual feedback هنگام drag نمایش داده شود.
-  - در موبایل با touch events کار کند.
+  - ❌ Drag & drop وجود ندارد.
+  - ❌ انیمیشن هنگام drag وجود ندارد.
+  - ❌ ترتیب کارت‌ها ذخیره نمی‌شود.
+  - ❌ Visual feedback وجود ندارد.
+  - ❌ در موبایل کار نمی‌کند.
 
 ---
 
-### Story EP3-S4 — Live Status Bar برای شعب
+### Story EP3-S4 — Live Status Bar برای شعب ❌ **انجام نشده**
 
 **As a** user  
 **I want to** see a live status bar showing all branches  
 **So that I can** quickly identify which branches have issues
 
+**نکته:** Status Bar برای شعب وجود ندارد. فقط گزارش‌های آماری موجود است.
+
 - **Tasks**
-  - **Task 1**: طراحی Status Bar با نمایش وضعیت شعب (سبز/زرد/قرمز)
-  - **Task 2**: پیاده‌سازی انیمیشن slide چپ/راست هنگام تغییر وضعیت با GSAP
-  - **Task 3**: اضافه کردن tooltip برای نمایش جزئیات هر شعبه
-  - **Task 4**: اتصال به WebSocket یا polling برای real-time updates
-  - **Task 5**: پیاده‌سازی pulse animation برای شعب با مشکل
-  - **Task 6**: تست performance با تعداد زیاد شعب (50+)
+  - ❌ **Task 1**: Status Bar طراحی نشده
+  - ❌ **Task 2**: انیمیشن slide وجود ندارد
+  - ❌ **Task 3**: Tooltip برای شعب وجود ندارد
+  - ❌ **Task 4**: WebSocket یا polling برای real-time وجود ندارد
+  - ❌ **Task 5**: Pulse animation وجود ندارد
+  - ❌ **Task 6**: تست performance انجام نشده
 
 - **Acceptance Criteria**
-  - Status Bar وضعیت تمام شعب را نمایش دهد.
-  - انیمیشن slide هنگام تغییر وضعیت smooth باشد.
-  - Tooltip جزئیات هر شعبه را نمایش دهد.
-  - به‌روزرسانی real-time کار کند.
-  - Pulse animation برای شعب با مشکل نمایش داده شود.
+  - ❌ Status Bar وجود ندارد.
+  - ❌ انیمیشن slide وجود ندارد.
+  - ❌ Tooltip وجود ندارد.
+  - ❌ به‌روزرسانی real-time وجود ندارد.
+  - ❌ Pulse animation وجود ندارد.
 
 ---
 
-## 🎫 EPIC 4 — سیستم تیکتینگ (Ticketing UI/UX)
+## 🎫 EPIC 4 — سیستم تیکتینگ (Ticketing UI/UX) ✅ **80% تکمیل شده**
 
 هدف: ساخت رابط کاربری کامل برای مدیریت تیکت‌ها با انیمیشن‌های حرفه‌ای و UX عالی.
 
-### Story EP4-S1 — صفحه لیست تیکت‌ها با فیلتر و جستجو
+### Story EP4-S1 — صفحه لیست تیکت‌ها با فیلتر و جستجو ✅ **انجام شده**
 
 **As a** user  
 **I want to** see a list of tickets with filters and search  
 **So that I can** quickly find the tickets I need
 
 - **Tasks**
-  - **Task 1**: طراحی جدول تیکت‌ها با TailwindCSS (responsive)
-  - **Task 2**: پیاده‌سازی فیلترها (وضعیت، اولویت، شعبه، Agent)
-  - **Task 3**: اضافه کردن جستجوی هوشمند (Omni Search) با debounce
-  - **Task 4**: پیاده‌سازی pagination با infinite scroll یا numbered pages
-  - **Task 5**: اضافه کردن انیمیشن fade-in برای ردیف‌های جدول با GSAP stagger
-  - **Task 6**: پیاده‌سازی hover effect برای ردیف‌ها (highlight با Framer Motion)
+  - ✅ **Task 1**: جدول تیکت‌ها با CSS Variables responsive است
+  - ✅ **Task 2**: فیلترها پیاده‌سازی شده (وضعیت، اولویت، شعبه، Agent، تاریخ، شماره تیکت)
+  - ⚠️ **Task 3**: جستجو موجود است اما Omni Search نیست (جستجو در عنوان)
+  - ✅ **Task 4**: Pagination با numbered pages پیاده‌سازی شده
+  - ⚠️ **Task 5**: انیمیشن fade-in ساده موجود است (نه GSAP stagger)
+  - ✅ **Task 6**: Hover effect برای ردیف‌ها با CSS موجود است
 
 - **Acceptance Criteria**
-  - جدول تیکت‌ها responsive باشد.
-  - فیلترها به‌درستی کار کنند.
-  - جستجو با debounce (300ms) کار کند.
-  - Pagination کار کند.
-  - ردیف‌ها با انیمیشن stagger نمایش داده شوند.
-  - Hover effect برای ردیف‌ها کار کند.
+  - ✅ جدول تیکت‌ها responsive است.
+  - ✅ فیلترها به‌درستی کار می‌کنند.
+  - ⚠️ جستجو کار می‌کند اما debounce نیست (client-side filter).
+  - ✅ Pagination کار می‌کند.
+  - ⚠️ ردیف‌ها با fade-in ساده نمایش داده می‌شوند (نه stagger).
+  - ✅ Hover effect برای ردیف‌ها کار می‌کند.
 
 ---
 
-### Story EP4-S2 — انیمیشن اولویت‌بندی تیکت‌ها
+### Story EP4-S2 — انیمیشن اولویت‌بندی تیکت‌ها ⚠️ **اولویت‌ها نمایش داده می‌شوند اما انیمیشن‌های پیشرفته نیست**
 
 **As a** user  
 **I want to** see visual animations for ticket priorities  
 **So that I can** quickly identify urgent tickets
 
+**نکته:** اولویت‌ها با رنگ و emoji نمایش داده می‌شوند اما انیمیشن‌های پیشرفته وجود ندارد.
+
 - **Tasks**
-  - **Task 1**: تعریف رنگ‌ها و آیکون‌ها برای هر اولویت
-  - **Task 2**: پیاده‌سازی shake animation برای تیکت‌های Critical با GSAP
-  - **Task 3**: اضافه کردن pulse animation برای تیکت‌های High
-  - **Task 4**: پیاده‌سازی border pulse برای تیکت‌های نزدیک به SLA deadline
-  - **Task 5**: اضافه کردن tooltip برای نمایش زمان باقی‌مانده تا SLA
-  - **Task 6**: تست performance با تعداد زیاد تیکت‌ها (100+)
+  - ✅ **Task 1**: رنگ‌ها و emoji برای هر اولویت تعریف شده
+  - ❌ **Task 2**: Shake animation برای Critical وجود ندارد
+  - ❌ **Task 3**: Pulse animation برای High وجود ندارد
+  - ❌ **Task 4**: Border pulse برای SLA deadline وجود ندارد
+  - ❌ **Task 5**: Tooltip برای زمان باقی‌مانده SLA وجود ندارد
+  - ✅ **Task 6**: Performance قابل قبول است
 
 - **Acceptance Criteria**
-  - تیکت‌های Critical shake animation داشته باشند.
-  - تیکت‌های High pulse animation داشته باشند.
-  - تیکت‌های نزدیک به SLA deadline border pulse داشته باشند.
-  - Tooltip زمان باقی‌مانده را نمایش دهد.
-  - Performance با 100+ تیکت قابل قبول باشد.
+  - ✅ اولویت‌ها با رنگ و emoji نمایش داده می‌شوند.
+  - ❌ Shake animation وجود ندارد.
+  - ❌ Pulse animation وجود ندارد.
+  - ❌ Border pulse وجود ندارد.
+  - ❌ Tooltip برای SLA وجود ندارد.
+  - ✅ Performance قابل قبول است.
 
 ---
 
-### Story EP4-S3 — صفحه جزئیات تیکت با Timeline
+### Story EP4-S3 — صفحه جزئیات تیکت با Timeline ✅ **انجام شده (بدون انیمیشن‌های پیشرفته)**
 
 **As a** user  
 **I want to** see ticket details with an animated timeline  
 **So that I can** track ticket history and events
 
+**نکته:** صفحه جزئیات تیکت با Timeline موجود است اما انیمیشن‌های پیشرفته نیست.
+
 - **Tasks**
-  - **Task 1**: طراحی صفحه جزئیات تیکت با Timeline
-  - **Task 2**: پیاده‌سازی انیمیشن fade-in برای Timeline items با GSAP
-  - **Task 3**: اضافه کردن انیمیشن slide برای پیام‌های جدید
-  - **Task 4**: پیاده‌سازی auto-scroll به آخرین پیام با smooth animation
-  - **Task 5**: اضافه کردن انیمیشن برای attach files (fade-in + scale)
-  - **Task 6**: تست UX در موبایل (تجربه touch-friendly)
+  - ✅ **Task 1**: صفحه جزئیات تیکت با Timeline موجود است
+  - ⚠️ **Task 2**: انیمیشن fade-in ساده موجود است (نه GSAP)
+  - ❌ **Task 3**: انیمیشن slide برای پیام‌های جدید وجود ندارد
+  - ❌ **Task 4**: Auto-scroll به آخرین پیام وجود ندارد
+  - ⚠️ **Task 5**: Attach files نمایش داده می‌شوند اما انیمیشن fade-in + scale نیست
+  - ✅ **Task 6**: صفحه در موبایل کار می‌کند
 
 - **Acceptance Criteria**
-  - Timeline با انیمیشن fade-in نمایش داده شود.
-  - پیام‌های جدید با انیمیشن slide ظاهر شوند.
-  - Auto-scroll به آخرین پیام smooth باشد.
-  - Attach files با انیمیشن fade-in + scale نمایش داده شوند.
-  - صفحه در موبایل به‌درستی کار کند.
+  - ✅ Timeline موجود است.
+  - ⚠️ انیمیشن fade-in ساده موجود است.
+  - ❌ انیمیشن slide برای پیام‌های جدید وجود ندارد.
+  - ❌ Auto-scroll وجود ندارد.
+  - ⚠️ Attach files نمایش داده می‌شوند.
+  - ✅ صفحه در موبایل کار می‌کند.
 
 ---
 
-### Story EP4-S4 — فرم ایجاد تیکت با Multi-Step
+### Story EP4-S4 — فرم ایجاد تیکت با Multi-Step ⚠️ **فرم ایجاد تیکت موجود است اما Multi-Step نیست**
 
 **As a** user  
 **I want to** create tickets through a multi-step form  
 **So that I can** provide all necessary information easily
 
+**نکته:** فرم ایجاد تیکت در UserPortal موجود است اما Multi-Step نیست. یک فرم ساده است.
+
 - **Tasks**
-  - **Task 1**: طراحی Multi-Step Form (اطلاعات اولیه، دسته‌بندی، اولویت، توضیحات)
-  - **Task 2**: پیاده‌سازی Progress Indicator با انیمیشن counter
-  - **Task 3**: اضافه کردن انیمیشن slide بین مراحل با Framer Motion
-  - **Task 4**: پیاده‌سازی validation برای هر مرحله
-  - **Task 5**: اضافه کردن preview قبل از submit
-  - **Task 6**: تست UX در موبایل
+  - ⚠️ **Task 1**: فرم ایجاد تیکت موجود است اما Multi-Step نیست
+  - ❌ **Task 2**: Progress Indicator وجود ندارد
+  - ❌ **Task 3**: انیمیشن slide بین مراحل وجود ندارد
+  - ✅ **Task 4**: Validation موجود است
+  - ❌ **Task 5**: Preview قبل از submit وجود ندارد
+  - ✅ **Task 6**: UX در موبایل کار می‌کند
 
 - **Acceptance Criteria**
-  - فرم Multi-Step با 4 مرحله کار کند.
-  - Progress Indicator با انیمیشن counter نمایش داده شود.
-  - ترنزیشن بین مراحل smooth باشد.
-  - Validation برای هر مرحله کار کند.
-  - Preview قبل از submit نمایش داده شود.
+  - ⚠️ فرم ایجاد تیکت موجود است اما Multi-Step نیست.
+  - ❌ Progress Indicator وجود ندارد.
+  - ❌ ترنزیشن بین مراحل وجود ندارد.
+  - ✅ Validation کار می‌کند.
+  - ❌ Preview وجود ندارد.
 
 ---
 
-## 📡 EPIC 5 — سیستم مانیتورینگ (Monitoring UI/UX)
+## 📡 EPIC 5 — سیستم مانیتورینگ (Monitoring UI/UX) ❌ **5% تکمیل شده**
 
 هدف: ساخت رابط کاربری برای مانیتورینگ شبکه، سرورها و سرویس‌ها با نمایش real-time data.
 
-### Story EP5-S1 — داشبورد مانیتورینگ شبکه
+**نکته:** فقط صفحه Infrastructure موجود است که برای ثبت اطلاعات است، نه مانیتورینگ real-time.
+
+### Story EP5-S1 — داشبورد مانیتورینگ شبکه ❌ **انجام نشده**
 
 **As a** network administrator  
 **I want to** see network status and metrics in real-time  
 **So that I can** monitor network health
 
 - **Tasks**
-  - **Task 1**: طراحی داشبورد مانیتورینگ با کارت‌های وضعیت
-  - **Task 2**: پیاده‌سازی نمودار Network Throughput با ECharts
-  - **Task 3**: اضافه کردن نمودار Packet Loss با Gauge Chart
-  - **Task 4**: پیاده‌سازی انیمیشن fade-in برای کارت‌ها با GSAP
-  - **Task 5**: اتصال به WebSocket برای real-time updates
-  - **Task 6**: اضافه کردن alert animation برای مشکلات شبکه
+  - ❌ **Task 1**: داشبورد مانیتورینگ طراحی نشده
+  - ❌ **Task 2**: نمودار Network Throughput وجود ندارد
+  - ❌ **Task 3**: نمودار Packet Loss وجود ندارد
+  - ❌ **Task 4**: انیمیشن fade-in برای کارت‌ها وجود ندارد
+  - ❌ **Task 5**: WebSocket برای real-time وجود ندارد
+  - ❌ **Task 6**: Alert animation وجود ندارد
 
 - **Acceptance Criteria**
-  - داشبورد وضعیت شبکه را نمایش دهد.
-  - نمودارها real-time به‌روزرسانی شوند.
-  - انیمیشن fade-in برای کارت‌ها کار کند.
-  - Alert animation برای مشکلات نمایش داده شود.
-  - Performance قابل قبول باشد.
+  - ❌ داشبورد مانیتورینگ وجود ندارد.
+  - ❌ نمودارها real-time نیستند.
+  - ❌ انیمیشن fade-in وجود ندارد.
+  - ❌ Alert animation وجود ندارد.
+  - ❌ Performance تست نشده.
 
 ---
 
-### Story EP5-S2 — مانیتورینگ روترهای Mikrotik
+### Story EP5-S2 — مانیتورینگ روترهای Mikrotik ❌ **انجام نشده**
 
 **As a** network administrator  
 **I want to** monitor Mikrotik routers with visual indicators  
 **So that I can** quickly identify router issues
 
 - **Tasks**
-  - **Task 1**: طراحی کارت‌های وضعیت روترها
-  - **Task 2**: پیاده‌سازی نمودار Interface Traffic با ECharts
-  - **Task 3**: اضافه کردن Ping Status با color coding (سبز/زرد/قرمز)
-  - **Task 4**: پیاده‌سازی pulse animation برای روترهای down
-  - **Task 5**: اضافه کردن tooltip برای جزئیات هر روتر
-  - **Task 6**: تست با تعداد زیاد روترها (20+)
+  - ❌ **Task 1**: کارت‌های وضعیت روترها طراحی نشده
+  - ❌ **Task 2**: نمودار Interface Traffic وجود ندارد
+  - ❌ **Task 3**: Ping Status وجود ندارد
+  - ❌ **Task 4**: Pulse animation وجود ندارد
+  - ❌ **Task 5**: Tooltip برای روترها وجود ندارد
+  - ❌ **Task 6**: تست انجام نشده
 
 - **Acceptance Criteria**
-  - کارت‌های وضعیت روترها نمایش داده شوند.
-  - نمودار Interface Traffic کار کند.
-  - Ping Status با color coding نمایش داده شود.
-  - Pulse animation برای روترهای down کار کند.
-  - Tooltip جزئیات را نمایش دهد.
+  - ❌ کارت‌های وضعیت روترها وجود ندارد.
+  - ❌ نمودار Interface Traffic وجود ندارد.
+  - ❌ Ping Status وجود ندارد.
+  - ❌ Pulse animation وجود ندارد.
+  - ❌ Tooltip وجود ندارد.
 
 ---
 
-### Story EP5-S3 — مانیتورینگ سرویس‌ها (HTTP/TCP Checks)
+### Story EP5-S3 — مانیتورینگ سرویس‌ها (HTTP/TCP Checks) ❌ **انجام نشده**
 
 **As a** system administrator  
 **I want to** see service status with uptime charts  
 **So that I can** monitor service availability
 
 - **Tasks**
-  - **Task 1**: طراحی لیست سرویس‌ها با وضعیت (UP/DOWN)
-  - **Task 2**: پیاده‌سازی نمودار Uptime با Line Chart (ECharts)
-  - **Task 3**: اضافه کردن Latency Chart برای هر سرویس
-  - **Task 4**: پیاده‌سازی alert animation برای سرویس‌های down
-  - **Task 5**: اضافه کردن tooltip برای نمایش جزئیات (response time, last check)
-  - **Task 6**: تست real-time updates
+  - ❌ **Task 1**: لیست سرویس‌ها با وضعیت طراحی نشده
+  - ❌ **Task 2**: نمودار Uptime وجود ندارد
+  - ❌ **Task 3**: Latency Chart وجود ندارد
+  - ❌ **Task 4**: Alert animation وجود ندارد
+  - ❌ **Task 5**: Tooltip برای جزئیات وجود ندارد
+  - ❌ **Task 6**: Real-time updates وجود ندارد
 
 - **Acceptance Criteria**
-  - لیست سرویس‌ها با وضعیت نمایش داده شود.
-  - نمودار Uptime کار کند.
-  - Latency Chart نمایش داده شود.
-  - Alert animation برای سرویس‌های down کار کند.
-  - Real-time updates کار کنند.
+  - ❌ لیست سرویس‌ها وجود ندارد.
+  - ❌ نمودار Uptime وجود ندارد.
+  - ❌ Latency Chart وجود ندارد.
+  - ❌ Alert animation وجود ندارد.
+  - ❌ Real-time updates وجود ندارد.
 
 ---
 
-## 📦 EPIC 6 — Asset Management UI/UX
+## 📦 EPIC 6 — Asset Management UI/UX ❌ **0% تکمیل شده**
 
 هدف: ساخت رابط کاربری برای مدیریت دارایی‌ها با نمایش بصری و انیمیشن‌های حرفه‌ای.
 
-### Story EP6-S1 — صفحه لیست دارایی‌ها
+**نکته:** Asset Management UI وجود ندارد.
+
+### Story EP6-S1 — صفحه لیست دارایی‌ها ❌ **انجام نشده**
 
 **As a** user  
 **I want to** see a list of assets with filters and search  
@@ -536,56 +609,58 @@
 
 ---
 
-### Story EP6-S2 — فرم ثبت دارایی با انیمیشن
+### Story EP6-S2 — فرم ثبت دارایی با انیمیشن ❌ **انجام نشده**
 
 **As a** user  
 **I want to** register assets through an animated form  
 **So that I can** provide all information easily
 
 - **Tasks**
-  - **Task 1**: طراحی فرم ثبت دارایی
-  - **Task 2**: پیاده‌سازی انیمیشن fade-in برای input fields با GSAP stagger
-  - **Task 3**: اضافه کردن validation با انیمیشن slide-down برای خطاها
-  - **Task 4**: پیاده‌سازی success animation پس از submit
-  - **Task 5**: اضافه کردن loading state با spinner
-  - **Task 6**: تست UX در موبایل
+  - ❌ **Task 1**: فرم ثبت دارایی طراحی نشده
+  - ❌ **Task 2**: انیمیشن fade-in وجود ندارد
+  - ❌ **Task 3**: Validation با انیمیشن وجود ندارد
+  - ❌ **Task 4**: Success animation وجود ندارد
+  - ❌ **Task 5**: Loading state وجود ندارد
+  - ❌ **Task 6**: تست UX انجام نشده
 
 - **Acceptance Criteria**
-  - فرم با انیمیشن fade-in نمایش داده شود.
-  - Input fields با stagger animation ظاهر شوند.
-  - Validation با انیمیشن slide-down کار کند.
-  - Success animation پس از submit نمایش یابد.
-  - Loading state کار کند.
+  - ❌ فرم وجود ندارد.
+  - ❌ انیمیشن fade-in وجود ندارد.
+  - ❌ Validation با انیمیشن وجود ندارد.
+  - ❌ Success animation وجود ندارد.
+  - ❌ Loading state وجود ندارد.
 
 ---
 
-### Story EP6-S3 — نمایش تاریخچه و Life Cycle دارایی
+### Story EP6-S3 — نمایش تاریخچه و Life Cycle دارایی ❌ **انجام نشده**
 
 **As a** user  
 **I want to** see asset history and life cycle  
 **So that I can** track asset maintenance and warranty
 
 - **Tasks**
-  - **Task 1**: طراحی Timeline برای تاریخچه دارایی
-  - **Task 2**: پیاده‌سازی انیمیشن fade-in برای Timeline items
-  - **Task 3**: اضافه کردن visual indicator برای پایان گارانتی (alert animation)
-  - **Task 4**: پیاده‌سازی نمودار Life Cycle با ECharts
-  - **Task 5**: اضافه کردن tooltip برای جزئیات هر رویداد
-  - **Task 6**: تست UX
+  - ❌ **Task 1**: Timeline برای تاریخچه طراحی نشده
+  - ❌ **Task 2**: انیمیشن fade-in وجود ندارد
+  - ❌ **Task 3**: Visual indicator برای گارانتی وجود ندارد
+  - ❌ **Task 4**: نمودار Life Cycle وجود ندارد
+  - ❌ **Task 5**: Tooltip وجود ندارد
+  - ❌ **Task 6**: تست UX انجام نشده
 
 - **Acceptance Criteria**
-  - Timeline با انیمیشن fade-in نمایش داده شود.
-  - Alert animation برای پایان گارانتی کار کند.
-  - نمودار Life Cycle نمایش داده شود.
-  - Tooltip جزئیات را نمایش دهد.
+  - ❌ Timeline وجود ندارد.
+  - ❌ Alert animation وجود ندارد.
+  - ❌ نمودار Life Cycle وجود ندارد.
+  - ❌ Tooltip وجود ندارد.
 
 ---
 
-## 🤖 EPIC 7 — Telegram Bot UI Integration
+## 🤖 EPIC 7 — Telegram Bot UI Integration ❌ **0% تکمیل شده**
 
 هدف: ساخت رابط کاربری برای مدیریت و نمایش اطلاعات Telegram Bot در داشبورد.
 
-### Story EP7-S1 — نمایش وضعیت Telegram Bot
+**نکته:** Telegram Bot UI در Frontend وجود ندارد.
+
+### Story EP7-S1 — نمایش وضعیت Telegram Bot ❌ **انجام نشده**
 
 **As a** administrator  
 **I want to** see Telegram Bot status in the dashboard  
@@ -607,462 +682,463 @@
 
 ---
 
-### Story EP7-S2 — مدیریت تنظیمات Telegram Bot
+### Story EP7-S2 — مدیریت تنظیمات Telegram Bot ❌ **انجام نشده**
 
 **As a** administrator  
 **I want to** configure Telegram Bot settings  
 **So that I can** customize bot behavior
 
 - **Tasks**
-  - **Task 1**: طراحی فرم تنظیمات Telegram Bot
-  - **Task 2**: پیاده‌سازی toggle switches با انیمیشن (Framer Motion)
-  - **Task 3**: اضافه کردن validation برای تنظیمات
-  - **Task 4**: پیاده‌سازی success animation پس از save
-  - **Task 5**: اضافه کردن preview برای تغییرات
-  - **Task 6**: تست UX
+  - ❌ **Task 1**: فرم تنظیمات طراحی نشده
+  - ❌ **Task 2**: Toggle switches با انیمیشن وجود ندارد
+  - ❌ **Task 3**: Validation وجود ندارد
+  - ❌ **Task 4**: Success animation وجود ندارد
+  - ❌ **Task 5**: Preview وجود ندارد
+  - ❌ **Task 6**: تست UX انجام نشده
 
 - **Acceptance Criteria**
-  - فرم تنظیمات کار کند.
-  - Toggle switches با انیمیشن کار کنند.
-  - Validation کار کند.
-  - Success animation پس از save نمایش یابد.
+  - ❌ فرم تنظیمات وجود ندارد.
+  - ❌ Toggle switches وجود ندارد.
+  - ❌ Validation وجود ندارد.
+  - ❌ Success animation وجود ندارد.
 
 ---
 
-## 🔔 EPIC 8 — Notification Center UI/UX
+## 🔔 EPIC 8 — Notification Center UI/UX ✅ **70% تکمیل شده**
 
 هدف: ساخت مرکز اعلان‌ها با انیمیشن‌های حرفه‌ای و UX عالی.
 
-### Story EP8-S1 — Notification Center با انیمیشن Telegram-like
+### Story EP8-S1 — Notification Center با انیمیشن Telegram-like ⚠️ **Notification Bell موجود است اما انیمیشن‌های پیشرفته نیست**
 
 **As a** user  
 **I want to** see notifications with smooth animations  
 **So that I can** stay updated without distraction
 
 - **Tasks**
-  - **Task 1**: طراحی Notification Center با dropdown
-  - **Task 2**: پیاده‌سازی انیمیشن slide-down برای نمایش notifications با GSAP
-  - **Task 3**: اضافه کردن انیمیشن fade-in برای هر notification
-  - **Task 4**: پیاده‌سازی دسته‌بندی notifications (تیکت، شبکه، VoIP، CCTV)
-  - **Task 5**: اضافه کردن color coding برای انواع notifications
-  - **Task 6**: تست UX در موبایل
+  - ✅ **Task 1**: NotificationBell component با dropdown موجود است
+  - ⚠️ **Task 2**: انیمیشن slide-down ساده با CSS موجود است (نه GSAP)
+  - ⚠️ **Task 3**: انیمیشن fade-in ساده موجود است
+  - ❌ **Task 4**: دسته‌بندی notifications وجود ندارد
+  - ✅ **Task 5**: Color coding برای severity موجود است (info, warning, critical)
+  - ✅ **Task 6**: UX در موبایل کار می‌کند
 
 - **Acceptance Criteria**
-  - Notification Center با انیمیشن slide-down نمایش داده شود.
-  - هر notification با fade-in ظاهر شود.
-  - دسته‌بندی notifications کار کند.
-  - Color coding برای انواع notifications نمایش داده شود.
-  - در موبایل به‌درستی کار کند.
+  - ✅ Notification Center با dropdown موجود است.
+  - ⚠️ انیمیشن slide-down ساده موجود است (نه GSAP).
+  - ⚠️ انیمیشن fade-in ساده موجود است.
+  - ❌ دسته‌بندی notifications وجود ندارد.
+  - ✅ Color coding برای severity موجود است.
+  - ✅ در موبایل کار می‌کند.
 
 ---
 
-### Story EP8-S2 — Web Push Notifications
+### Story EP8-S2 — Web Push Notifications ❌ **انجام نشده**
 
 **As a** user  
 **I want to** receive web push notifications  
 **So that I can** stay updated even when not on the page
 
 - **Tasks**
-  - **Task 1**: پیاده‌سازی Web Push API
-  - **Task 2**: طراحی notification UI برای browser notifications
-  - **Task 3**: اضافه کردن sound effect برای notifications مهم
-  - **Task 4**: پیاده‌سازی click handler برای باز کردن صفحه مربوطه
-  - **Task 5**: تست در مرورگرهای مختلف (Chrome, Firefox, Safari)
-  - **Task 6**: مستندسازی setup برای کاربران
+  - ❌ **Task 1**: Web Push API پیاده‌سازی نشده
+  - ❌ **Task 2**: Notification UI برای browser وجود ندارد
+  - ❌ **Task 3**: Sound effect وجود ندارد
+  - ❌ **Task 4**: Click handler وجود ندارد
+  - ❌ **Task 5**: تست در مرورگرها انجام نشده
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - Web Push Notifications کار کنند.
-  - Notification UI مناسب باشد.
-  - Sound effect برای notifications مهم کار کند.
-  - Click handler صفحه مربوطه را باز کند.
-  - در تمام مرورگرهای اصلی کار کند.
+  - ❌ Web Push Notifications وجود ندارد.
+  - ❌ Notification UI وجود ندارد.
+  - ❌ Sound effect وجود ندارد.
+  - ❌ Click handler وجود ندارد.
+  - ❌ تست انجام نشده.
 
 ---
 
-## 📱 EPIC 9 — Mobile-First UI/UX
+## 📱 EPIC 9 — Mobile-First UI/UX ✅ **60% تکمیل شده**
 
 هدف: بهینه‌سازی تجربه کاربری برای موبایل با انیمیشن‌های touch-friendly.
 
-### Story EP9-S1 — Bottom Navigation با انیمیشن
+### Story EP9-S1 — Bottom Navigation با انیمیشن ✅ **MobileNavigation موجود است اما انیمیشن‌های پیشرفته نیست**
 
 **As a** mobile user  
 **I want to** navigate using a bottom navigation bar  
 **So that I can** easily access main sections
 
 - **Tasks**
-  - **Task 1**: طراحی Bottom Navigation با TailwindCSS
-  - **Task 2**: پیاده‌سازی انیمیشن slide برای transition بین صفحه‌ها با GSAP
-  - **Task 3**: اضافه کردن active state با scale animation
-  - **Task 4**: پیاده‌سازی swipe gesture برای navigation
-  - **Task 5**: تست در دستگاه‌های مختلف (iOS, Android)
-  - **Task 6**: بهینه‌سازی performance
+  - ✅ **Task 1**: MobileNavigation component موجود است (با CSS Variables)
+  - ❌ **Task 2**: انیمیشن slide با GSAP وجود ندارد
+  - ⚠️ **Task 3**: Active state موجود است اما scale animation نیست
+  - ❌ **Task 4**: Swipe gesture وجود ندارد
+  - ❌ **Task 5**: تست در دستگاه‌های مختلف انجام نشده
+  - ⚠️ **Task 6**: Performance بهینه است اما تست نشده
 
 - **Acceptance Criteria**
-  - Bottom Navigation responsive باشد.
-  - انیمیشن slide برای transition کار کند.
-  - Active state با scale animation کار کند.
-  - Swipe gesture کار کند.
-  - در iOS و Android به‌درستی کار کند.
+  - ✅ Bottom Navigation responsive است.
+  - ❌ انیمیشن slide وجود ندارد.
+  - ⚠️ Active state موجود است اما scale animation نیست.
+  - ❌ Swipe gesture وجود ندارد.
+  - ⚠️ در موبایل کار می‌کند اما تست کامل نشده.
 
 ---
 
-### Story EP9-S2 — Swipe Actions برای لیست تیکت‌ها
+### Story EP9-S2 — Swipe Actions برای لیست تیکت‌ها ❌ **انجام نشده**
 
 **As a** mobile user  
 **I want to** swipe on tickets to perform actions  
 **So that I can** quickly manage tickets
 
 - **Tasks**
-  - **Task 1**: نصب `react-swipeable` یا استفاده از touch events
-  - **Task 2**: پیاده‌سازی swipe left برای actions (مثل بستن تیکت)
-  - **Task 3**: پیاده‌سازی swipe right برای actions (مثل باز کردن تیکت)
-  - **Task 4**: اضافه کردن انیمیشن slide برای swipe با Framer Motion
-  - **Task 5**: اضافه کردن visual feedback هنگام swipe
-  - **Task 6**: تست UX در دستگاه‌های مختلف
+  - ❌ **Task 1**: react-swipeable نصب نشده
+  - ❌ **Task 2**: Swipe left وجود ندارد
+  - ❌ **Task 3**: Swipe right وجود ندارد
+  - ❌ **Task 4**: انیمیشن slide وجود ندارد
+  - ❌ **Task 5**: Visual feedback وجود ندارد
+  - ❌ **Task 6**: تست UX انجام نشده
 
 - **Acceptance Criteria**
-  - Swipe left برای actions کار کند.
-  - Swipe right برای actions کار کند.
-  - انیمیشن slide smooth باشد.
-  - Visual feedback هنگام swipe نمایش داده شود.
-  - در دستگاه‌های مختلف کار کند.
+  - ❌ Swipe left وجود ندارد.
+  - ❌ Swipe right وجود ندارد.
+  - ❌ انیمیشن slide وجود ندارد.
+  - ❌ Visual feedback وجود ندارد.
+  - ❌ تست انجام نشده.
 
 ---
 
-### Story EP9-S3 — Pull-to-Refresh برای لیست‌ها
+### Story EP9-S3 — Pull-to-Refresh برای لیست‌ها ❌ **انجام نشده**
 
 **As a** mobile user  
 **I want to** pull down to refresh lists  
 **So that I can** update data easily
 
 - **Tasks**
-  - **Task 1**: پیاده‌سازی pull-to-refresh gesture
-  - **Task 2**: اضافه کردن loading indicator با انیمیشن
-  - **Task 3**: پیاده‌سازی haptic feedback (اختیاری)
-  - **Task 4**: تست در دستگاه‌های مختلف
-  - **Task 5**: بهینه‌سازی performance
-  - **Task 6**: مستندسازی UX pattern
+  - ❌ **Task 1**: Pull-to-refresh gesture پیاده‌سازی نشده
+  - ❌ **Task 2**: Loading indicator با انیمیشن وجود ندارد
+  - ❌ **Task 3**: Haptic feedback وجود ندارد
+  - ❌ **Task 4**: تست انجام نشده
+  - ❌ **Task 5**: بهینه‌سازی انجام نشده
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - Pull-to-refresh کار کند.
-  - Loading indicator با انیمیشن نمایش داده شود.
-  - Haptic feedback کار کند (در صورت پشتیبانی).
-  - در دستگاه‌های مختلف کار کند.
+  - ❌ Pull-to-refresh وجود ندارد.
+  - ❌ Loading indicator با انیمیشن وجود ندارد.
+  - ❌ Haptic feedback وجود ندارد.
+  - ❌ تست انجام نشده.
 
 ---
 
-## 🎨 EPIC 10 — Design System و Theme Management
+## 🎨 EPIC 10 — Design System و Theme Management ✅ **70% تکمیل شده**
 
 هدف: ساخت یک Design System یکپارچه با پشتیبانی از تم روشن و تاریک.
 
-### Story EP10-S1 — Design System با TailwindCSS
+### Story EP10-S1 — Design System با TailwindCSS ⚠️ **Design System با CSS Variables موجود است (نه TailwindCSS)**
 
 **As a** developer  
 **I want to** use a consistent design system  
 **So that I can** build UI components quickly and consistently
 
 - **Tasks**
-  - **Task 1**: تعریف رنگ‌های اصلی سیستم (Primary, Secondary, Success, Warning, Error)
-  - **Task 2**: تعریف Typography scale (font sizes, line heights)
-  - **Task 3**: تعریف Spacing scale (margins, paddings)
-  - **Task 4**: ایجاد کامپوننت‌های پایه (Button, Input, Card, Modal)
-  - **Task 5**: مستندسازی Design System
-  - **Task 6**: ایجاد Storybook برای نمایش کامپوننت‌ها
+  - ✅ **Task 1**: رنگ‌های اصلی با CSS Variables تعریف شده (Primary, Secondary, Success, Warning, Error)
+  - ⚠️ **Task 2**: Typography scale به صورت محدود موجود است
+  - ⚠️ **Task 3**: Spacing scale به صورت محدود موجود است
+  - ✅ **Task 4**: کامپوننت‌های پایه موجود است (Button, Input, Card)
+  - ❌ **Task 5**: مستندسازی Design System وجود ندارد
+  - ❌ **Task 6**: Storybook وجود ندارد
 
 - **Acceptance Criteria**
-  - رنگ‌های سیستم تعریف شده باشند.
-  - Typography scale تعریف شده باشد.
-  - Spacing scale تعریف شده باشد.
-  - کامپوننت‌های پایه ساخته شده باشند.
-  - Design System مستند شده باشد.
+  - ✅ رنگ‌های سیستم تعریف شده‌اند.
+  - ⚠️ Typography scale به صورت محدود موجود است.
+  - ⚠️ Spacing scale به صورت محدود موجود است.
+  - ✅ کامپوننت‌های پایه ساخته شده‌اند.
+  - ❌ Design System مستند نشده.
 
 ---
 
-### Story EP10-S2 — Dark/Light Mode با انیمیشن
+### Story EP10-S2 — Dark/Light Mode با انیمیشن ✅ **انجام شده (بدون انیمیشن fade)**
 
 **As a** user  
 **I want to** switch between dark and light mode  
 **So that I can** use the system comfortably in different lighting
 
 - **Tasks**
-  - **Task 1**: پیاده‌سازی theme switcher
-  - **Task 2**: تعریف رنگ‌های dark mode در TailwindCSS
-  - **Task 3**: پیاده‌سازی انیمیشن fade برای transition بین تم‌ها
-  - **Task 4**: ذخیره preference در localStorage
-  - **Task 5**: اضافه کردن system preference detection
-  - **Task 6**: تست در تمام صفحات
+  - ✅ **Task 1**: Theme switcher در App.tsx موجود است
+  - ✅ **Task 2**: رنگ‌های dark mode با CSS Variables تعریف شده
+  - ⚠️ **Task 3**: انیمیشن fade برای transition وجود ندارد (transition ساده CSS)
+  - ✅ **Task 4**: Preference در localStorage ذخیره می‌شود
+  - ❌ **Task 5**: System preference detection وجود ندارد
+  - ✅ **Task 6**: در تمام صفحات کار می‌کند
 
 - **Acceptance Criteria**
-  - Theme switcher کار کند.
-  - رنگ‌های dark mode تعریف شده باشند.
-  - انیمیشن fade برای transition کار کند.
-  - Preference در localStorage ذخیره شود.
-  - System preference detection کار کند.
+  - ✅ Theme switcher کار می‌کند.
+  - ✅ رنگ‌های dark mode تعریف شده‌اند.
+  - ⚠️ Transition ساده CSS موجود است (نه fade animation).
+  - ✅ Preference در localStorage ذخیره می‌شود.
+  - ❌ System preference detection وجود ندارد.
 
 ---
 
-### Story EP10-S3 — کامپوننت‌های قابل استفاده مجدد
+### Story EP10-S3 — کامپوننت‌های قابل استفاده مجدد ✅ **انجام شده (بدون انیمیشن‌های پیشرفته)**
 
 **As a** developer  
 **I want to** use reusable UI components  
 **So that I can** build features faster
 
 - **Tasks**
-  - **Task 1**: ایجاد کامپوننت Button با variants (primary, secondary, danger)
-  - **Task 2**: ایجاد کامپوننت Input با validation states
-  - **Task 3**: ایجاد کامپوننت Card با hover effects
-  - **Task 4**: ایجاد کامپوننت Modal با انیمیشن Framer Motion
-  - **Task 5**: ایجاد کامپوننت Dropdown با Headless UI
-  - **Task 6**: مستندسازی تمام کامپوننت‌ها
+  - ✅ **Task 1**: Button با variants موجود است (primary, secondary, danger, success)
+  - ✅ **Task 2**: Input با validation states موجود است
+  - ✅ **Task 3**: Card با hover effects موجود است
+  - ❌ **Task 4**: Modal با Framer Motion وجود ندارد
+  - ⚠️ **Task 5**: Dropdown ساده موجود است (نه Headless UI)
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - تمام کامپوننت‌ها قابل استفاده مجدد باشند.
-  - کامپوننت‌ها responsive باشند.
-  - انیمیشن‌ها smooth باشند.
-  - کامپوننت‌ها accessible باشند.
-  - مستندسازی کامل باشد.
+  - ✅ کامپوننت‌ها قابل استفاده مجدد هستند.
+  - ✅ کامپوننت‌ها responsive هستند.
+  - ⚠️ انیمیشن‌های ساده موجود است (نه smooth پیشرفته).
+  - ❌ Accessibility تست نشده.
+  - ❌ مستندسازی وجود ندارد.
 
 ---
 
-## 🔍 EPIC 11 — جستجوی هوشمند (Omni Search)
+## 🔍 EPIC 11 — جستجوی هوشمند (Omni Search) ❌ **10% تکمیل شده**
 
 هدف: ساخت سیستم جستجوی جامع با انیمیشن‌های حرفه‌ای.
 
-### Story EP11-S1 — Omni Search با انیمیشن
+### Story EP11-S1 — Omni Search با انیمیشن ❌ **جستجوی ساده موجود است اما Omni Search نیست**
 
 **As a** user  
 **I want to** search across tickets, users, assets, IPs, and branches  
 **So that I can** quickly find what I need
 
 - **Tasks**
-  - **Task 1**: طراحی UI جستجو با input و dropdown results
-  - **Task 2**: پیاده‌سازی debounce برای جستجو (300ms)
-  - **Task 3**: اضافه کردن انیمیشن fade-in برای نتایج با GSAP
-  - **Task 4**: پیاده‌سازی highlight برای کلمات جستجو شده
-  - **Task 5**: اضافه کردن keyboard navigation (arrow keys, enter)
-  - **Task 6**: تست performance با نتایج زیاد
+  - ⚠️ **Task 1**: جستجوی ساده در Tickets موجود است (نه Omni Search)
+  - ❌ **Task 2**: Debounce پیاده‌سازی نشده
+  - ⚠️ **Task 3**: انیمیشن fade-in ساده موجود است (نه GSAP)
+  - ❌ **Task 4**: Highlight برای کلمات وجود ندارد
+  - ❌ **Task 5**: Keyboard navigation وجود ندارد
+  - ❌ **Task 6**: تست performance انجام نشده
 
 - **Acceptance Criteria**
-  - جستجو در تمام بخش‌ها کار کند (تیکت، کاربر، دارایی، IP، شعبه).
-  - Debounce کار کند.
-  - انیمیشن fade-in برای نتایج کار کند.
-  - Highlight برای کلمات جستجو شده کار کند.
-  - Keyboard navigation کار کند.
+  - ⚠️ جستجو فقط در Tickets کار می‌کند (نه در تمام بخش‌ها).
+  - ❌ Debounce وجود ندارد.
+  - ⚠️ انیمیشن fade-in ساده موجود است.
+  - ❌ Highlight وجود ندارد.
+  - ❌ Keyboard navigation وجود ندارد.
 
 ---
 
-### Story EP11-S2 — جستجوی پیشنهادی (Autocomplete)
+### Story EP11-S2 — جستجوی پیشنهادی (Autocomplete) ❌ **انجام نشده**
 
 **As a** user  
 **I want to** see search suggestions as I type  
 **So that I can** find items faster
 
 - **Tasks**
-  - **Task 1**: پیاده‌سازی autocomplete با API calls
-  - **Task 2**: اضافه کردن انیمیشن slide-down برای dropdown
-  - **Task 3**: پیاده‌سازی caching برای suggestions
-  - **Task 4**: اضافه کردن loading state
-  - **Task 5**: تست UX
-  - **Task 6**: بهینه‌سازی performance
+  - ❌ **Task 1**: Autocomplete پیاده‌سازی نشده
+  - ❌ **Task 2**: انیمیشن slide-down وجود ندارد
+  - ❌ **Task 3**: Caching وجود ندارد
+  - ❌ **Task 4**: Loading state وجود ندارد
+  - ❌ **Task 5**: تست UX انجام نشده
+  - ❌ **Task 6**: بهینه‌سازی انجام نشده
 
 - **Acceptance Criteria**
-  - Autocomplete کار کند.
-  - انیمیشن slide-down برای dropdown کار کند.
-  - Caching برای suggestions کار کند.
-  - Loading state نمایش داده شود.
+  - ❌ Autocomplete وجود ندارد.
+  - ❌ انیمیشن slide-down وجود ندارد.
+  - ❌ Caching وجود ندارد.
+  - ❌ Loading state وجود ندارد.
 
 ---
 
-## 📈 EPIC 12 — گزارش‌ها و Analytics UI/UX
+## 📈 EPIC 12 — گزارش‌ها و Analytics UI/UX ✅ **80% تکمیل شده**
 
 هدف: ساخت رابط کاربری برای گزارش‌ها و تحلیل‌ها با نمودارهای حرفه‌ای.
 
-### Story EP12-S1 — صفحه گزارش‌ها با فیلتر تاریخ
+### Story EP12-S1 — صفحه گزارش‌ها با فیلتر تاریخ ✅ **Dashboard با فیلترها موجود است**
 
 **As a** manager  
 **I want to** view reports with date filters  
 **So that I can** analyze data for specific periods
 
 - **Tasks**
-  - **Task 1**: طراحی صفحه گزارش‌ها
-  - **Task 2**: پیاده‌سازی Date Range Picker
-  - **Task 3**: اضافه کردن فیلترهای اضافی (شعبه، Agent، دسته‌بندی)
-  - **Task 4**: پیاده‌سازی انیمیشن fade-in برای نمودارها با GSAP
-  - **Task 5**: اضافه کردن export به Excel/PDF
-  - **Task 6**: تست UX
+  - ✅ **Task 1**: صفحه Dashboard با گزارش‌ها موجود است
+  - ✅ **Task 2**: Date Range Picker موجود است (dateFrom, dateTo)
+  - ✅ **Task 3**: فیلترهای اضافی موجود است (شعبه، دپارتمان، اولویت)
+  - ⚠️ **Task 4**: انیمیشن fade-in ساده موجود است (نه GSAP)
+  - ✅ **Task 5**: Export به PDF/Excel/CSV موجود است
+  - ✅ **Task 6**: UX کار می‌کند
 
 - **Acceptance Criteria**
-  - صفحه گزارش‌ها کار کند.
-  - Date Range Picker کار کند.
-  - فیلترها کار کنند.
-  - انیمیشن fade-in برای نمودارها کار کند.
-  - Export به Excel/PDF کار کند.
+  - ✅ صفحه گزارش‌ها کار می‌کند.
+  - ✅ Date Range Picker کار می‌کند.
+  - ✅ فیلترها کار می‌کنند.
+  - ⚠️ انیمیشن fade-in ساده موجود است.
+  - ✅ Export به PDF/Excel/CSV کار می‌کند.
 
 ---
 
-### Story EP12-S2 — نمودارهای KPI با انیمیشن
+### Story EP12-S2 — نمودارهای KPI با انیمیشن ⚠️ **نمودارهای KPI موجود است اما انیمیشن‌های پیشرفته نیست**
 
 **As a** manager  
 **I want to** see animated KPI charts  
 **So that I can** understand metrics visually
 
 - **Tasks**
-  - **Task 1**: طراحی نمودارهای KPI (Internet Downtime, VoIP Issues, SLA, Technician Performance)
-  - **Task 2**: پیاده‌سازی انیمیشن counter برای اعداد
-  - **Task 3**: اضافه کردن انیمیشن fill برای نمودارها با GSAP
-  - **Task 4**: پیاده‌سازی tooltip برای جزئیات
-  - **Task 5**: تست responsive
-  - **Task 6**: بهینه‌سازی performance
+  - ✅ **Task 1**: نمودارهای KPI موجود است (SLA, Response Time, Status, Priority, Branch, Department)
+  - ❌ **Task 2**: انیمیشن counter برای اعداد وجود ندارد
+  - ❌ **Task 3**: انیمیشن fill با GSAP وجود ندارد
+  - ✅ **Task 4**: Tooltip برای جزئیات موجود است (Recharts Tooltip)
+  - ✅ **Task 5**: نمودارها responsive هستند
+  - ⚠️ **Task 6**: Performance قابل قبول است اما بهینه‌سازی نشده
 
 - **Acceptance Criteria**
-  - نمودارهای KPI نمایش داده شوند.
-  - انیمیشن counter برای اعداد کار کند.
-  - انیمیشن fill برای نمودارها کار کند.
-  - Tooltip جزئیات را نمایش دهد.
-  - نمودارها responsive باشند.
+  - ✅ نمودارهای KPI نمایش داده می‌شوند.
+  - ❌ انیمیشن counter وجود ندارد.
+  - ❌ انیمیشن fill وجود ندارد.
+  - ✅ Tooltip جزئیات را نمایش می‌دهد.
+  - ✅ نمودارها responsive هستند.
 
 ---
 
-## ⚡ EPIC 13 — Performance و بهینه‌سازی
+## ⚡ EPIC 13 — Performance و بهینه‌سازی ❌ **20% تکمیل شده**
 
 هدف: بهینه‌سازی performance و تجربه کاربری با تکنیک‌های پیشرفته.
 
-### Story EP13-S1 — Lazy Loading و Code Splitting
+### Story EP13-S1 — Lazy Loading و Code Splitting ❌ **انجام نشده**
 
 **As a** user  
 **I want to** experience fast page loads  
 **So that I can** use the system efficiently
 
 - **Tasks**
-  - **Task 1**: پیاده‌سازی code splitting با Next.js dynamic imports
-  - **Task 2**: اضافه کردن lazy loading برای تصاویر
-  - **Task 3**: پیاده‌سازی virtual scrolling برای لیست‌های بزرگ
-  - **Task 4**: بهینه‌سازی bundle size
-  - **Task 5**: تست performance با Lighthouse
-  - **Task 6**: مستندسازی optimizations
+  - ❌ **Task 1**: Code splitting با dynamic imports انجام نشده
+  - ❌ **Task 2**: Lazy loading برای تصاویر وجود ندارد
+  - ❌ **Task 3**: Virtual scrolling وجود ندارد
+  - ⚠️ **Task 4**: Bundle size بهینه نشده (Vite به صورت خودکار بهینه می‌کند)
+  - ❌ **Task 5**: تست با Lighthouse انجام نشده
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - Code splitting کار کند.
-  - Lazy loading برای تصاویر کار کند.
-  - Virtual scrolling برای لیست‌های بزرگ کار کند.
-  - Bundle size بهینه باشد.
-  - Lighthouse score بالای 90 باشد.
+  - ❌ Code splitting انجام نشده.
+  - ❌ Lazy loading وجود ندارد.
+  - ❌ Virtual scrolling وجود ندارد.
+  - ⚠️ Bundle size بهینه است (Vite default).
+  - ❌ Lighthouse score تست نشده.
 
 ---
 
-### Story EP13-S2 — Caching Strategy با React Query
+### Story EP13-S2 — Caching Strategy با React Query ❌ **انجام نشده (React Query استفاده نشده)**
 
 **As a** developer  
 **I want to** implement smart caching  
 **So that I can** reduce API calls and improve performance
 
 - **Tasks**
-  - **Task 1**: پیکربندی React Query cache settings
-  - **Task 2**: پیاده‌سازی stale-while-revalidate pattern
-  - **Task 3**: اضافه کردن background refetch برای داده‌های مهم
-  - **Task 4**: تست cache invalidation
-  - **Task 5**: مستندسازی caching strategy
-  - **Task 6**: بهینه‌سازی memory usage
+  - ❌ **Task 1**: React Query استفاده نشده
+  - ❌ **Task 2**: Stale-while-revalidate pattern وجود ندارد
+  - ⚠️ **Task 3**: Background refetch فقط برای notifications موجود است (polling)
+  - ❌ **Task 4**: Cache invalidation وجود ندارد
+  - ❌ **Task 5**: مستندسازی وجود ندارد
+  - ❌ **Task 6**: بهینه‌سازی memory انجام نشده
 
 - **Acceptance Criteria**
-  - Caching strategy کار کند.
-  - Stale-while-revalidate pattern کار کند.
-  - Background refetch کار کند.
-  - Cache invalidation کار کند.
+  - ❌ Caching strategy وجود ندارد.
+  - ❌ Stale-while-revalidate pattern وجود ندارد.
+  - ⚠️ Background refetch فقط برای notifications موجود است.
+  - ❌ Cache invalidation وجود ندارد.
 
 ---
 
-## 🧪 EPIC 14 — Testing و Quality Assurance
+## 🧪 EPIC 14 — Testing و Quality Assurance ❌ **0% تکمیل شده**
 
 هدف: اطمینان از کیفیت کد و تجربه کاربری با تست‌های جامع.
 
-### Story EP14-S1 — Unit Tests برای کامپوننت‌ها
+### Story EP14-S1 — Unit Tests برای کامپوننت‌ها ❌ **انجام نشده**
 
 **As a** developer  
 **I want to** write unit tests for components  
 **So that I can** ensure code quality
 
 - **Tasks**
-  - **Task 1**: نصب Jest و React Testing Library
-  - **Task 2**: نوشتن unit tests برای کامپوننت‌های پایه
-  - **Task 3**: نوشتن tests برای custom hooks
-  - **Task 4**: پیکربندی coverage threshold (80%+)
-  - **Task 5**: اضافه کردن tests به CI/CD pipeline
-  - **Task 6**: مستندسازی testing patterns
+  - ❌ **Task 1**: Jest و React Testing Library نصب نشده
+  - ❌ **Task 2**: Unit tests نوشته نشده
+  - ❌ **Task 3**: Tests برای hooks نوشته نشده
+  - ❌ **Task 4**: Coverage threshold تنظیم نشده
+  - ❌ **Task 5**: CI/CD pipeline وجود ندارد
+  - ❌ **Task 6**: مستندسازی وجود ندارد
 
 - **Acceptance Criteria**
-  - Unit tests برای کامپوننت‌های پایه نوشته شده باشند.
-  - Tests برای custom hooks نوشته شده باشند.
-  - Coverage threshold برآورده شود.
-  - Tests در CI/CD pipeline اجرا شوند.
+  - ❌ Unit tests وجود ندارد.
+  - ❌ Tests برای hooks وجود ندارد.
+  - ❌ Coverage threshold وجود ندارد.
+  - ❌ CI/CD pipeline وجود ندارد.
 
 ---
 
-### Story EP14-S2 — E2E Tests با Playwright
+### Story EP14-S2 — E2E Tests با Playwright ❌ **انجام نشده**
 
 **As a** developer  
 **I want to** write E2E tests  
 **So that I can** ensure user flows work correctly
 
 - **Tasks**
-  - **Task 1**: نصب Playwright
-  - **Task 2**: نوشتن E2E tests برای user flows اصلی (لاگین، ایجاد تیکت، مشاهده داشبورد)
-  - **Task 3**: تست responsive در دستگاه‌های مختلف
-  - **Task 4**: اضافه کردن tests به CI/CD pipeline
-  - **Task 5**: مستندسازی E2E testing
-  - **Task 6**: بهینه‌سازی test execution time
+  - ❌ **Task 1**: Playwright نصب نشده
+  - ❌ **Task 2**: E2E tests نوشته نشده
+  - ❌ **Task 3**: تست responsive انجام نشده
+  - ❌ **Task 4**: CI/CD pipeline وجود ندارد
+  - ❌ **Task 5**: مستندسازی وجود ندارد
+  - ❌ **Task 6**: بهینه‌سازی انجام نشده
 
 - **Acceptance Criteria**
-  - E2E tests برای user flows اصلی نوشته شده باشند.
-  - Tests responsive کار کنند.
-  - Tests در CI/CD pipeline اجرا شوند.
+  - ❌ E2E tests وجود ندارد.
+  - ❌ Tests responsive وجود ندارد.
+  - ❌ CI/CD pipeline وجود ندارد.
 
 ---
 
-## 📚 EPIC 15 — مستندسازی و راهنما
+## 📚 EPIC 15 — مستندسازی و راهنما ❌ **0% تکمیل شده**
 
 هدف: ایجاد مستندات کامل برای توسعه‌دهندگان و کاربران.
 
-### Story EP15-S1 — مستندسازی کامپوننت‌ها
+### Story EP15-S1 — مستندسازی کامپوننت‌ها ❌ **انجام نشده**
 
 **As a** developer  
 **I want to** see component documentation  
 **So that I can** use components correctly
 
 - **Tasks**
-  - **Task 1**: راه‌اندازی Storybook
-  - **Task 2**: نوشتن stories برای تمام کامپوننت‌ها
-  - **Task 3**: اضافه کردن JSDoc comments
-  - **Task 4**: ایجاد examples برای هر کامپوننت
-  - **Task 5**: مستندسازی props و usage
-  - **Task 6**: Deploy Storybook به hosting
+  - ❌ **Task 1**: Storybook راه‌اندازی نشده
+  - ❌ **Task 2**: Stories نوشته نشده
+  - ⚠️ **Task 3**: JSDoc comments محدود موجود است (در برخی فایل‌ها)
+  - ❌ **Task 4**: Examples وجود ندارد
+  - ❌ **Task 5**: مستندسازی props وجود ندارد
+  - ❌ **Task 6**: Deploy انجام نشده
 
 - **Acceptance Criteria**
-  - Storybook راه‌اندازی شده باشد.
-  - Stories برای تمام کامپوننت‌ها نوشته شده باشند.
-  - JSDoc comments کامل باشند.
-  - Examples برای هر کامپوننت وجود داشته باشد.
+  - ❌ Storybook وجود ندارد.
+  - ❌ Stories وجود ندارد.
+  - ⚠️ JSDoc comments محدود موجود است.
+  - ❌ Examples وجود ندارد.
 
 ---
 
-### Story EP15-S2 — راهنمای کاربری (User Guide)
+### Story EP15-S2 — راهنمای کاربری (User Guide) ❌ **انجام نشده**
 
 **As a** user  
 **I want to** see a user guide  
 **So that I can** learn how to use the system
 
 - **Tasks**
-  - **Task 1**: طراحی صفحه راهنمای کاربری
-  - **Task 2**: نوشتن مستندات برای هر بخش
-  - **Task 3**: اضافه کردن screenshots و GIFs
-  - **Task 4**: پیاده‌سازی search در راهنما
-  - **Task 5**: تست UX راهنما
-  - **Task 6**: به‌روزرسانی مستمر راهنما
+  - ❌ **Task 1**: صفحه راهنمای کاربری طراحی نشده
+  - ❌ **Task 2**: مستندات نوشته نشده
+  - ❌ **Task 3**: Screenshots و GIFs اضافه نشده
+  - ❌ **Task 4**: Search در راهنما وجود ندارد
+  - ❌ **Task 5**: تست UX انجام نشده
+  - ❌ **Task 6**: به‌روزرسانی انجام نشده
 
 - **Acceptance Criteria**
-  - راهنمای کاربری کامل باشد.
-  - Screenshots و GIFs اضافه شده باشند.
-  - Search در راهنما کار کند.
+  - ❌ راهنمای کاربری وجود ندارد.
+  - ❌ Screenshots و GIFs وجود ندارد.
+  - ❌ Search وجود ندارد.
 
 ---
 

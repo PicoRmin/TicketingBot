@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { stagger, fadeIn, slideIn } from "../lib/gsap";
 import {
   apiGet,
   createUserApi,
@@ -249,10 +250,34 @@ export default function Users() {
 
   const branchOptions = useMemo(() => branches, [branches]);
   const departmentOptions = useMemo(() => departments, [departments]);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const listCardRef = useRef<HTMLDivElement>(null);
+
+  // Animate on mount
+  useEffect(() => {
+    if (titleRef.current) {
+      slideIn(titleRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+    if (formCardRef.current) {
+      fadeIn(formCardRef.current, { duration: 0.7, delay: 0.2 });
+    }
+  }, []);
+
+  // Animate users list when data changes
+  useEffect(() => {
+    if (users.length > 0 && listCardRef.current) {
+      stagger(
+        "tbody tr",
+        (el) => slideIn(el, "left", { duration: 0.4, distance: 20 }),
+        { stagger: 0.03, delay: 0.3 }
+      );
+    }
+  }, [users.length]);
 
   return (
     <div className="fade-in">
-      <h1 className="page-title">👥 مدیریت کاربران</h1>
+      <h1 ref={titleRef} className="page-title">👥 مدیریت کاربران</h1>
 
       {loading && (
         <div style={{ textAlign: "center", padding: 16 }}>
@@ -273,7 +298,7 @@ export default function Users() {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 24 }}>
+      <div ref={formCardRef} className="card" style={{ marginBottom: 24 }}>
         <div className="card-header">
           <h2 className="card-title">{editingId ? "✏️ ویرایش کاربر" : "➕ افزودن کاربر جدید"}</h2>
         </div>
@@ -393,7 +418,7 @@ export default function Users() {
         </div>
       </div>
 
-      <div className="card">
+      <div ref={listCardRef} className="card">
         <div className="card-header" style={{ flexWrap: "wrap", gap: 12 }}>
           <h2 className="card-title">فهرست کاربران</h2>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

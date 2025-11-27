@@ -10,7 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from app.database import engine, Base
 # Import all models to ensure they are registered with Base
-from app.models import User, Ticket, Attachment, Branch, Comment, TicketHistory, RefreshToken, SystemSettings  # noqa
+from app.models import User, Ticket, Attachment, Branch, Comment, TicketHistory, RefreshToken, SystemSettings, TelegramSession  # noqa
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 import logging

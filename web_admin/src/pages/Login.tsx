@@ -1,6 +1,7 @@
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, useRef } from "react";
 import { login, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { scaleIn, slideIn } from "../lib/gsap";
 
 export default function Login() {
   const [username, setUsername] = useState("admin");
@@ -9,11 +10,28 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const cardRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
   useEffect(() => {
     if (isAuthenticated()) {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (cardRef.current && titleRef.current && formRef.current) {
+      // Animate card with scale and fade
+      scaleIn(cardRef.current, { from: 0.8, to: 1, duration: 0.8, delay: 0.1 });
+      
+      // Animate title with slide from top
+      slideIn(titleRef.current, "top", { duration: 0.6, distance: 30, delay: 0.3 });
+      
+      // Animate form with fade and slide from bottom
+      slideIn(formRef.current, "bottom", { duration: 0.7, distance: 40, delay: 0.5 });
+    }
+  }, []);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,9 +59,9 @@ export default function Login() {
       justifyContent: "center",
       background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
     }}>
-      <div className="card" style={{ maxWidth: 400, width: "100%", margin: "0 20px" }}>
+      <div ref={cardRef} className="card" style={{ maxWidth: 400, width: "100%", margin: "0 20px" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ margin: "0 0 8px 0", fontSize: 28, fontWeight: 700 }}>
+          <h1 ref={titleRef} style={{ margin: "0 0 8px 0", fontSize: 28, fontWeight: 700 }}>
             سیستم تیکتینگ ایرانمهر
           </h1>
           <p style={{ color: "var(--fg-secondary)", margin: 0 }}>
@@ -51,7 +69,7 @@ export default function Login() {
           </p>
         </div>
         
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
+        <form ref={formRef} onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
           <div>
             <label style={{ display: "block", marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
               نام کاربری

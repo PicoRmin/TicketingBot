@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiGet, apiPost, apiPatch, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { stagger, fadeIn, slideIn, scrollAnimation } from "../lib/gsap";
 
 type TicketItem = {
   id: number;
@@ -64,6 +65,9 @@ export default function Tickets() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
   
+  const ticketsListRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate("/login");
@@ -77,6 +81,24 @@ export default function Tickets() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
+
+  // Animate header on mount
+  useEffect(() => {
+    if (headerRef.current) {
+      slideIn(headerRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+  }, []);
+
+  // Animate tickets list when data changes
+  useEffect(() => {
+    if (data && data.items.length > 0 && ticketsListRef.current) {
+      stagger(
+        "tbody tr",
+        (el) => slideIn(el, "left", { duration: 0.5, distance: 30 }),
+        { stagger: 0.05, delay: 0.2 }
+      );
+    }
+  }, [data]);
   const [category, setCategory] = useState<string>("");
   const [priority, setPriority] = useState<string>("");
   const [departmentId, setDepartmentId] = useState<string>("");
@@ -237,7 +259,7 @@ export default function Tickets() {
 
   return (
     <div className="fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div ref={headerRef} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700 }}>🎫 تیکت‌ها</h1>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           {data && (
@@ -458,7 +480,7 @@ export default function Tickets() {
               </p>
             </div>
           ) : (
-            <div className="table-wrap">
+            <div ref={ticketsListRef} className="table-wrap">
               <table>
                 <thead>
                   <tr>

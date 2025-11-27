@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiGet, apiPost, apiPut, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { stagger, fadeIn, slideIn } from "../lib/gsap";
 
 type Branch = {
   id: number;
@@ -107,13 +108,38 @@ export default function Branches() {
     }
   };
 
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Animate on mount
+  useEffect(() => {
+    if (titleRef.current) {
+      slideIn(titleRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+    if (formCardRef.current) {
+      fadeIn(formCardRef.current, { duration: 0.7, delay: 0.2 });
+    }
+  }, []);
+
+  // Animate branches list when data changes
+  useEffect(() => {
+    if (items.length > 0 && listRef.current) {
+      stagger(
+        ".branch-item",
+        (el) => slideIn(el, "left", { duration: 0.4, distance: 20 }),
+        { stagger: 0.05, delay: 0.3 }
+      );
+    }
+  }, [items.length]);
+
   if (!isAuthenticated()) {
     return null;
   }
 
   return (
     <div className="fade-in">
-      <h1 style={{ margin: "0 0 24px 0", fontSize: 32, fontWeight: 700 }}>🏢 مدیریت شعب</h1>
+      <h1 ref={titleRef} style={{ margin: "0 0 24px 0", fontSize: 32, fontWeight: 700 }}>🏢 مدیریت شعب</h1>
 
       {loading && !items.length && (
         <div style={{ textAlign: "center", padding: 40 }}>
@@ -129,7 +155,7 @@ export default function Branches() {
       )}
 
       {/* Form Card */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      <div ref={formCardRef} className="card" style={{ marginBottom: 24 }}>
         <div className="card-header">
           <h2 className="card-title">
             {editingId ? "✏️ ویرایش شعبه" : "➕ افزودن شعبه جدید"}
@@ -232,7 +258,7 @@ export default function Branches() {
             <p style={{ margin: 0 }}>برای شروع، شعبه اول را اضافه کنید.</p>
           </div>
         ) : (
-          <div className="table-wrap">
+          <div ref={listRef} className="table-wrap">
             <table>
               <thead>
                 <tr>
@@ -247,7 +273,7 @@ export default function Branches() {
               </thead>
               <tbody>
                 {items.map((b) => (
-                  <tr key={b.id}>
+                  <tr key={b.id} className="branch-item">
                     <td style={{ fontWeight: 500 }}>
                       {b.name}
                       {b.name_en && (

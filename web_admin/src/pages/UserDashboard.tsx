@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiGet, isAuthenticated, getStoredProfile } from "../services/api";
 import { OnboardingWizard } from "../components/OnboardingWizard";
+import { stagger, fadeIn, slideIn, scaleIn } from "../lib/gsap";
 
 type TicketStats = {
   total: number;

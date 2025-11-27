@@ -34,12 +34,24 @@
     "footer": "Iranmehr Ticketing © 2025",
     "version": "Version {{version}} | Crafted with ❤️"
   },
+  "notifications": {
+    "ariaLabel": "Notifications",
+    "title": "Notifications",
+    "refresh": "Refresh",
+    "markAll": "Mark all read",
+    "empty": "No new notifications.",
+    "loading": "Updating..."
+  },
   "errors": {
     "sessionExpired": "Session expired. Please login again.",
     "network": "Unable to reach the server. Check backend status."
   },
   "dashboard": {
     "title": "📊 Dashboard",
+    "modes": {
+      "count": "Count view",
+      "percent": "Percent view"
+    },
     "buttons": {
       "openFilters": "🔍 Advanced Filters",
       "closeFilters": "❌ Hide Filters",
@@ -60,6 +72,7 @@
       "clear": "🗑️ Clear filters"
     },
     "loading": "Loading...",
+    "noData": "No data available.",
     "errorLabel": "Error:",
     "errors": {
       "fetch": "Failed to load reports",
@@ -101,7 +114,8 @@
       "branch": "🏢 Tickets by Branch"
     },
     "labels": {
-      "count": "Count"
+      "count": "Count",
+      "percent": "Percent"
     },
     "slaCards": {
       "totalSla": "Tickets with SLA",

@@ -25,7 +25,15 @@ async def run_session_cleanup():
         else:
             logger.debug("No expired Telegram sessions to clean up.")
     except Exception as e:
-        logger.error(f"Error running Telegram session cleanup: {e}", exc_info=True)
+        # Log error but don't crash the scheduler
+        error_msg = str(e).lower()
+        if "no such table" in error_msg or "does not exist" in error_msg:
+            logger.warning(
+                "telegram_sessions table does not exist. "
+                "Run migration: python scripts/migrate_v21_create_telegram_sessions.py"
+            )
+        else:
+            logger.error(f"Error running Telegram session cleanup: {e}", exc_info=True)
     finally:
         db.close()
 

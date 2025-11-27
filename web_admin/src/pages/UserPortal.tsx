@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
 import { Link } from "react-router-dom";
 import { KnowledgeSuggestions } from "../components/KnowledgeSuggestions";
+import { stagger, fadeIn, slideIn } from "../lib/gsap";
 
 type TicketItem = {
   id: number;
@@ -231,9 +232,38 @@ export default function UserPortal() {
     }
   };
 
+  const headerRef = useRef<HTMLDivElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const ticketsListRef = useRef<HTMLDivElement>(null);
+
+  // Animate header on mount
+  useEffect(() => {
+    if (headerRef.current) {
+      slideIn(headerRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+  }, []);
+
+  // Animate form when it appears
+  useEffect(() => {
+    if (showNewTicketForm && formCardRef.current) {
+      scaleIn(formCardRef.current, { from: 0.9, to: 1, duration: 0.5 });
+    }
+  }, [showNewTicketForm]);
+
+  // Animate tickets list when data changes
+  useEffect(() => {
+    if (tickets.length > 0 && ticketsListRef.current) {
+      stagger(
+        "tbody tr",
+        (el) => slideIn(el, "left", { duration: 0.4, distance: 30 }),
+        { stagger: 0.05, delay: 0.2 }
+      );
+    }
+  }, [tickets.length]);
+
   return (
     <div className="fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div ref={headerRef} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 className="page-title">🎫 پورتال کاربران</h1>
         <button
           onClick={() => setShowNewTicketForm(!showNewTicketForm)}
@@ -245,7 +275,7 @@ export default function UserPortal() {
 
       {/* New Ticket Form */}
       {showNewTicketForm && (
-        <div className="card" style={{ marginBottom: 24 }}>
+        <div ref={formCardRef} className="card" style={{ marginBottom: 24 }}>
           <div className="card-header">
             <h2 className="card-title">ایجاد تیکت جدید</h2>
           </div>
@@ -368,7 +398,7 @@ export default function UserPortal() {
       )}
 
       {/* Tickets List */}
-      <div className="card">
+      <div ref={ticketsListRef} className="card">
         <div className="card-header">
           <h2 className="card-title">تیکت‌های من</h2>
         </div>

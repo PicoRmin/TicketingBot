@@ -1,10 +1,14 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, ChangeEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import { getToken, logout, getStoredProfile, fetchProfile, setProfile, clearProfile } from "./services/api";
 import logoUrl from "./assets/brand-logo.svg";
 import { MobileNavigation } from "./components/MobileNavigation";
 import { NotificationBell } from "./components/NotificationBell";
+import { PageTransition } from "./components/PageTransition";
+import { headerRevealVariants, reducedMotionVariants } from "./lib/motion";
+import { useMotionPreferences } from "./hooks/useMotionPreferences";
 
 export default function App() {
   const navigate = useNavigate();
@@ -20,6 +24,7 @@ export default function App() {
     return localStorage.getItem("imehr_dark") === "1";
   });
   const { t, i18n } = useTranslation();
+  const { shouldReduceMotion } = useMotionPreferences();
 
   useEffect(() => {
     if (!token) {
@@ -102,10 +107,11 @@ export default function App() {
     i18n.changeLanguage(e.target.value);
   };
   const versionLabel = t("layout.version", { version: "0.1.0" });
+  const headerVariants = shouldReduceMotion ? reducedMotionVariants : headerRevealVariants;
 
   return (
     <div className="container">
-      <header>
+      <motion.header variants={headerVariants} initial="hidden" animate="visible">
         <div className="header-left">
           <Link to="/" className="brand">
             <img src={logoUrl} alt="لوگوی ایرانمهر" />
@@ -173,9 +179,9 @@ export default function App() {
             </Link>
           )}
         </div>
-      </header>
+      </motion.header>
       <main>
-        <Outlet />
+        <PageTransition />
       </main>
       {isMobile && token && (
         <MobileNavigation role={profile?.role} />

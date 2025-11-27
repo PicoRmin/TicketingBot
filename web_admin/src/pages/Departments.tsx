@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiGet, apiPost, apiPut, apiDelete, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { stagger, fadeIn, slideIn } from "../lib/gsap";
 
 type Department = {
   id: number;
@@ -103,9 +104,34 @@ export default function Departments() {
     }
   };
 
+  const titleRef = useRef<HTMLDivElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Animate on mount
+  useEffect(() => {
+    if (titleRef.current) {
+      slideIn(titleRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+    if (formCardRef.current) {
+      fadeIn(formCardRef.current, { duration: 0.7, delay: 0.2 });
+    }
+  }, []);
+
+  // Animate departments list when data changes
+  useEffect(() => {
+    if (items.length > 0 && listRef.current) {
+      stagger(
+        "tbody tr",
+        (el) => slideIn(el, "left", { duration: 0.4, distance: 20 }),
+        { stagger: 0.05, delay: 0.3 }
+      );
+    }
+  }, [items.length]);
+
   return (
     <div className="fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div ref={titleRef} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700 }}>🏢 دپارتمان‌ها</h1>
         {items.length > 0 && (
           <div style={{ color: "var(--fg-secondary)", fontSize: 14 }}>
@@ -120,7 +146,7 @@ export default function Departments() {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 24 }}>
+      <div ref={formCardRef} className="card" style={{ marginBottom: 24 }}>
         <div className="card-header">
           <h2 className="card-title">{editingId ? "✏️ ویرایش دپارتمان" : "➕ افزودن دپارتمان جدید"}</h2>
         </div>

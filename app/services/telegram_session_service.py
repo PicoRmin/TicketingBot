@@ -237,20 +237,38 @@ def cleanup_expired_telegram_sessions(db: Session) -> int:
     Returns:
         Number of sessions cleaned up
     """
-    now = datetime.now(timezone.utc)
-    sessions = db.query(TelegramSession).filter(
-        and_(
-            TelegramSession.is_active == 1,
-            TelegramSession.expires_at < now,
-        )
-    ).all()
-    
-    count = len(sessions)
-    for session in sessions:
-        session.is_active = 0
-    
-    db.commit()
-    return count
+    try:
+        now = datetime.now(timezone.utc)
+        sessions = db.query(TelegramSession).filter(
+            and_(
+                TelegramSession.is_active == 1,
+                TelegramSession.expires_at < now,
+            )
+        ).all()
+        
+        count = len(sessions)
+        for session in sessions:
+            session.is_active = 0
+        
+        db.commit()
+        return count
+    except Exception as e:
+        # Handle case where table doesn't exist yet
+        error_msg = str(e).lower()
+        if "no such table" in error_msg or "does not exist" in error_msg:
+            # Table doesn't exist - this is expected if migration hasn't been run
+            # Log warning but don't crash
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                "telegram_sessions table does not exist. "
+                "Run migration: python scripts/migrate_v21_create_telegram_sessions.py"
+            )
+            db.rollback()
+            return 0
+        # Re-raise other errors
+        db.rollback()
+        raise
 
 
 def format_session_info(session: TelegramSession, language: str = "fa") -> str:

@@ -6,9 +6,10 @@
  * This page provides the ability to create, edit, delete and manage custom fields.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, apiPatch, apiDelete, isAuthenticated, getStoredProfile } from "../services/api";
+import { stagger, fadeIn, slideIn, scaleIn } from "../lib/gsap";
 
 // نوع داده‌های فیلد سفارشی
 type CustomField = {
@@ -304,9 +305,38 @@ export default function CustomFields() {
     setConfigOptions(updated);
   };
 
+  const titleRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const fieldsListRef = useRef<HTMLDivElement>(null);
+
+  // Animate on mount
+  useEffect(() => {
+    if (titleRef.current) {
+      slideIn(titleRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+  }, []);
+
+  // Animate form when it appears
+  useEffect(() => {
+    if (showForm && formRef.current) {
+      scaleIn(formRef.current, { from: 0.9, to: 1, duration: 0.5 });
+    }
+  }, [showForm]);
+
+  // Animate fields list when data changes
+  useEffect(() => {
+    if (fields.length > 0 && fieldsListRef.current) {
+      stagger(
+        ".field-card",
+        (el) => slideIn(el, "left", { duration: 0.4, distance: 30 }),
+        { stagger: 0.08, delay: 0.2 }
+      );
+    }
+  }, [fields.length]);
+
   return (
     <div style={{ padding: "20px", maxWidth: "1400px", margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+      <div ref={titleRef} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <h1>📋 مدیریت فیلدهای سفارشی</h1>
         <button
           onClick={startNew}
@@ -379,6 +409,7 @@ export default function CustomFields() {
       {/* فرم ایجاد/ویرایش */}
       {showForm && (
         <div
+          ref={formRef}
           style={{
             background: "var(--bg-secondary)",
             padding: "20px",
@@ -788,7 +819,7 @@ export default function CustomFields() {
           هیچ فیلد سفارشی تعریف نشده است.
         </div>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <div ref={fieldsListRef} style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", background: "var(--bg-primary)" }}>
             <thead>
               <tr style={{ background: "var(--bg-secondary)", borderBottom: "2px solid var(--border)" }}>
@@ -802,7 +833,7 @@ export default function CustomFields() {
             </thead>
             <tbody>
               {fields.map((field) => (
-                <tr key={field.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                <tr key={field.id} className="field-card" style={{ borderBottom: "1px solid var(--border)" }}>
                   <td style={{ padding: "12px" }}>
                     <code style={{ background: "var(--bg-secondary)", padding: "4px 8px", borderRadius: "4px" }}>
                       {field.name}

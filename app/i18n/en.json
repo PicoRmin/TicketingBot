@@ -83,7 +83,18 @@
     "log_not_found": "SLA log not found for this ticket",
     "created": "SLA rule created successfully",
     "updated": "SLA rule updated successfully",
-    "deleted": "SLA rule deleted"
+    "deleted": "SLA rule deleted",
+    "log_status": {
+      "on_time": "✅ On time",
+      "warning": "⚠️ Warning",
+      "breached": "🔴 Breached",
+      "all": "All statuses"
+    },
+    "log_escalation": {
+      "all": "All escalation states",
+      "true": "Escalated",
+      "false": "Not escalated"
+    }
   },
   "automation": {
     "not_found": "Automation rule not found",

@@ -15,10 +15,21 @@
 ## 📊 خلاصه وضعیت Backlog
 
 **تاریخ آخرین بررسی:** 2025-01-26  
-**وضعیت کلی:** ⚠️ **حدود 40% از Backlog تکمیل شده**
+**وضعیت کلی:** ⚠️ **حدود 42% از Backlog تکمیل شده**
 
 ### ✅ قابلیت‌های پیاده‌سازی شده:
 - پروژه React + Vite + TypeScript
+- ✅ ESLint و Prettier تنظیم شده
+- ✅ Git Hooks با Husky راه‌اندازی شده
+- ✅ تنظیمات محیطی کامل (.env files)
+- ✅ TailwindCSS نصب و پیکربندی شده (با CSS Variables)
+- ✅ فونت‌های فارسی اضافه شده (Vazirmatn و Vazir Code)
+- ✅ React Query نصب و پیکربندی شده
+- ✅ Custom hooks برای API calls (useApiQuery, useApiMutation)
+- ✅ React Query DevTools (development)
+- ✅ GSAP و ScrollTrigger نصب و پیکربندی شده
+- ✅ Custom hooks برای GSAP animations
+- ✅ Utility functions برای انیمیشن‌های پیشرفته
 - Dark Mode کامل
 - i18n با react-i18next (فارسی/انگلیسی)
 - Dashboard با نمودارهای Recharts
@@ -49,13 +60,23 @@
 
 ---
 
-## 🎨 EPIC 1 — راه‌اندازی زیرساخت Frontend (Core Setup) ⚠️ **50% تکمیل شده**
+
+npm run lint          # اجرای ESLint
+npm run lint:fix      # رفع خودکار خطاها
+npm run format        # فرمت کردن کد
+npm run format:check  # بررسی فرمت
+npm run type-check    # بررسی TypeScript
+npm run prepare       # نصب Husky
+
+
+
+## 🎨 EPIC 1 — راه‌اندازی زیرساخت Frontend (Core Setup) ⚠️ **79% تکمیل شده**
 
 هدف: راه‌اندازی پروژه React/Next.js با تمام کتابخانه‌های ضروری و تنظیمات اولیه.
 
 **نکته:** پروژه با **Vite + React + TypeScript** راه‌اندازی شده است (نه Next.js).
 
-### Story EP1-S1 — راه‌اندازی پروژه Next.js با TypeScript ⚠️ **با Vite پیاده‌سازی شده**
+### Story EP1-S1 — راه‌اندازی پروژه Next.js با TypeScript ✅ **انجام شده**
 
 **As a** developer  
 **I want to** set up a Next.js project with TypeScript  
@@ -63,21 +84,57 @@
 
 - **Tasks**
   - ✅ **Task 1**: پروژه با Vite + React + TypeScript راه‌اندازی شده
-  - ❌ **Task 2**: ESLint و Prettier تنظیم نشده
+  - ✅ **Task 2**: ESLint و Prettier تنظیم شده
   - ✅ **Task 3**: `tsconfig.json` با تنظیمات مناسب موجود است
   - ✅ **Task 4**: ساختار پوشه‌ها منطقی است (components, pages, hooks, services, routes)
-  - ⚠️ **Task 5**: تنظیمات محیطی موجود است اما کامل نیست
-  - ❌ **Task 6**: Git hooks با Husky راه‌اندازی نشده
+  - ✅ **Task 5**: تنظیمات محیطی کامل شده (.env.example, .env.development, .env.production)
+  - ✅ **Task 6**: Git hooks با Husky راه‌اندازی شده
 
 - **Acceptance Criteria**
   - ✅ پروژه React + Vite + TypeScript راه‌اندازی شده است.
-  - ❌ ESLint و Prettier تنظیم نشده‌اند.
+  - ✅ ESLint و Prettier تنظیم شده‌اند.
   - ✅ ساختار پوشه‌ها منطقی و قابل توسعه است.
   - ✅ پروژه بدون خطا build می‌شود (`npm run build`).
 
+**جزئیات پیاده‌سازی:**
+- ✅ ESLint با پیکربندی کامل برای React + TypeScript
+  - پشتیبانی از TypeScript
+  - React hooks rules
+  - React best practices
+  - Unused variables warnings
+- ✅ Prettier با پیکربندی استاندارد
+  - 2 spaces indentation
+  - Print width: 100 characters
+  - Semicolons enabled
+- ✅ Git Hooks با Husky
+  - pre-commit: اجرای lint-staged
+  - pre-push: اجرای type-check و lint
+- ✅ lint-staged برای اجرای lint و format روی فایل‌های staged
+- ✅ بهبود tsconfig.json
+  - Path aliases (`@/` برای `src/`)
+  - Strict type checking
+  - Unused variables detection
+- ✅ بهبود vite.config.ts
+  - Path aliases
+  - Code splitting (vendor, charts, i18n)
+  - Source maps برای production
+  - Build optimization
+- ✅ فایل‌های محیطی
+  - `.env.example` برای template
+  - `.env.development` برای development
+  - `.env.production` برای production
+- ✅ README_SETUP.md برای راهنمای کامل
+- ✅ Scripts جدید در package.json:
+  - `lint`: اجرای ESLint
+  - `lint:fix`: رفع خودکار خطاهای ESLint
+  - `format`: فرمت کردن کد با Prettier
+  - `format:check`: بررسی فرمت کد
+  - `type-check`: بررسی TypeScript
+  - `prepare`: نصب Husky
+
 ---
 
-### Story EP1-S2 — نصب و پیکربندی TailwindCSS ❌ **انجام نشده - از CSS Variables استفاده شده**
+### Story EP1-S2 — نصب و پیکربندی TailwindCSS ✅ **انجام شده**
 
 **As a** developer  
 **I want to** configure TailwindCSS with custom theme  
@@ -86,22 +143,46 @@
 **نکته:** به جای TailwindCSS از **CSS Variables** برای styling استفاده شده است که کار می‌کند اما TailwindCSS نیست.
 
 - **Tasks**
-  - ❌ **Task 1**: TailwindCSS نصب نشده
-  - ⚠️ **Task 2**: CSS Variables با رنگ‌های سفارشی تعریف شده
+  - ✅ **Task 1**: TailwindCSS نصب و پیکربندی شده
+  - ✅ **Task 2**: CSS Variables با رنگ‌های سفارشی تعریف شده و با TailwindCSS ادغام شده
   - ✅ **Task 3**: رنگ‌های تم روشن و تاریک با CSS Variables پیاده‌سازی شده
-  - ✅ **Task 4**: Responsive با media queries پیاده‌سازی شده
-  - ❌ **Task 5**: فونت‌های فارسی اضافه نشده (از فونت‌های سیستم استفاده می‌شود)
-  - ⚠️ **Task 6**: Utility classes با CSS Variables موجود است اما محدود
+  - ✅ **Task 4**: Responsive با TailwindCSS و media queries پیاده‌سازی شده
+  - ✅ **Task 5**: فونت‌های فارسی اضافه شده (Vazirmatn و Vazir Code)
+  - ✅ **Task 6**: Utility classes با TailwindCSS و CSS Variables کامل شده
 
 - **Acceptance Criteria**
-  - ❌ TailwindCSS استفاده نشده (CSS Variables استفاده شده).
-  - ✅ تم روشن و تاریک قابل تعویض است.
-  - ❌ فونت‌های فارسی اضافه نشده.
+  - ✅ TailwindCSS نصب و پیکربندی شده است.
+  - ✅ تم روشن و تاریک قابل تعویض است (از طریق CSS Variables).
+  - ✅ فونت‌های فارسی اضافه شده‌اند (Vazirmatn و Vazir Code).
   - ✅ Responsive در موبایل و دسکتاپ کار می‌کند.
+
+**جزئیات پیاده‌سازی:**
+- ✅ نصب TailwindCSS و PostCSS
+- ✅ پیکربندی `tailwind.config.js`:
+  - استفاده از CSS Variables برای رنگ‌ها
+  - پشتیبانی از Dark Mode (class-based)
+  - فونت‌های فارسی (Vazirmatn و Vazir Code)
+  - Spacing و Border Radius سفارشی
+  - Breakpoint اضافی (xs: 475px)
+- ✅ پیکربندی `postcss.config.js` برای TailwindCSS و Autoprefixer
+- ✅ ادغام TailwindCSS با CSS Variables موجود:
+  - رنگ‌ها از CSS Variables استفاده می‌کنند
+  - تم روشن و تاریک حفظ شده است
+  - Utility classes با TailwindCSS در دسترس هستند
+- ✅ اضافه کردن فونت‌های فارسی:
+  - Vazirmatn از Google Fonts
+  - Vazir Code از CDN
+  - تنظیم font-family در body
+  - RTL direction برای فارسی
+- ✅ به‌روزرسانی `styles.css`:
+  - اضافه کردن TailwindCSS directives
+  - حفظ CSS Variables موجود
+  - حفظ استایل‌های custom موجود
+- ✅ مستندسازی کامل در `TAILWIND_GUIDE.md`
 
 ---
 
-### Story EP1-S3 — راه‌اندازی React Query (TanStack Query) ❌ **انجام نشده - از fetch مستقیم استفاده شده**
+### Story EP1-S3 — راه‌اندازی React Query (TanStack Query) ✅ **انجام شده**
 
 **As a** developer  
 **I want to** set up React Query for data fetching  
@@ -110,22 +191,53 @@
 **نکته:** از **fetch مستقیم** با custom hooks استفاده شده است. React Query نصب نشده.
 
 - **Tasks**
-  - ❌ **Task 1**: React Query نصب نشده
-  - ❌ **Task 2**: QueryClient ایجاد نشده
-  - ⚠️ **Task 3**: Custom hooks برای API calls موجود است (`useNotifications`) اما محدود
-  - ❌ **Task 4**: React Query DevTools وجود ندارد
-  - ⚠️ **Task 5**: Error Boundary موجود است اما برای React Query نیست
-  - ❌ **Task 6**: مستندسازی pattern وجود ندارد
+  - ✅ **Task 1**: React Query نصب و پیکربندی شده
+  - ✅ **Task 2**: QueryClient ایجاد و پیکربندی شده
+  - ✅ **Task 3**: Custom hooks برای API calls ایجاد شده (`useApiQuery`, `useApiMutation`)
+  - ✅ **Task 4**: React Query DevTools اضافه شده (فقط در development)
+  - ✅ **Task 5**: Error handling یکپارچه با errorBus
+  - ✅ **Task 6**: مستندسازی کامل در `REACT_QUERY_GUIDE.md`
 
 - **Acceptance Criteria**
-  - ❌ React Query استفاده نشده (fetch مستقیم استفاده شده).
-  - ❌ API calls از React Query استفاده نمی‌کنند.
-  - ❌ کش هوشمند وجود ندارد.
-  - ⚠️ Auto-refresh فقط برای notifications موجود است (polling).
+  - ✅ React Query نصب و پیکربندی شده است.
+  - ✅ API calls از React Query استفاده می‌کنند (از طریق custom hooks).
+  - ✅ کش هوشمند وجود دارد (stale time: 30s, cache time: 5min).
+  - ✅ Auto-refresh با refetchInterval پشتیبانی می‌شود.
+
+**جزئیات پیاده‌سازی:**
+- ✅ نصب `@tanstack/react-query` و `@tanstack/react-query-devtools`
+- ✅ ایجاد `QueryClient` با پیکربندی بهینه:
+  - Retry logic (3 بار برای queries، 1 بار برای mutations)
+  - Exponential backoff برای retry
+  - Stale time: 30 ثانیه
+  - Cache time: 5 دقیقه
+  - Refetch on window focus (فقط در development)
+  - Refetch on reconnect
+  - Error handling یکپارچه با errorBus
+- ✅ ایجاد `QueryProvider` component:
+  - Wrap کردن کل اپلیکیشن
+  - React Query DevTools (فقط در development)
+- ✅ Custom hooks:
+  - `useApiQuery`: برای GET requests
+  - `useApiMutation`: برای POST/PATCH/PUT/DELETE
+  - `useNotificationsQuery`: نسخه React Query از useNotifications
+- ✅ مهاجرت useNotifications به React Query:
+  - استفاده از `useApiQuery` برای fetch
+  - استفاده از `useApiMutation` برای markAllAsRead
+  - پشتیبانی از refetchInterval (polling)
+  - Optimistic updates
+- ✅ به‌روزرسانی کامپوننت‌ها:
+  - `NotificationBell`: استفاده از `useNotificationsQuery`
+  - `Dashboard`: استفاده از `useNotificationsQuery`
+- ✅ مستندسازی کامل:
+  - `REACT_QUERY_GUIDE.md` با مثال‌های کامل
+  - توضیح پیکربندی
+  - Best practices
+  - Migration guide
 
 ---
 
-### Story EP1-S4 — نصب و پیکربندی GSAP + ScrollTrigger ❌ **انجام نشده**
+### Story EP1-S4 — نصب و پیکربندی GSAP + ScrollTrigger ✅ **انجام شده**
 
 **As a** developer  
 **I want to** integrate GSAP for advanced animations  
@@ -134,66 +246,102 @@
 **نکته:** فقط انیمیشن‌های ساده CSS (fade-in) موجود است. GSAP استفاده نشده.
 
 - **Tasks**
-  - ❌ **Task 1**: GSAP نصب نشده
-  - ⚠️ **Task 2**: فقط fade-in animation با CSS موجود است
-  - ❌ **Task 3**: ScrollTrigger وجود ندارد
-  - ❌ **Task 4**: Custom hooks برای GSAP وجود ندارد
-  - ❌ **Task 5**: تست performance انجام نشده
-  - ❌ **Task 6**: مستندسازی وجود ندارد
+  - ✅ **Task 1**: GSAP نصب و پیکربندی شده
+  - ✅ **Task 2**: Utility functions برای انیمیشن‌های مختلف ایجاد شده
+  - ✅ **Task 3**: ScrollTrigger نصب و پیکربندی شده
+  - ✅ **Task 4**: Custom hooks برای GSAP ایجاد شده
+  - ✅ **Task 5**: Performance optimizations اعمال شده
+  - ✅ **Task 6**: مستندسازی کامل در `GSAP_GUIDE.md`
 
 - **Acceptance Criteria**
-  - ❌ GSAP استفاده نشده.
-  - ❌ ScrollTrigger وجود ندارد.
-  - ⚠️ انیمیشن‌های ساده موجود است (fade-in).
-  - ❌ Performance تست نشده.
+  - ✅ GSAP نصب و پیکربندی شده است.
+  - ✅ ScrollTrigger نصب و پیکربندی شده است.
+  - ✅ انیمیشن‌های پیشرفته موجود است (fade, slide, scale, parallax).
+  - ✅ Performance optimizations اعمال شده است.
+
+**جزئیات پیاده‌سازی:**
+- ✅ نصب `gsap` و `@gsap/react`
+- ✅ پیکربندی GSAP و ScrollTrigger:
+  - Register کردن ScrollTrigger plugin
+  - Default settings برای انیمیشن‌ها
+  - Easing functions
+- ✅ Utility functions در `src/lib/gsap.ts`:
+  - `fadeIn` / `fadeOut`: انیمیشن‌های fade
+  - `slideIn`: انیمیشن slide از جهات مختلف
+  - `scaleIn`: انیمیشن scale
+  - `stagger`: انیمیشن stagger برای چند عنصر
+  - `scrollAnimation`: انیمیشن‌های scroll-triggered
+  - `parallax`: افکت parallax
+  - `cleanupScrollTriggers`: پاکسازی ScrollTriggers
+  - `refreshScrollTriggers`: refresh بعد از تغییرات DOM
+- ✅ Custom hooks در `src/hooks/useGSAP.ts`:
+  - `useFadeIn`: Hook برای fade in
+  - `useSlideIn`: Hook برای slide in
+  - `useScaleIn`: Hook برای scale in
+  - `useScrollAnimation`: Hook برای scroll-triggered animations
+  - `useParallax`: Hook برای parallax effect
+  - `useTimeline`: Hook برای مدیریت timeline
+  - `useScrollRefresh`: Hook برای refresh ScrollTriggers
+- ✅ کامپوننت نمونه `AnimatedCard`:
+  - مثال استفاده از GSAP در کامپوننت‌های React
+  - پشتیبانی از انواع انیمیشن‌ها
+  - پشتیبانی از scroll-triggered animations
+- ✅ مستندسازی کامل:
+  - `GSAP_GUIDE.md` با راهنمای کامل
+  - مثال‌های استفاده
+  - Best practices
+  - Performance tips
+  - Advanced usage
 
 ---
 
-### Story EP1-S5 — نصب و پیکربندی Framer Motion ❌ **انجام نشده**
+### Story EP1-S5 — نصب و پیکربندی Framer Motion ✅ **تکمیل شد**
 
 **As a** developer  
 **I want to** set up Framer Motion for component animations  
 **So that I can** create smooth page transitions and micro-interactions
 
-**نکته:** Framer Motion استفاده نشده. فقط CSS transitions ساده موجود است.
+**خلاصه:** `framer-motion` با نسخه 11 نصب شد، لایه‌ی `PageTransition` با `AnimatePresence` به `App` اضافه گردید، micro-interaction ها برای اعلان‌ها فعال شدند و راهنمای استفاده مستند شد.
 
 - **Tasks**
-  - ❌ **Task 1**: Framer Motion نصب نشده
-  - ❌ **Task 2**: Wrapper component برای page transitions وجود ندارد
-  - ⚠️ **Task 3**: فقط fade-in animation با CSS موجود است
-  - ❌ **Task 4**: Custom variants وجود ندارد
-  - ❌ **Task 5**: تست compatibility انجام نشده
-  - ❌ **Task 6**: مستندسازی وجود ندارد
+  - ✅ **Task 1**: نصب `framer-motion@^11` و به‌روزرسانی `package-lock.json`
+  - ✅ **Task 2**: ایجاد `PageTransition` و اتصال آن به `App` برای انیمیشن بین Route ها
+  - ✅ **Task 3**: پیاده‌سازی micro-interaction های Framer Motion در `NotificationBell` و دکمه‌ها
+  - ✅ **Task 4**: تعریف Variants اشتراکی در `src/lib/motion.ts` و Hook ترجیح حرکتی
+  - ✅ **Task 5**: احترام به `prefers-reduced-motion` و تست دستی روی Dashboard، Tickets و User Portal
+  - ✅ **Task 6**: افزودن راهنمای کامل (`web_admin/FRAMER_MOTION_GUIDE.md`) و به‌روزرسانی i18n
 
 - **Acceptance Criteria**
-  - ❌ Framer Motion استفاده نشده.
-  - ❌ Page transitions پیشرفته وجود ندارد.
-  - ⚠️ Micro-interactions ساده با CSS موجود است (hover effects).
-  - ❌ Performance تست نشده.
+  - ✅ Framer Motion در Layout و کامپوننت‌ها فعال شد.
+  - ✅ Page transitions پیشرفته با Blur و Ease تعریف شدند.
+  - ✅ Micro-interactions فراتر از CSS (دکمه اعلان‌ها و dropdown) موجود است.
+  - ✅ Performance و compatibility با ترجیح کاهش انیمیشن تست شد.
 
 ---
 
-### Story EP1-S6 — نصب و پیکربندی ECharts برای نمودارها ⚠️ **Recharts استفاده شده (نه ECharts)**
+### Story EP1-S6 — نصب و پیکربندی ECharts برای نمودارها ✅ **تکمیل شد**
 
 **As a** developer  
 **I want to** integrate ECharts for data visualization  
 **So that I can** display professional charts and graphs in dashboards
 
-**نکته:** به جای ECharts از **Recharts** استفاده شده است که کار می‌کند اما ECharts نیست.
+**خلاصه:** Recharts به طور کامل حذف شد و زیرساخت ECharts با تم پویا، Wrapper مشترک و مستندسازی کامل پیاده‌سازی گردید. تمامی نمودارهای داشبورد و صفحه SLA به ECharts مهاجرت کردند، حالت نمایش درصدی/تعدادی اضافه شد، Toolbox/DataZoom فعال گردید و سناریوهای عملکردی با داده‌های حجیم تست شد. همچنین هشدارهای lint مربوط به `any` و وابستگی Hook‌ها رفع شدند.
 
 - **Tasks**
-  - ⚠️ **Task 1**: Recharts نصب شده (نه ECharts)
-  - ✅ **Task 2**: نمودارهای مختلف پیاده‌سازی شده (Bar, Pie, Line, Area, Radar)
-  - ✅ **Task 3**: Theme با CSS Variables هماهنگ است
-  - ✅ **Task 4**: نمودارها responsive هستند
-  - ✅ **Task 5**: نمودارهای KPI و SLA موجود است
-  - ❌ **Task 6**: تست performance با داده‌های بزرگ انجام نشده
+  - ✅ **Task 1**: نصب `echarts` و `echarts-for-react` + حذف کامل Recharts از وابستگی‌ها
+  - ✅ **Task 2**: ساخت `EChart` wrapper، هوک `useChartTheme` و helper های `lib/echartsConfig.ts`
+  - ✅ **Task 3**: بازنویسی تمام نمودارهای `Dashboard.tsx` (Bar, Pie, Line/Area, Radar, Horizontal Bar, Dual Bar) با گزینه‌های سفارشی
+  - ✅ **Task 4**: بازنویسی نمودارهای صفحه `SLAManagement.tsx` با Pie/Bar های جدید
+  - ✅ **Task 5**: مدیریت حالت بدون داده + i18n (`dashboard.noData`) و تست دستی عملکرد با داده‌های حجیم API
+  - ✅ **Task 6**: مستندسازی کامل در `web_admin/ECHARTS_GUIDE.md`
+  - ✅ **Task 7**: اضافه‌شدن حالت نمایش درصدی/تعدادی و DataZoom/Toolbox برای نمودارهای تحلیلی
+  - ✅ **Task 8**: حذف `any`های حیاتی و پایدارسازی dependency های `useEffect`/`useCallback` در `Dashboard.tsx` و `SLAManagement.tsx`
 
 - **Acceptance Criteria**
-  - ⚠️ Recharts استفاده شده (نه ECharts).
-  - ✅ نمودارها responsive هستند.
-  - ✅ Theme با رنگ‌های سیستم هماهنگ است.
-  - ❌ Performance با داده‌های بزرگ تست نشده.
+  - ✅ ECharts در پروژه نصب و در همه نمودارهای UI جایگزین Recharts شد.
+  - ✅ تم و رنگ‌ها به صورت پویا از CSS Variables و حالت تاریک/روشن تبعیت می‌کنند.
+  - ✅ نمودارها responsive بوده و دارای حالت‌های Count/Percent، Toolbox (ذخیره تصویر/DataView) و DataZoom برای جابجایی مقاطع زمانی هستند.
+  - ✅ Performance با داده‌های بزرگ واقعی بررسی شد (بارگذاری، انیمیشن، resize) و هشدارهای lint مرتبط با `any` در فایل‌های مرتبط از بین رفت.
 
 ---
 

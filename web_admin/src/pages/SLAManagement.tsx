@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete, isAuthenticated, getStoredProfile } from "../services/api";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
+import type { EChartsOption } from "echarts";
+import { useChartTheme } from "../hooks/useChartTheme";
+import { EChart } from "../components/charts/EChart";
+import { buildGrid, buildLegend, buildTooltip, buildCategoryAxis, buildValueAxis } from "../lib/echartsConfig";
 
 type SLARule = {
   id: number;
@@ -19,6 +22,58 @@ type SLARule = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+type SLAPayload = {
+  name: string;
+  description: string | null;
+  priority: string | null;
+  category: string | null;
+  department_id: number | null;
+  response_time_minutes: number;
+  resolution_time_minutes: number;
+  response_warning_minutes: number;
+  resolution_warning_minutes: number;
+  escalation_enabled: boolean;
+  escalation_after_minutes: number | null;
+  is_active: boolean;
+};
+
+type SLALogStatus = "on_time" | "warning" | "breached" | null;
+
+type SLALog = {
+  id: number;
+  ticket_id: number;
+  ticket_number?: string;
+  sla_rule_name?: string;
+  sla_rule_id?: number;
+  response_status: SLALogStatus;
+  resolution_status: SLALogStatus;
+  target_response_time: string;
+  target_resolution_time: string;
+  actual_response_time?: string | null;
+  actual_resolution_time?: string | null;
+  escalated: boolean;
+  escalated_at?: string | null;
+};
+
+type SLAStatsSummary = {
+  total_logs: number;
+  response_on_time: number;
+  response_warning: number;
+  response_breached: number;
+  resolution_on_time: number;
+  resolution_warning: number;
+  resolution_breached: number;
+  escalated_count: number;
+  response_compliance_rate: number;
+  resolution_compliance_rate: number;
+};
+
+type LogFilters = {
+  response_status: "" | Exclude<SLALogStatus, null>;
+  resolution_status: "" | Exclude<SLALogStatus, null>;
+  escalated: "" | "true" | "false";
 };
 
 const EMPTY_FORM = {
@@ -54,7 +109,8 @@ const CATEGORIES = [
 
 export default function SLAManagement() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any | null>(() => getStoredProfile());
+  const chartTheme = useChartTheme();
+  const profile = useMemo(() => getStoredProfile(), []);
   const [rules, setRules] = useState<SLARule[]>([]);
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,20 +121,101 @@ export default function SLAManagement() {
   const [filterActive, setFilterActive] = useState<string>("");
   
   // SLA Logs states
-  const [slaLogs, setSlaLogs] = useState<any[]>([]);
+  const [slaLogs, setSlaLogs] = useState<SLALog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsPage, setLogsPage] = useState(1);
   const [logsTotalPages, setLogsTotalPages] = useState(1);
   const [showLogs, setShowLogs] = useState(false);
-  const [logFilters, setLogFilters] = useState({
+  const [logFilters, setLogFilters] = useState<LogFilters>({
     response_status: "",
     resolution_status: "",
     escalated: "",
   });
   
   // SLA Statistics states
-  const [slaStats, setSlaStats] = useState<any>(null);
+  const [slaStats, setSlaStats] = useState<SLAStatsSummary | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+
+  const responseStatusOption = useMemo<EChartsOption>(() => ({
+    tooltip: buildTooltip(chartTheme, { trigger: "item", formatter: "{b}: {c} ({d}%)" }),
+    legend: buildLegend(chartTheme, { bottom: 0 }),
+    series: [
+      {
+        type: "pie",
+        radius: ["35%", "70%"],
+        label: { formatter: "{b}\n{d}%", color: chartTheme.foreground },
+        data: [
+          { value: slaStats?.response_on_time || 0, name: "در مهلت", itemStyle: { color: chartTheme.success } },
+          { value: slaStats?.response_warning || 0, name: "هشدار", itemStyle: { color: chartTheme.warning } },
+          { value: slaStats?.response_breached || 0, name: "نقض شده", itemStyle: { color: chartTheme.danger } },
+        ],
+      },
+    ],
+  }), [slaStats, chartTheme]);
+
+  const resolutionStatusOption = useMemo<EChartsOption>(() => ({
+    tooltip: buildTooltip(chartTheme, { trigger: "item", formatter: "{b}: {c} ({d}%)" }),
+    legend: buildLegend(chartTheme, { bottom: 0 }),
+    series: [
+      {
+        type: "pie",
+        radius: ["35%", "70%"],
+        label: { formatter: "{b}\n{d}%", color: chartTheme.foreground },
+        data: [
+          { value: slaStats?.resolution_on_time || 0, name: "در مهلت", itemStyle: { color: chartTheme.success } },
+          { value: slaStats?.resolution_warning || 0, name: "هشدار", itemStyle: { color: chartTheme.warning } },
+          { value: slaStats?.resolution_breached || 0, name: "نقض شده", itemStyle: { color: chartTheme.danger } },
+        ],
+      },
+    ],
+  }), [slaStats, chartTheme]);
+
+  const responseVsResolutionOption = useMemo<EChartsOption>(() => ({
+    grid: buildGrid(),
+    tooltip: buildTooltip(chartTheme),
+    legend: buildLegend(chartTheme, { top: 0 }),
+    xAxis: buildCategoryAxis(["در مهلت", "هشدار", "نقض شده"], chartTheme),
+    yAxis: buildValueAxis(chartTheme),
+    series: [
+      {
+        name: "پاسخ",
+        type: "bar",
+        data: [slaStats?.response_on_time || 0, slaStats?.response_warning || 0, slaStats?.response_breached || 0],
+        itemStyle: { color: chartTheme.palette[0] },
+      },
+      {
+        name: "حل",
+        type: "bar",
+        data: [slaStats?.resolution_on_time || 0, slaStats?.resolution_warning || 0, slaStats?.resolution_breached || 0],
+        itemStyle: { color: chartTheme.palette[1] },
+      },
+    ],
+  }), [slaStats, chartTheme]);
+
+  const loadDepartments = useCallback(async () => {
+    try {
+      const depts = (await apiGet("/api/departments?page_size=100")) as { id: number; name: string }[];
+      setDepartments(depts);
+    } catch (error) {
+      console.error("Error loading departments:", error);
+    }
+  }, []);
+
+  const loadRules = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (filterActive) params.set("is_active", filterActive);
+      const query = params.toString() ? `?${params.toString()}` : "";
+      const res = (await apiGet(`/api/sla${query}`)) as SLARule[];
+      setRules(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت قوانین SLA");
+    } finally {
+      setLoading(false);
+    }
+  }, [filterActive]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -91,32 +228,7 @@ export default function SLAManagement() {
     }
     loadDepartments();
     loadRules();
-  }, [navigate, profile, filterActive]);
-
-  const loadDepartments = async () => {
-    try {
-      const depts = await apiGet("/api/departments?page_size=100") as { id: number; name: string }[];
-      setDepartments(depts);
-    } catch (e: any) {
-      console.error("Error loading departments:", e);
-    }
-  };
-
-  const loadRules = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (filterActive) params.set("is_active", filterActive);
-      const query = params.toString() ? `?${params.toString()}` : "";
-      const res = await apiGet(`/api/sla${query}`) as SLARule[];
-      setRules(res);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت قوانین SLA");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [navigate, profile, loadDepartments, loadRules]);
 
   const startEdit = (rule: SLARule) => {
     setEditingId(rule.id);
@@ -155,7 +267,7 @@ export default function SLAManagement() {
     setError(null);
     setSuccess(null);
     try {
-      const payload: any = {
+      const payload: SLAPayload = {
         name: form.name,
         description: form.description || null,
         priority: form.priority || null,
@@ -179,8 +291,8 @@ export default function SLAManagement() {
       }
       cancelEdit();
       await loadRules();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره قانون SLA.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "خطا در ذخیره قانون SLA.");
     } finally {
       setLoading(false);
     }
@@ -197,8 +309,8 @@ export default function SLAManagement() {
       await apiDelete(`/api/sla/${id}`);
       setSuccess("قانون SLA با موفقیت حذف شد.");
       await loadRules();
-    } catch (e: any) {
-      setError(e?.message || "خطا در حذف قانون SLA.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "خطا در حذف قانون SLA.");
     } finally {
       setLoading(false);
     }
@@ -210,19 +322,19 @@ export default function SLAManagement() {
     try {
       await apiPut(`/api/sla/${rule.id}`, { is_active: !rule.is_active });
       await loadRules();
-    } catch (e: any) {
-      setError(e?.message || "خطا در تغییر وضعیت قانون.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "خطا در تغییر وضعیت قانون.");
     } finally {
       setLoading(false);
     }
   };
 
-  const getPriorityLabel = (priority: string | null) => {
+  const getPriorityLabel = (priority?: string | null) => {
     if (!priority) return "همه اولویت‌ها";
     return PRIORITIES.find((p) => p.value === priority)?.label || priority;
   };
 
-  const getCategoryLabel = (category: string | null) => {
+  const getCategoryLabel = (category?: string | null) => {
     if (!category) return "همه دسته‌بندی‌ها";
     return CATEGORIES.find((c) => c.value === category)?.label || category;
   };
@@ -239,7 +351,7 @@ export default function SLAManagement() {
    * بارگذاری لاگ‌های SLA
    * Load SLA logs
    */
-  const loadSlaLogs = async () => {
+  const loadSlaLogs = useCallback(async () => {
     setLogsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -249,27 +361,35 @@ export default function SLAManagement() {
       if (logFilters.resolution_status) params.set("resolution_status", logFilters.resolution_status);
       if (logFilters.escalated) params.set("escalated", logFilters.escalated);
       
-      const logs = await apiGet(`/api/sla/logs?${params.toString()}`) as any[];
+      const logs = (await apiGet(`/api/sla/logs?${params.toString()}`)) as SLALog[];
       setSlaLogs(logs);
-      // محاسبه تعداد صفحات (فرض می‌کنیم هر صفحه 20 آیتم است)
       setLogsTotalPages(Math.ceil(logs.length / 20) || 1);
-    } catch (e: any) {
-      console.error("Error loading SLA logs:", e);
+    } catch (error) {
+      console.error("Error loading SLA logs:", error);
     } finally {
       setLogsLoading(false);
     }
-  };
+  }, [logFilters, logsPage]);
 
   /**
    * بارگذاری آمار SLA
    * Load SLA statistics
    */
-  const loadSlaStats = async () => {
+  const loadSlaStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      // دریافت گزارش SLA از API
-      const stats = await apiGet("/api/reports/sla-compliance") as any;
-      // تطبیق نام فیلدها
+      const stats = (await apiGet("/api/reports/sla-compliance")) as {
+        total_tickets_with_sla?: number;
+        response_on_time?: number;
+        response_warning?: number;
+        response_breached?: number;
+        resolution_on_time?: number;
+        resolution_warning?: number;
+        resolution_breached?: number;
+        escalated_count?: number;
+        response_compliance_rate?: number;
+        resolution_compliance_rate?: number;
+      };
       setSlaStats({
         total_logs: stats.total_tickets_with_sla || 0,
         response_on_time: stats.response_on_time || 0,
@@ -282,22 +402,22 @@ export default function SLAManagement() {
         response_compliance_rate: stats.response_compliance_rate || 0,
         resolution_compliance_rate: stats.resolution_compliance_rate || 0,
       });
-    } catch (e: any) {
-      console.error("Error loading SLA stats:", e);
+    } catch (error) {
+      console.error("Error loading SLA stats:", error);
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (showLogs) {
       loadSlaLogs();
     }
-  }, [showLogs, logsPage, logFilters]);
+  }, [showLogs, loadSlaLogs]);
 
   useEffect(() => {
     loadSlaStats();
-  }, []);
+  }, [loadSlaStats]);
 
   /**
    * تابع برای نمایش وضعیت SLA
@@ -722,89 +842,19 @@ export default function SLAManagement() {
                 {/* نمودار وضعیت پاسخ */}
                 <div style={{ background: "var(--bg-primary)", padding: 20, borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
                   <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600 }}>📊 وضعیت پاسخ</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "در مهلت", value: slaStats.response_on_time || 0, color: "#28a745" },
-                          { name: "هشدار", value: slaStats.response_warning || 0, color: "#ffc107" },
-                          { name: "نقض شده", value: slaStats.response_breached || 0, color: "#dc3545" },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {[
-                          { name: "در مهلت", value: slaStats.response_on_time || 0, color: "#28a745" },
-                          { name: "هشدار", value: slaStats.response_warning || 0, color: "#ffc107" },
-                          { name: "نقض شده", value: slaStats.response_breached || 0, color: "#dc3545" },
-                        ].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <EChart option={responseStatusOption} height={300} ariaLabel="وضعیت پاسخ SLA" />
                 </div>
 
                 {/* نمودار وضعیت حل */}
                 <div style={{ background: "var(--bg-primary)", padding: 20, borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
                   <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600 }}>📊 وضعیت حل</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "در مهلت", value: slaStats.resolution_on_time || 0, color: "#28a745" },
-                          { name: "هشدار", value: slaStats.resolution_warning || 0, color: "#ffc107" },
-                          { name: "نقض شده", value: slaStats.resolution_breached || 0, color: "#dc3545" },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {[
-                          { name: "در مهلت", value: slaStats.resolution_on_time || 0, color: "#28a745" },
-                          { name: "هشدار", value: slaStats.resolution_warning || 0, color: "#ffc107" },
-                          { name: "نقض شده", value: slaStats.resolution_breached || 0, color: "#dc3545" },
-                        ].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <EChart option={resolutionStatusOption} height={300} ariaLabel="وضعیت حل SLA" />
                 </div>
 
                 {/* نمودار مقایسه‌ای پاسخ و حل */}
                 <div style={{ background: "var(--bg-primary)", padding: 20, borderRadius: "var(--radius)", border: "1px solid var(--border)", gridColumn: "1 / -1" }}>
                   <h3 style={{ marginBottom: 20, fontSize: 18, fontWeight: 600 }}>📊 مقایسه وضعیت پاسخ و حل</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={[
-                        { name: "در مهلت", پاسخ: slaStats.response_on_time || 0, حل: slaStats.resolution_on_time || 0 },
-                        { name: "هشدار", پاسخ: slaStats.response_warning || 0, حل: slaStats.resolution_warning || 0 },
-                        { name: "نقض شده", پاسخ: slaStats.response_breached || 0, حل: slaStats.resolution_breached || 0 },
-                      ]}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="پاسخ" fill="#4dabf7" />
-                      <Bar dataKey="حل" fill="#51cf66" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <EChart option={responseVsResolutionOption} height={300} ariaLabel="مقایسه وضعیت پاسخ و حل SLA" />
                 </div>
               </div>
             </div>
@@ -823,7 +873,12 @@ export default function SLAManagement() {
           <div className="filters" style={{ marginBottom: 16 }}>
             <select
               value={logFilters.response_status}
-              onChange={(e) => setLogFilters({ ...logFilters, response_status: e.target.value })}
+              onChange={(e) =>
+                setLogFilters({
+                  ...logFilters,
+                  response_status: e.target.value as LogFilters["response_status"],
+                })
+              }
               style={{ flex: 1 }}
             >
               <option value="">همه وضعیت‌های پاسخ</option>
@@ -833,7 +888,12 @@ export default function SLAManagement() {
             </select>
             <select
               value={logFilters.resolution_status}
-              onChange={(e) => setLogFilters({ ...logFilters, resolution_status: e.target.value })}
+              onChange={(e) =>
+                setLogFilters({
+                  ...logFilters,
+                  resolution_status: e.target.value as LogFilters["resolution_status"],
+                })
+              }
               style={{ flex: 1 }}
             >
               <option value="">همه وضعیت‌های حل</option>
@@ -843,7 +903,12 @@ export default function SLAManagement() {
             </select>
             <select
               value={logFilters.escalated}
-              onChange={(e) => setLogFilters({ ...logFilters, escalated: e.target.value })}
+              onChange={(e) =>
+                setLogFilters({
+                  ...logFilters,
+                  escalated: e.target.value as LogFilters["escalated"],
+                })
+              }
               style={{ flex: 1 }}
             >
               <option value="">همه Escalation</option>

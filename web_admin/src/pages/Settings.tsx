@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiGet, apiPut, isAuthenticated, fetchProfile, getStoredProfile } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { fadeIn, slideIn, stagger } from "../lib/gsap";
 
 type FileSettings = {
   max_images_per_ticket: number;
@@ -123,9 +124,26 @@ export default function Settings() {
     );
   }
 
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const userCardRef = useRef<HTMLDivElement>(null);
+
+  // Animate on mount
+  useEffect(() => {
+    if (titleRef.current) {
+      slideIn(titleRef.current, "right", { duration: 0.6, distance: 50 });
+    }
+    if (formCardRef.current) {
+      fadeIn(formCardRef.current, { duration: 0.7, delay: 0.2 });
+    }
+    if (userCardRef.current) {
+      fadeIn(userCardRef.current, { duration: 0.7, delay: 0.4 });
+    }
+  }, []);
+
   return (
     <div className="fade-in">
-      <h1 style={{ marginBottom: 24, fontSize: 32, fontWeight: 700 }}>⚙️ تنظیمات سیستم</h1>
+      <h1 ref={titleRef} style={{ marginBottom: 24, fontSize: 32, fontWeight: 700 }}>⚙️ تنظیمات سیستم</h1>
 
       {error && (
         <div className="alert error fade-in">
@@ -140,7 +158,7 @@ export default function Settings() {
       )}
 
       <form onSubmit={handleSave}>
-        <div className="card">
+        <div ref={formCardRef} className="card">
           <div className="card-header">
             <h2 className="card-title">📎 تنظیمات فایل</h2>
           </div>
@@ -281,7 +299,7 @@ export default function Settings() {
         </div>
       </form>
 
-      <div className="card" style={{ marginTop: 24 }}>
+      <div ref={userCardRef} className="card" style={{ marginTop: 24 }}>
         <div className="card-header">
           <h2 className="card-title">👥 دسترسی‌های کاربران</h2>
         </div>

@@ -1,6 +1,6 @@
 import { FormEvent, useState, useEffect, useRef } from "react";
 import { login, isAuthenticated } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { scaleIn, slideIn } from "../lib/gsap";
 
 export default function Login() {
@@ -119,6 +119,13 @@ export default function Login() {
           <strong>اطلاعات پیش‌فرض:</strong><br />
           نام کاربری: <code>admin</code><br />
           رمز عبور: <code>admin123</code>
+        </div>
+
+        <div style={{ marginTop: 16, textAlign: "center" }}>
+          <span style={{ color: "var(--fg-secondary)", marginInlineEnd: 8 }}>حساب کاربری ندارید؟</span>
+          <Link to="/register" className="link">
+            شروع ثبت‌نام چندمرحله‌ای
+          </Link>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiPost } from "../services/api";
+import gsap from "gsap";
 
 type OnboardingProfile = {
   firstName: string;
@@ -9,12 +10,10 @@ type OnboardingProfile = {
   skillLevel: string;
   goals: string[];
   responsibilities: string;
-  preferredHabits: string[];
   notes: string;
 };
 
 const ONBOARDING_KEY = "imehr_onboarding_state";
-const HABIT_LIBRARY = ["پیگیری روزانه تیکت‌ها", "ثبت گزارش پایانی", "اشتراک دانش در بانک", "ارائه بازخورد SLA"];
 const GOAL_LIBRARY = ["بهبود مهارت شبکه", "مدیریت شعب", "حل سریع مشکلات", "یادگیری نرم‌افزارهای جدید"];
 
 const defaultProfile: OnboardingProfile = {
@@ -25,7 +24,6 @@ const defaultProfile: OnboardingProfile = {
   skillLevel: "",
   goals: [],
   responsibilities: "",
-  preferredHabits: [],
   notes: "",
 };
 
@@ -53,16 +51,41 @@ export function OnboardingWizard({ onComplete }: Props) {
     return { completed: false, step: 0, profile: defaultProfile };
   });
   const [saving, setSaving] = useState(false);
-  const steps = [
-    "اطلاعات پایه",
-    "اهداف و مسئولیت‌ها",
-    "عادات پیشنهادی",
-    "بازبینی و تایید",
-  ];
+  const steps = ["اطلاعات پایه", "اهداف و مسئولیت‌ها", "بازبینی و تایید"];
+  const tooltipContent: Record<number, { title: string; hints: string[]; highlight: "panel" | "chips" | "review" }> = {
+    0: {
+      title: "راهنمای تکمیل اطلاعات پایه",
+      hints: ["نام و نام خانوادگی رسمی را درج کنید.", "شماره تماس قابل دسترس روزانه را بنویسید.", "رده سنی و سطح مهارت، پیشنهادهای بعدی را دقیق‌تر می‌کند."],
+      highlight: "panel",
+    },
+    1: {
+      title: "اهداف و مسئولیت‌ها",
+      hints: ["حداقل دو هدف شغلی انتخاب کنید.", "شرح مسئولیت‌ها باعث سفارشی‌سازی اعلان‌ها می‌شود.", "می‌توانید هدف جدید تایپ و با Enter اضافه کنید."],
+      highlight: "chips",
+    },
+    2: {
+      title: "بازبینی و تایید نهایی",
+      hints: ["اطلاعات شخصی و اهداف را یک‌بار مرور کنید.", "در صورت نیاز می‌توانید به مراحل قبل بازگردید.", "با تایید نهایی، تنظیمات در پروفایل ذخیره می‌شود."],
+      highlight: "review",
+    },
+  };
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     localStorage.setItem(ONBOARDING_KEY, JSON.stringify(state));
   }, [state]);
+
+  useEffect(() => {
+    if (!tooltipRef.current) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        tooltipRef.current,
+        { autoAlpha: 0, y: 12 },
+        { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" }
+      );
+    }, tooltipRef);
+    return () => ctx.revert();
+  }, [state.step]);
 
   const updateProfile = (changes: Partial<OnboardingProfile>) => {
     setState((prev) => ({
@@ -71,16 +94,16 @@ export function OnboardingWizard({ onComplete }: Props) {
     }));
   };
 
-  const toggleListValue = (key: "goals" | "preferredHabits", value: string) => {
+  const toggleGoal = (value: string) => {
     setState((prev) => {
-      const current = prev.profile[key];
+      const current = prev.profile.goals;
       const exists = current.includes(value);
       const updated = exists ? current.filter((item) => item !== value) : [...current, value];
       return {
         ...prev,
         profile: {
           ...prev.profile,
-          [key]: updated,
+          goals: updated,
         },
       };
     });
@@ -162,7 +185,7 @@ export function OnboardingWizard({ onComplete }: Props) {
       </div>
 
       {state.step === 0 && (
-        <div className="onboarding-panel">
+        <div className="onboarding-panel highlight-ring">
           <label>
             نام:
             <input value={profile.firstName} onChange={(e) => updateProfile({ firstName: e.target.value })} placeholder="علی" />
@@ -202,13 +225,13 @@ export function OnboardingWizard({ onComplete }: Props) {
       {state.step === 1 && (
         <div className="onboarding-panel">
           <p>اهداف کاری خود را انتخاب یا وارد کنید:</p>
-          <div className="chip-list">
+          <div className="chip-list highlight-ring">
             {GOAL_LIBRARY.map((goal) => (
               <button
                 type="button"
                 key={goal}
                 className={`chip ${profile.goals.includes(goal) ? "active" : ""}`}
-                onClick={() => toggleListValue("goals", goal)}
+                onClick={() => toggleGoal(goal)}
               >
                 {goal}
               </button>
@@ -223,38 +246,20 @@ export function OnboardingWizard({ onComplete }: Props) {
               placeholder="مثال: پیگیری مشکلات شبکه شعب غرب، هماهنگی با تیم VOIP..."
             />
           </label>
+        <label>
+          یادداشت‌های تکمیلی:
+          <textarea
+            rows={3}
+            value={profile.notes}
+            onChange={(e) => updateProfile({ notes: e.target.value })}
+            placeholder="هر نکته‌ای که به تیم پشتیبانی کمک می‌کند را وارد کنید."
+          />
+        </label>
         </div>
       )}
 
       {state.step === 2 && (
-        <div className="onboarding-panel">
-          <p>عادت‌های پیشنهادی را انتخاب کنید:</p>
-          <div className="chip-list">
-            {HABIT_LIBRARY.map((habit) => (
-              <button
-                type="button"
-                key={habit}
-                className={`chip ${profile.preferredHabits.includes(habit) ? "active" : ""}`}
-                onClick={() => toggleListValue("preferredHabits", habit)}
-              >
-                {habit}
-              </button>
-            ))}
-          </div>
-          <label>
-            توضیحات تکمیلی:
-            <textarea
-              rows={3}
-              value={profile.notes}
-              onChange={(e) => updateProfile({ notes: e.target.value })}
-              placeholder="هر نکته‌ای که به تیم پشتیبانی کمک می‌کند را وارد کنید."
-            />
-          </label>
-        </div>
-      )}
-
-      {state.step === 3 && (
-        <div className="onboarding-panel">
+        <div className="onboarding-panel highlight-ring">
           <h3>مرور اطلاعات</h3>
           <ul className="onboarding-review">
             <li>
@@ -269,9 +274,22 @@ export function OnboardingWizard({ onComplete }: Props) {
             <li>
               <strong>مسئولیت‌ها:</strong> {profile.responsibilities || "-"}
             </li>
-            <li>
-              <strong>عادات منتخب:</strong> {profile.preferredHabits.length ? profile.preferredHabits.join("، ") : "-"}
-            </li>
+            {profile.notes && (
+              <li>
+                <strong>توضیحات:</strong> {profile.notes}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {tooltipContent[state.step] && (
+        <div className="onboarding-tooltip" ref={tooltipRef}>
+          <h4>{tooltipContent[state.step].title}</h4>
+          <ul>
+            {tooltipContent[state.step].hints.map((hint) => (
+              <li key={hint}>{hint}</li>
+            ))}
           </ul>
         </div>
       )}

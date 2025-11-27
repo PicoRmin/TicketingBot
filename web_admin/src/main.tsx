@@ -6,6 +6,7 @@ import { QueryProvider } from "./providers/QueryProvider";
 
 import App from "./App";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
@@ -25,18 +26,23 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { GlobalErrorToast } from "./components/GlobalErrorToast";
 import i18n from "./i18n";
+import type { UserRole } from "./services/api";
 
-const adminViewRoles = ["central_admin", "admin", "branch_admin", "it_specialist", "report_manager"];
-const operationalRoles = ["central_admin", "admin", "branch_admin", "it_specialist"];
-const adminRoles = ["central_admin", "admin"];
-const centralRoles = ["central_admin"];
-const userRoles = ["user"];
+const adminViewRoles: UserRole[] = ["central_admin", "admin", "branch_admin", "it_specialist", "report_manager"];
+const operationalRoles: UserRole[] = ["central_admin", "admin", "branch_admin", "it_specialist"];
+const adminRoles: UserRole[] = ["central_admin", "admin"];
+const centralRoles: UserRole[] = ["central_admin"];
+const userRoles: UserRole[] = ["user"];
 
 const router = createBrowserRouter(
   [
     {
       path: "/login",
       element: <Login />,
+    },
+    {
+      path: "/register",
+      element: <Register />,
     },
     {
       path: "/",
@@ -160,12 +166,7 @@ const router = createBrowserRouter(
         },
       ],
     },
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-    },
-  }
+  ]
 );
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

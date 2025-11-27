@@ -173,6 +173,86 @@
       "responseRate": "Response rate",
       "resolutionRate": "Resolution rate"
     }
+  },
+  "auth": {
+    "register": {
+      "eyebrow": "Multi-step signup",
+      "title": "Create your help desk account",
+      "subtitle": "Complete a few short steps to activate access to the support portal.",
+      "steps": {
+        "identity": {
+          "title": "Identity details",
+          "description": "We use your name, email and phone to communicate and verify ownership."
+        },
+        "organization": {
+          "title": "Organization info",
+          "description": "Branch, department and role help us personalize dashboards and notifications."
+        },
+        "security": {
+          "title": "Security setup",
+          "description": "Define username, password and verify ownership via OTP."
+        },
+        "review": {
+          "title": "Review & confirm",
+          "description": "Validate your data, accept the terms and submit the request."
+        }
+      },
+      "fields": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Corporate email",
+        "phone": "Phone number",
+        "branch": "Branch",
+        "department": "Department",
+        "jobTitle": "Job title",
+        "employeeCode": "Employee code",
+        "username": "Preferred username",
+        "password": "Password",
+        "confirmPassword": "Confirm password",
+        "otpTarget": "Email or phone for OTP",
+        "otpCode": "Six-digit verification code"
+      },
+      "placeholders": {
+        "branch": "e.g. Vanak Branch",
+        "department": "e.g. IT Department",
+        "jobTitle": "e.g. Network Engineer"
+      },
+      "review": {
+        "identity": "Identity details",
+        "organization": "Organization details",
+        "acceptTerms": "I accept the terms of use and privacy policy.",
+        "shareInsights": "Send me best practices and onboarding tips."
+      },
+      "actions": {
+        "next": "Next step",
+        "prev": "Previous",
+        "submit": "Submit request",
+        "submitting": "Submitting...",
+        "sendOtp": "Send code",
+        "sendingOtp": "Sending..."
+      },
+      "messages": {
+        "otpSent": "Verification code sent. Please check your inbox or SMS.",
+        "otpError": "Unable to send the code. Try again later.",
+        "genericError": "Registration failed. Please try again."
+      },
+      "validation": {
+        "required": "This field is required.",
+        "email": "Enter a valid email.",
+        "phone": "Phone number must be at least 10 digits.",
+        "password": "Password must contain at least 6 characters.",
+        "passwordMatch": "Passwords do not match.",
+        "otpTarget": "Email or phone is required for OTP delivery.",
+        "terms": "You must accept the terms to continue."
+      },
+      "success": {
+        "title": "Request submitted",
+        "subtitle": "We will review the details and notify you by email once approved.",
+        "cta": "Back to login"
+      },
+      "haveAccount": "Already have an account?",
+      "goToLogin": "Back to login"
+    }
   }
 }
 

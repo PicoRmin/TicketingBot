@@ -411,13 +411,13 @@ npm run prepare       # نصب Husky
 
 ---
 
-### Story EP2-S2 — صفحه ثبت‌نام با Multi-Step Form ⚠️ **طراحی و مستندسازی تکمیل شد؛ پیاده‌سازی UI باقی است**
+### Story EP2-S2 — صفحه ثبت‌نام با Multi-Step Form ✅ **پیاده‌سازی کامل شد**
 
 **As a** new user  
 **I want to** register through a multi-step form with progress animation  
 **So that I can** complete registration easily and see my progress
 
-**به‌روزرسانی 2025-11-27:** فلوچارت کامل چهار مرحله‌ای (اطلاعات هویتی → اطلاعات سازمانی → تنظیمات امنیتی → تأیید نهایی) مستند شد. برای هر مرحله، فیلدها، قوانین Validation، و پیام‌های خطا (fa/en) استخراج شد. State machine مبتنی بر `useReducer` + `stepConfig` تعریف گردید تا جداسازی UI و منطق به‌صورت کامل انجام شود. قرارداد API جدید `/api/auth/register` و Endpoint موقت برای ارسال OTP مشخص شد. همچنین Motion spec شامل GSAP Timeline برای ترنزیشن‌های slide/fade و Progress Indicator با Variantهای ARIA توضیح داده شد. اجرای UI همچنان در صف توسعه است.
+**به‌روزرسانی 2025-11-27:** صفحه `/register` با چهار مرحله (اطلاعات هویتی → سازمانی → امنیتی → بازبینی) ساخته شد. State machine مبتنی بر `useReducer`، Progress Indicator تعاملی، انیمیشن‌های GSAP/Framer و فرم OTP پیاده‌سازی شدند. مستندات و i18n به‌روزرسانی شد و لینک بازگشت به Login در UI قرار گرفت. اتصال به Endpointهای `/api/auth/register` و `/api/auth/register/otp` از طریق `apiPost` انجام می‌شود و آماده اتصال نهایی به Backend است.
 
 - **Tasks**
   - ✅ **Task 1**: تحلیل نیازمندی‌های ثبت‌نام کاربر نهایی و طراحی Flow چهاربخشی
@@ -425,38 +425,39 @@ npm run prepare       # نصب Husky
   - ✅ **Task 3**: تعریف قرارداد API شامل بدنه درخواست، ساختار خطا، و وضعیت‌های OTP
   - ✅ **Task 4**: استخراج کامل کلیدهای i18n (fa/en) برای متن دکمه‌ها، خطاها و Tooltips
   - ✅ **Task 5**: نگارش Test Plan (happy path، invalid input، قطع اتصال شبکه)
-  - ⚠️ **Task 6**: پیاده‌سازی UI/GSAP برای Progress Bar و انیمیشن‌های بین مراحل (در صف توسعه)
-  - ⚠️ **Task 7**: اتصال به Backend و مدیریت حالت pending/OTP (وابسته به Task 6)
+- ✅ **Task 6**: پیاده‌سازی UI/GSAP برای Progress Bar، Step Panels و انیمیشن‌های بین مراحل
+- ⚠️ **Task 7**: اتصال نهایی Backend (پشتیبانی از Endpointهای OTP/ثبت‌نام در صف تست یکپارچه‌سازی)
 
 - **Acceptance Criteria**
   - ✅ مستند Flow و State Machine در این فایل و README ثبت شده است.
   - ✅ قرارداد API و سناریوهای خطا مشخص شده است.
   - ✅ کلیدهای i18n موردنیاز تعریف و در فایل‌های ترجمه رزرو شده‌اند.
-  - ⚠️ Componentهای UI (Progress Bar، Step Panels، Snackbar موفقیت) هنوز پیاده‌سازی نشده‌اند.
-  - ⚠️ تست تعاملی (Keyboard Navigation، Screen Reader) پس از تکمیل UI اجرا خواهد شد.
+- ✅ فرم چندمرحله‌ای با Progress Indicator و Snackbar موفقیت در دسترس است.
+- ✅ تست‌های دستی (Keyboard Navigation، Screen Reader، حالت موبایل) انجام شده‌اند.
+- ⚠️ تایید نهایی Backend برای ارسال واقعی OTP/ثبت‌نام در انتظار است.
 
 ---
 
-### Story EP2-S3 — Onboarding با Tooltips انیمیشن‌دار ⚠️ **Onboarding Wizard موجود است اما Tooltips نیست**
+### Story EP2-S3 — Onboarding با Tooltips انیمیشن‌دار ⚠️ **Tooltips و Highlight اضافه شد؛ بهبود Skip باقی است**
 
 **As a** new user  
 **I want to** see guided tooltips that explain the system  
 **So that I can** learn how to use the system effectively
 
-**نکته:** **OnboardingWizard** پیاده‌سازی شده است اما Tooltips انیمیشن‌دار نیست. یک Multi-Step Form برای جمع‌آوری اطلاعات کاربر است.
+**نکته:** ویزارد موجود اکنون Tooltip های راهنما با GSAP و حلقه Highlight برای هر مرحله دارد، اما سناریوی Skip پیشرفته و آنبردینگ سناریوهای خاص هنوز تکمیل نشده است.
 
 - **Tasks**
   - ✅ **Task 1**: OnboardingWizard موجود است (اما Tooltips نیست)
-  - ❌ **Task 2**: انیمیشن fade-in با GSAP Timeline وجود ندارد
-  - ❌ **Task 3**: Highlight effect برای عناصر وجود ندارد
+- ✅ **Task 2**: انیمیشن fade-in/slide برای Tooltip ها با GSAP پیاده‌سازی شد
+- ✅ **Task 3**: Highlight effect برای پنل‌های فعال اضافه شد (کلاس `highlight-ring`)
   - ✅ **Task 4**: Navigation بین مراحل موجود است
   - ✅ **Task 5**: وضعیت Onboarding در localStorage ذخیره می‌شود
   - ⚠️ **Task 6**: Skip option موجود است اما کامل نیست
 
 - **Acceptance Criteria**
-  - ⚠️ Onboarding Wizard موجود است اما Tooltips نیست.
-  - ❌ انیمیشن fade-in با GSAP Timeline وجود ندارد.
-  - ❌ Highlight effect وجود ندارد.
+- ✅ Tooltip های راهنما و Highlight برای هر مرحله فعال است.
+- ✅ انیمیشن fade-in با GSAP Timeline برای Tooltip ها وجود دارد.
+- ✅ Highlight effect روی مراحل فعال اعمال می‌شود.
   - ✅ Navigation بین مراحل کار می‌کند.
   - ✅ وضعیت Onboarding ذخیره می‌شود.
   - ⚠️ امکان skip موجود است.

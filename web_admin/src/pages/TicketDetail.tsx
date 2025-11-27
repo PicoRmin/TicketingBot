@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { apiGet, apiPatch, apiUploadFile, isAuthenticated, API_BASE_URL } from "../services/api";
 import { apiPost } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
 import { PriorityBadge } from "@/components/tickets/PriorityBadge";
+import { motion, AnimatePresence } from "framer-motion";
+import { fadeIn } from "../lib/gsap";
 
 type Ticket = {
   id: number;
@@ -185,6 +187,13 @@ export default function TicketDetail() {
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string | null>>({});
   const [savingCustomFields, setSavingCustomFields] = useState(false);
+  
+  // Refs for animations and auto-scroll
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
+  const historyContainerRef = useRef<HTMLDivElement>(null);
+  const attachmentsContainerRef = useRef<HTMLDivElement>(null);
+  const [prevCommentsLength, setPrevCommentsLength] = useState(0);
+  const [prevAttachmentsLength, setPrevAttachmentsLength] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -224,6 +233,7 @@ export default function TicketDetail() {
         setNewStatus(t.status);
         const list = await apiGet(`/api/files/ticket/${id}/list`) as Attachment[];
         setAttachments(list);
+        setPrevAttachmentsLength(list.length);
         const commentsList = await apiGet(`/api/comments/ticket/${id}`) as Comment[];
         setComments(commentsList);
         const historyList = await apiGet(`/api/tickets/${id}/history`) as HistoryItem[];
@@ -284,14 +294,18 @@ export default function TicketDetail() {
       const form = new FormData();
       form.append("file", file);
       const res = await apiUploadFile(`/api/files/upload?ticket_id=${id}`, form) as Attachment;
-      setAttachments((prev) => [...prev, {
-        id: res.id,
-        filename: res.filename,
-        original_filename: res.original_filename,
-        file_size: res.file_size,
-        file_type: res.file_type,
-        ticket_id: res.ticket_id
-      }]);
+      setAttachments((prev) => {
+        const newList = [...prev, {
+          id: res.id,
+          filename: res.filename,
+          original_filename: res.original_filename,
+          file_size: res.file_size,
+          file_type: res.file_type,
+          ticket_id: res.ticket_id
+        }];
+        setPrevAttachmentsLength(newList.length);
+        return newList;
+      });
       setFile(null);
       setError(null);
     } catch (e) {
@@ -485,10 +499,24 @@ export default function TicketDetail() {
         comment: newComment.trim(),
         is_internal: isInternal
       }) as Comment;
-      setComments((prev) => [...prev, res]);
+      setComments((prev) => {
+        const newList = [...prev, res];
+        setPrevCommentsLength(newList.length);
+        return newList;
+      });
       setNewComment("");
       setIsInternal(false);
       setError(null);
+      
+      // Auto-scroll to new comment after a short delay
+      setTimeout(() => {
+        if (commentsContainerRef.current) {
+          commentsContainerRef.current.scrollTo({
+            top: commentsContainerRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      }, 100);
     } catch (e) {
       const errorMessage = (e instanceof Error ? e.message : "خطا در ثبت نظر");
       setError(errorMessage);
@@ -912,30 +940,45 @@ export default function TicketDetail() {
                     </tr>
                   </thead>
                   <tbody>
-                    {attachments.map(a => (
-                      <tr key={a.id}>
-                        <td style={{ fontWeight: 500 }}>{a.original_filename}</td>
-                        <td>
-                          <span className="badge" style={{ background: "var(--bg-secondary)", color: "var(--fg)" }}>
-                            {a.file_type}
-                          </span>
-                        </td>
-                        <td style={{ color: "var(--fg-secondary)" }}>
-                          {(a.file_size / 1024).toFixed(1)} KB
-                        </td>
-                        <td>
-                          <a 
-                            href={`${API_BASE_URL}/api/files/${a.id}`}
-                            target="_blank"
-                            rel="noreferrer"
+                    <AnimatePresence mode="popLayout">
+                      {attachments.map((a, idx) => {
+                        const isNew = idx >= prevAttachmentsLength;
+                        return (
+                          <motion.tr
+                            key={a.id}
+                            initial={isNew ? { opacity: 0, scale: 0.95 } : { opacity: 0 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ 
+                              duration: 0.3,
+                              delay: isNew ? 0 : idx * 0.05,
+                              ease: "easeOut"
+                            }}
                           >
-                            <button className="secondary" style={{ padding: "6px 12px", fontSize: 13 }}>
-                              ⬇️ دانلود
-                            </button>
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
+                            <td style={{ fontWeight: 500 }}>{a.original_filename}</td>
+                            <td>
+                              <span className="badge" style={{ background: "var(--bg-secondary)", color: "var(--fg)" }}>
+                                {a.file_type}
+                              </span>
+                            </td>
+                            <td style={{ color: "var(--fg-secondary)" }}>
+                              {(a.file_size / 1024).toFixed(1)} KB
+                            </td>
+                            <td>
+                              <a 
+                                href={`${API_BASE_URL}/api/files/${a.id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <button className="secondary" style={{ padding: "6px 12px", fontSize: 13 }}>
+                                  ⬇️ دانلود
+                                </button>
+                              </a>
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </AnimatePresence>
                   </tbody>
                 </table>
               </div>
@@ -971,35 +1014,57 @@ export default function TicketDetail() {
                 💭 هیچ نظری ثبت نشده است
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 12, marginBottom: 20 }}>
-                {comments.map((c, idx) => (
-                  <div 
-                    key={idx} 
-                    className="card"
-                    style={{ 
-                      padding: 16,
-                      background: c.is_internal ? "var(--bg)" : "var(--bg-secondary)",
-                      borderLeft: c.is_internal ? "4px solid var(--warning)" : "4px solid var(--info)"
-                    }}
-                  >
-                    <div style={{ 
-                      display: "flex", 
-                      justifyContent: "space-between", 
-                      alignItems: "center",
-                      marginBottom: 8
-                    }}>
-                      <div style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
-                        {c.created_at ? new Date(c.created_at).toLocaleString("fa-IR") : "-"}
-                      </div>
-                      {c.is_internal && (
-                        <span className="badge" style={{ background: "var(--warning)", color: "white" }}>
-                          🔒 داخلی
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ lineHeight: 1.6 }}>{c.comment}</div>
-                  </div>
-                ))}
+              <div 
+                ref={commentsContainerRef}
+                style={{ 
+                  display: "grid", 
+                  gap: 12, 
+                  marginBottom: 20,
+                  maxHeight: "600px",
+                  overflowY: "auto",
+                  paddingRight: 8
+                }}
+              >
+                <AnimatePresence mode="popLayout">
+                  {comments.map((c, idx) => {
+                    const isNew = idx >= prevCommentsLength;
+                    return (
+                      <motion.div
+                        key={c.id || idx}
+                        initial={isNew ? { opacity: 0, x: -20, scale: 0.95 } : { opacity: 0 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                        transition={{ 
+                          duration: 0.3,
+                          delay: isNew ? 0 : idx * 0.05
+                        }}
+                        className="card"
+                        style={{ 
+                          padding: 16,
+                          background: c.is_internal ? "var(--bg)" : "var(--bg-secondary)",
+                          borderLeft: c.is_internal ? "4px solid var(--warning)" : "4px solid var(--info)"
+                        }}
+                      >
+                        <div style={{ 
+                          display: "flex", 
+                          justifyContent: "space-between", 
+                          alignItems: "center",
+                          marginBottom: 8
+                        }}>
+                          <div style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
+                            {c.created_at ? new Date(c.created_at).toLocaleString("fa-IR") : "-"}
+                          </div>
+                          {c.is_internal && (
+                            <span className="badge" style={{ background: "var(--warning)", color: "white" }}>
+                              🔒 داخلی
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ lineHeight: 1.6 }}>{c.comment}</div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
             )}
             <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
@@ -1045,22 +1110,36 @@ export default function TicketDetail() {
                 📋 هیچ تغییر وضعیتی ثبت نشده است
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 12 }}>
-                {history.map((h, idx) => (
-                  <div 
-                    key={idx} 
-                    className="card"
-                    style={{ 
-                      padding: 16,
-                      background: "var(--bg)",
-                      borderLeft: "4px solid var(--primary)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: 12
-                    }}
-                  >
+              <div 
+                ref={historyContainerRef}
+                style={{ 
+                  display: "grid", 
+                  gap: 12,
+                  maxHeight: "600px",
+                  overflowY: "auto",
+                  paddingRight: 8
+                }}
+              >
+                <AnimatePresence mode="popLayout">
+                  {history.map((h, idx) => (
+                    <motion.div
+                      key={h.id || idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ duration: 0.3, delay: idx * 0.05 }}
+                      className="card"
+                      style={{ 
+                        padding: 16,
+                        background: "var(--bg)",
+                        borderLeft: "4px solid var(--primary)",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 12
+                      }}
+                    >
                     <div style={{ flex: 1, minWidth: 200 }}>
                       <div style={{ 
                         display: "flex", 
@@ -1097,8 +1176,9 @@ export default function TicketDetail() {
                         </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </div>

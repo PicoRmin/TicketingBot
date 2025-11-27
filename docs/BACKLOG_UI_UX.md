@@ -641,28 +641,28 @@ npm run prepare       # نصب Husky
 
 ---
 
-### Story EP4-S3 — صفحه جزئیات تیکت با Timeline ✅ **انجام شده (بدون انیمیشن‌های پیشرفته)**
+### Story EP4-S3 — صفحه جزئیات تیکت با Timeline ✅ **پیاده‌سازی کامل شد**
 
 **As a** user  
 **I want to** see ticket details with an animated timeline  
 **So that I can** track ticket history and events
 
-**نکته:** صفحه جزئیات تیکت با Timeline موجود است اما انیمیشن‌های پیشرفته نیست.
+**به‌روزرسانی 2025-11-27:** انیمیشن‌های Timeline با Framer Motion و GSAP پیاده‌سازی شد. انیمیشن slide برای پیام‌های جدید (comments) با ترنزیشن از چپ به راست، Auto-scroll به آخرین پیام پس از اضافه شدن نظر جدید، و انیمیشن fade-in + scale برای فایل‌های attach شده اضافه شد. Timeline items با GSAP fade-in و stagger نمایش داده می‌شوند.
 
 - **Tasks**
   - ✅ **Task 1**: صفحه جزئیات تیکت با Timeline موجود است
-  - ⚠️ **Task 2**: انیمیشن fade-in ساده موجود است (نه GSAP)
-  - ❌ **Task 3**: انیمیشن slide برای پیام‌های جدید وجود ندارد
-  - ❌ **Task 4**: Auto-scroll به آخرین پیام وجود ندارد
-  - ⚠️ **Task 5**: Attach files نمایش داده می‌شوند اما انیمیشن fade-in + scale نیست
+  - ✅ **Task 2**: انیمیشن fade-in با GSAP برای Timeline items پیاده‌سازی شد
+  - ✅ **Task 3**: انیمیشن slide برای پیام‌های جدید با Framer Motion اضافه شد
+  - ✅ **Task 4**: Auto-scroll به آخرین پیام پس از اضافه شدن نظر جدید فعال است
+  - ✅ **Task 5**: انیمیشن fade-in + scale برای فایل‌های attach با Framer Motion پیاده‌سازی شد
   - ✅ **Task 6**: صفحه در موبایل کار می‌کند
 
 - **Acceptance Criteria**
   - ✅ Timeline موجود است.
-  - ⚠️ انیمیشن fade-in ساده موجود است.
-  - ❌ انیمیشن slide برای پیام‌های جدید وجود ندارد.
-  - ❌ Auto-scroll وجود ندارد.
-  - ⚠️ Attach files نمایش داده می‌شوند.
+  - ✅ انیمیشن fade-in با GSAP برای Timeline items فعال است.
+  - ✅ انیمیشن slide برای پیام‌های جدید با ترنزیشن از چپ به راست فعال است.
+  - ✅ Auto-scroll به آخرین پیام پس از اضافه شدن نظر جدید کار می‌کند.
+  - ✅ فایل‌های attach با انیمیشن fade-in + scale نمایش داده می‌شوند.
   - ✅ صفحه در موبایل کار می‌کند.
 
 ---

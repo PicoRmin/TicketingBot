@@ -13,6 +13,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableCard } from "../components/dashboard/SortableCard";
 import { useDashboardLayout, type DashboardCardId } from "../hooks/useDashboardLayout";
+import { BranchStatusBar } from "../components/dashboard/BranchStatusBar";
 import {
   useDashboardReports,
   type OverviewReport,
@@ -1125,6 +1126,8 @@ export default function Dashboard() {
           </div>
         </SortableContext>
       )}
+        {/* Live Branch Status Bar */}
+        <BranchStatusBar enabled={authed} />
       </div>
     </DndContext>
   );

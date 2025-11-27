@@ -32,6 +32,7 @@
 - ✅ **Dashboard KPI انیمیشن‌دار** — کارت‌های KPI با GSAP Stagger، Counter Animation، Pulse هشدار و React Query Data Source
 - ✅ **نمودارهای Real-Time با ECharts** — نمودارها با GSAP fade-in + scale، ترنزیشن‌های نرم ECharts و به‌روزرسانی خودکار (120s)
 - ✅ **Drag & Drop برای کارت‌های داشبورد** — قابلیت تغییر ترتیب کارت‌ها با @dnd-kit، ذخیره در localStorage و پشتیبانی موبایل
+- ✅ **Live Status Bar برای شعب** — نمایش وضعیت زنده شعب با Tooltip، Pulse animation و به‌روزرسانی خودکار (60s)
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب

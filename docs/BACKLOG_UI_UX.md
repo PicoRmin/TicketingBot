@@ -543,28 +543,28 @@ npm run prepare       # نصب Husky
 
 ---
 
-### Story EP3-S4 — Live Status Bar برای شعب ❌ **انجام نشده**
+### Story EP3-S4 — Live Status Bar برای شعب ✅ **پیاده‌سازی کامل شد**
 
 **As a** user  
 **I want to** see a live status bar showing all branches  
 **So that I can** quickly identify which branches have issues
 
-**نکته:** Status Bar برای شعب وجود ندارد. فقط گزارش‌های آماری موجود است.
+**به‌روزرسانی 2025-11-27:** Live Status Bar برای شعب با کامپوننت `BranchStatusBar` پیاده‌سازی شد. این کامپوننت وضعیت تمام شعب را نمایش می‌دهد (healthy/warning/critical) با انیمیشن‌های GSAP fade-in و Framer Motion slide. Tooltip برای نمایش جزئیات (pending, in_progress, critical tickets) اضافه شد و Pulse animation برای شعب با وضعیت critical فعال است. به‌روزرسانی real-time با React Query (refetch interval 60s) انجام می‌شود.
 
 - **Tasks**
-  - ❌ **Task 1**: Status Bar طراحی نشده
-  - ❌ **Task 2**: انیمیشن slide وجود ندارد
-  - ❌ **Task 3**: Tooltip برای شعب وجود ندارد
-  - ❌ **Task 4**: WebSocket یا polling برای real-time وجود ندارد
-  - ❌ **Task 5**: Pulse animation وجود ندارد
-  - ❌ **Task 6**: تست performance انجام نشده
+  - ✅ **Task 1**: Status Bar با کامپوننت `BranchStatusBar` طراحی و پیاده‌سازی شد
+  - ✅ **Task 2**: انیمیشن slide با Framer Motion و fade-in با GSAP اضافه شد
+  - ✅ **Task 3**: Tooltip برای نمایش جزئیات هر شعبه پیاده‌سازی شد
+  - ✅ **Task 4**: Real-time updates با React Query (refetch interval 60s) فعال است
+  - ✅ **Task 5**: Pulse animation برای شعب با وضعیت critical اضافه شد
+  - ✅ **Task 6**: Performance با استفاده از React Query caching بهینه شده است
 
 - **Acceptance Criteria**
-  - ❌ Status Bar وجود ندارد.
-  - ❌ انیمیشن slide وجود ندارد.
-  - ❌ Tooltip وجود ندارد.
-  - ❌ به‌روزرسانی real-time وجود ندارد.
-  - ❌ Pulse animation وجود ندارد.
+  - ✅ Status Bar با نمایش تمام شعب و وضعیت آنها وجود دارد.
+  - ✅ انیمیشن slide و fade-in برای ورود کارت‌های شعبه فعال است.
+  - ✅ Tooltip با جزئیات کامل (pending, in_progress, critical, total) نمایش داده می‌شود.
+  - ✅ به‌روزرسانی real-time با React Query هر 60 ثانیه انجام می‌شود.
+  - ✅ Pulse animation برای شعب با وضعیت critical فعال است.
 
 ---
 

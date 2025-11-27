@@ -1083,6 +1083,210 @@ tbody tr:last-child td {
   color: var(--primary);
 }
 
+/* Branch Status Bar */
+.branch-status-bar {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.branch-status-bar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+.branch-status-bar__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg);
+  margin: 0;
+}
+
+.branch-status-bar__count {
+  font-size: 14px;
+  color: var(--fg-secondary);
+  font-weight: 500;
+}
+
+.branch-status-bar__container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  padding: 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+}
+
+.branch-status-bar__container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.branch-status-bar__container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.branch-status-bar__container::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 3px;
+}
+
+.branch-status-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 200px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.branch-status-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.branch-status-item--critical {
+  border-color: var(--error);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+.branch-status-item--warning {
+  border-color: var(--warning);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.branch-status-item--healthy {
+  border-color: var(--success);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.branch-status-item__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.branch-status-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.branch-status-item__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.branch-status-item__code {
+  font-size: 11px;
+  color: var(--fg-secondary);
+  font-family: "Vazir Code", monospace;
+}
+
+.branch-status-item__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.branch-status-item__tickets {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.branch-status-item__count {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.branch-status-item__label {
+  font-size: 10px;
+  color: var(--fg-secondary);
+  margin-top: 2px;
+}
+
+.branch-status-item__pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius);
+  border: 2px solid var(--error);
+  pointer-events: none;
+}
+
+.branch-status-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 8px 24px var(--shadow-lg);
+  z-index: 100;
+  min-width: 200px;
+  pointer-events: none;
+}
+
+.branch-status-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--bg);
+}
+
+.branch-status-tooltip__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.branch-status-tooltip__details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.branch-status-tooltip__details > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--fg-secondary);
+}
+
+.branch-status-tooltip__details strong {
+  color: var(--fg);
+  font-weight: 600;
+  margin-right: 8px;
+}
+
 .notification-bell {
   position: relative;
 }

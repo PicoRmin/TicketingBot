@@ -172,6 +172,15 @@
       "count": "Count",
       "responseRate": "Response rate",
       "resolutionRate": "Resolution rate"
+    },
+    "branchStatus": {
+      "title": "📊 Live Branch Status",
+      "branches": "branches",
+      "tickets": "tickets",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "critical": "Critical",
+      "total": "Total"
     }
   },
   "auth": {

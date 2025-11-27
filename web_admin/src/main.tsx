@@ -22,6 +22,7 @@ import UserPortal from "./pages/UserPortal";
 import UserTicketDetail from "./pages/UserTicketDetail";
 import UserDashboard from "./pages/UserDashboard";
 import CustomFields from "./pages/CustomFields";
+import Assets from "./pages/Assets";
 import { ErrorBoundary } from "./ErrorBoundary";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import { GlobalErrorToast } from "./components/GlobalErrorToast";
@@ -129,6 +130,14 @@ const router = createBrowserRouter(
           element: (
             <ProtectedRoute allowedRoles={centralRoles}>
               <Infrastructure />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/assets",
+          element: (
+            <ProtectedRoute allowedRoles={operationalRoles}>
+              <Assets />
             </ProtectedRoute>
           ),
         },

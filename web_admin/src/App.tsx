@@ -106,6 +106,7 @@ export default function App() {
   const isAdmin = profile && ["admin", "central_admin"].includes(profile.role);
   const isCentralAdmin = profile && profile.role === "central_admin";
   const isReportManager = profile && profile.role === "report_manager";
+  const isOperational = profile && ["central_admin", "admin", "branch_admin", "it_specialist"].includes(profile.role);
   const displayName = profile?.full_name || profile?.username;
 
   // Role labels
@@ -139,6 +140,7 @@ export default function App() {
     { to: "/custom-fields", label: t("nav.customFields"), visible: isAdmin },
     { to: "/settings", label: t("nav.settings"), visible: isCentralAdmin },
     { to: "/infrastructure", label: t("nav.infrastructure"), visible: isCentralAdmin },
+    { to: "/assets", label: t("nav.assets"), visible: isOperational },
   ].filter((item) => item.visible);
 
   const userNavItems = [

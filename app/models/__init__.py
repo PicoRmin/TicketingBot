@@ -18,6 +18,7 @@ from app.models.custom_field import CustomField, TicketCustomFieldValue, CustomF
 from app.models.notification import Notification
 from app.models.user_profile import UserProfile
 from app.models.knowledge_article import KnowledgeArticle
+from app.models.telegram_session import TelegramSession
 
 __all__ = [
     "User",
@@ -40,4 +41,5 @@ __all__ = [
     "Notification",
     "UserProfile",
     "KnowledgeArticle",
+    "TelegramSession",
 ]

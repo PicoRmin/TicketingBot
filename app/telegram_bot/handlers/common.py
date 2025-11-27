@@ -62,10 +62,41 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def require_token(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> str | None:
-    """Ensure the user is authenticated; otherwise prompt them to log in."""
+    """
+    Ensure the user is authenticated; otherwise prompt them to log in.
+    Also checks session timeout and updates activity.
+    """
     user_id = get_user_id(update)
     token = sessions.get_token(user_id)
+    
     if token:
+        # Check and update session activity in database
+        try:
+            from app.services.telegram_session_service import get_active_session, update_session_activity
+            from app.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                db_session = get_active_session(db, user_id, token)
+                if not db_session:
+                    # Session expired or not found, clear in-memory session
+                    sessions.set_token(user_id, None)
+                    sessions.set_profile(user_id, None)
+                    language = sessions.get_language(user_id)
+                    await context.bot.send_message(
+                        chat_id=get_chat_id(update),
+                        text=get_message("session_expired", language),
+                    )
+                    return None
+                else:
+                    # Update activity
+                    update_session_activity(db, user_id, token)
+            finally:
+                db.close()
+        except Exception:
+            # If database check fails, continue with in-memory session
+            pass
+        
         return token
 
     language = sessions.get_language(user_id)

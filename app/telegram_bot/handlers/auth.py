@@ -80,6 +80,36 @@ async def login_password(update, context: ContextTypes.DEFAULT_TYPE):
                 pass
         sessions.set_profile(user_id, profile)
 
+        # Create session in database
+        try:
+            from app.services.telegram_session_service import create_session
+            from app.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                backend_user_id = profile.get("id") if profile else None
+                if backend_user_id:
+                    # Get user agent from update if available
+                    user_agent = "Telegram Bot"
+                    if update.effective_user:
+                        user_agent = f"Telegram Bot - {getattr(update.effective_user, 'username', 'Unknown')}"
+                    
+                    # IP address is not available in Telegram Bot API
+                    # We'll store "Telegram" as IP since it's through Telegram servers
+                    create_session(
+                        db=db,
+                        user_id=backend_user_id,
+                        telegram_user_id=user_id,
+                        token=token,
+                        ip_address="Telegram",
+                        user_agent=user_agent,
+                    )
+                    logger.debug(f"Session created in database for user {user_id} (backend_id: {backend_user_id})")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Failed to create session in database for user {user_id}: {e}")
+
         # Link Telegram chat id with backend for notifications
         telegram_user = update.effective_user
         try:
@@ -110,6 +140,22 @@ async def logout_command(update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle `/logout` command."""
     user_id = get_user_id(update)
     language = sessions.get_language(user_id)
+    token = sessions.get_token(user_id)
+    
+    # Logout from database session
+    if token:
+        try:
+            from app.services.telegram_session_service import logout_session
+            from app.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                logout_session(db, user_id, token)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Failed to logout session from database for user {user_id}: {e}")
+    
     sessions.set_token(user_id, None)
     sessions.set_profile(user_id, None)
     await update.message.reply_text(get_message("logout_success", language))
@@ -122,6 +168,22 @@ async def logout_callback(update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await query.answer()
     user_id = get_user_id(update)
     language = sessions.get_language(user_id)
+    token = sessions.get_token(user_id)
+    
+    # Logout from database session
+    if token:
+        try:
+            from app.services.telegram_session_service import logout_session
+            from app.database import SessionLocal
+            
+            db = SessionLocal()
+            try:
+                logout_session(db, user_id, token)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Failed to logout session from database for user {user_id}: {e}")
+    
     sessions.set_token(user_id, None)
     sessions.set_profile(user_id, None)
     await query.edit_message_text(get_message("logout_success", language))

@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     TELEGRAM_ADMIN_GROUP_ID: str | None = None
     TELEGRAM_ADMIN_DAILY_REPORT_ENABLED: bool = False
     TELEGRAM_ADMIN_DAILY_REPORT_HOUR: int = 8
+    TELEGRAM_SESSION_TIMEOUT_MINUTES: int = 30  # Session timeout in minutes
+    TELEGRAM_SESSION_CLEANUP_INTERVAL_MINUTES: int = 60  # Cleanup interval in minutes
     
     # Email Configuration (SMTP)
     EMAIL_ENABLED: bool = False

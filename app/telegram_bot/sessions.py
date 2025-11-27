@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 from app.core.enums import Language
+from app.database import SessionLocal
 
 
 @dataclass
@@ -40,6 +41,29 @@ def clear_session(user_id: int) -> None:
     _sessions.pop(user_id, None)
 
 
+def update_session_activity_in_db(telegram_user_id: int, token: Optional[str]) -> None:
+    """
+    Update session activity in database
+    
+    Args:
+        telegram_user_id: Telegram user ID
+        token: JWT access token
+    """
+    if not token:
+        return
+    
+    try:
+        from app.services.telegram_session_service import update_session_activity
+        db = SessionLocal()
+        try:
+            update_session_activity(db, telegram_user_id, token)
+        finally:
+            db.close()
+    except Exception:
+        # Silently fail if database update fails
+        pass
+
+
 def set_language(user_id: int, language: Language) -> None:
     session = get_session(user_id)
     session.language = language
@@ -68,7 +92,28 @@ def get_profile(user_id: int) -> Optional[Dict[str, Any]]:
 
 
 def is_authenticated(user_id: int) -> bool:
-    return get_token(user_id) is not None
+    """Check if user is authenticated (has valid token)"""
+    token = get_token(user_id)
+    if not token:
+        return False
+    
+    # Also check database session
+    try:
+        from app.services.telegram_session_service import get_active_session
+        db = SessionLocal()
+        try:
+            db_session = get_active_session(db, user_id, token)
+            if not db_session:
+                # Session expired or not found, clear in-memory session
+                set_token(user_id, None)
+                return False
+        finally:
+            db.close()
+    except Exception:
+        # If database check fails, fall back to in-memory check
+        pass
+    
+    return True
 
 
 __all__ = [
@@ -82,5 +127,6 @@ __all__ = [
     "set_profile",
     "get_profile",
     "is_authenticated",
+    "update_session_activity_in_db",
 ]
 

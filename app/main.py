@@ -237,6 +237,14 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Failed to initialize Telegram daily report scheduler: {e}")
     
+    # Start Telegram session cleanup scheduler
+    try:
+        from app.tasks.telegram_session_tasks import start_telegram_session_cleanup_scheduler
+        start_telegram_session_cleanup_scheduler()
+        logger.info("Telegram session cleanup scheduler started")
+    except Exception as e:
+        logger.warning(f"Failed to start Telegram session cleanup scheduler: {e}")
+    
     # Start Telegram Bot if token is provided
     if settings.TELEGRAM_BOT_TOKEN:
         try:

@@ -498,3 +498,465 @@ class APIClient:
             logger.error(f"Failed to update ticket status: {e}")
             return None
 
+    async def get_ticket_comments(
+        self,
+        token: str,
+        ticket_id: int
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get comments for a ticket
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            
+        Returns:
+            List of comments or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/comments/ticket/{ticket_id}",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get ticket comments: {e}")
+            return None
+
+    async def add_comment(
+        self,
+        token: str,
+        ticket_id: int,
+        comment: str,
+        is_internal: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Add a comment to a ticket
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            comment: Comment text
+            is_internal: Whether comment is internal (admin only)
+            
+        Returns:
+            Created comment data or None if failed
+        """
+        try:
+            payload = {
+                "ticket_id": ticket_id,
+                "comment": comment,
+                "is_internal": is_internal
+            }
+            response = await self.client.post(
+                f"{self.base_url}/api/comments",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload
+            )
+            if response.status_code in (200, 201):
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to add comment: {e}")
+            return None
+
+    async def get_ticket_history(
+        self,
+        token: str,
+        ticket_id: int
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get ticket history
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            
+        Returns:
+            List of history entries or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/tickets/{ticket_id}/history",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get ticket history: {e}")
+            return None
+
+    async def get_ticket_attachments(
+        self,
+        token: str,
+        ticket_id: int
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get attachments for a ticket
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            
+        Returns:
+            List of attachments or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/files/ticket/{ticket_id}/list",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get ticket attachments: {e}")
+            return None
+
+    async def update_ticket_priority(
+        self,
+        token: str,
+        ticket_id: int,
+        priority: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update ticket priority
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            priority: New priority (critical, high, medium, low)
+            
+        Returns:
+            Updated ticket data or None if failed
+        """
+        try:
+            payload = {"priority": priority}
+            response = await self.client.put(
+                f"{self.base_url}/api/tickets/{ticket_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to update ticket priority: {e}")
+            return None
+
+    async def assign_ticket(
+        self,
+        token: str,
+        ticket_id: int,
+        assigned_to_id: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Assign ticket to a specialist
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            assigned_to_id: User ID to assign to
+            
+        Returns:
+            Updated ticket data or None if failed
+        """
+        try:
+            payload = {"assigned_to_id": assigned_to_id}
+            response = await self.client.patch(
+                f"{self.base_url}/api/tickets/{ticket_id}/assign",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to assign ticket: {e}")
+            return None
+
+    async def get_users(
+        self,
+        token: str,
+        role: Optional[str] = None,
+        branch_id: Optional[int] = None
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get list of users (for assignment)
+        
+        Args:
+            token: Access token
+            role: Filter by role (optional)
+            branch_id: Filter by branch (optional)
+            
+        Returns:
+            List of users or None if failed
+        """
+        try:
+            params = {}
+            if role:
+                params["role"] = role
+            if branch_id:
+                params["branch_id"] = branch_id
+            response = await self.client.get(
+                f"{self.base_url}/api/users",
+                headers={"Authorization": f"Bearer {token}"},
+                params=params or None
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get users: {e}")
+            return None
+
+    async def search_tickets(
+        self,
+        token: str,
+        page: int = 1,
+        page_size: int = 10,
+        status: Optional[str] = None,
+        priority: Optional[str] = None,
+        category: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        ticket_number: Optional[str] = None,
+        search_text: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Search tickets with filters
+        
+        Args:
+            token: Access token
+            page: Page number
+            page_size: Page size
+            status: Filter by status
+            priority: Filter by priority
+            category: Filter by category
+            date_from: Filter from date (YYYY-MM-DD)
+            date_to: Filter to date (YYYY-MM-DD)
+            ticket_number: Filter by ticket number
+            search_text: Search in title and description
+            
+        Returns:
+            Tickets data or None if failed
+        """
+        try:
+            params = {
+                "page": page,
+                "page_size": page_size
+            }
+            if status:
+                params["status"] = status
+            if priority:
+                params["priority"] = priority
+            if category:
+                params["category"] = category
+            if date_from:
+                params["date_from"] = date_from
+            if date_to:
+                params["date_to"] = date_to
+            if ticket_number:
+                params["ticket_number"] = ticket_number
+            
+            response = await self.client.get(
+                f"{self.base_url}/api/tickets",
+                headers={"Authorization": f"Bearer {token}"},
+                params=params
+            )
+            if response.status_code == 200:
+                data = response.json()
+                # Filter by search_text if provided (client-side filtering for now)
+                if search_text and data.get("items"):
+                    search_lower = search_text.lower()
+                    filtered_items = [
+                        item for item in data["items"]
+                        if search_lower in item.get("title", "").lower() or
+                        search_lower in item.get("description", "").lower()
+                    ]
+                    data["items"] = filtered_items
+                    data["total"] = len(filtered_items)
+                return data
+            return None
+        except Exception as e:
+            logger.error(f"Failed to search tickets: {e}")
+            return None
+
+    async def bulk_action_tickets(
+        self,
+        token: str,
+        ticket_ids: List[int],
+        action: str,
+        status: Optional[str] = None,
+        assigned_to_id: Optional[int] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Perform bulk action on tickets
+        
+        Args:
+            token: Access token
+            ticket_ids: List of ticket IDs
+            action: Action type (status, assign, unassign, delete)
+            status: New status (for action=status)
+            assigned_to_id: User ID (for action=assign)
+            
+        Returns:
+            Bulk action result or None if failed
+        """
+        try:
+            payload = {
+                "ticket_ids": ticket_ids,
+                "action": action
+            }
+            if status:
+                payload["status"] = status
+            if assigned_to_id:
+                payload["assigned_to_id"] = assigned_to_id
+            
+            response = await self.client.post(
+                f"{self.base_url}/api/tickets/bulk-action",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to perform bulk action: {e}")
+            return None
+
+    async def get_ticket_sla(
+        self,
+        token: str,
+        ticket_id: int
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get SLA log for a ticket
+        
+        Args:
+            token: Access token
+            ticket_id: Ticket ID
+            
+        Returns:
+            SLA log data or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/sla/ticket/{ticket_id}",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get ticket SLA: {e}")
+            return None
+
+    async def get_sla_logs(
+        self,
+        token: str,
+        page: int = 1,
+        page_size: int = 50,
+        ticket_id: Optional[int] = None,
+        sla_rule_id: Optional[int] = None,
+        response_status: Optional[str] = None,
+        resolution_status: Optional[str] = None,
+        escalated: Optional[bool] = None
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get SLA logs with filters
+        
+        Args:
+            token: Access token
+            page: Page number
+            page_size: Page size
+            ticket_id: Filter by ticket ID
+            sla_rule_id: Filter by SLA rule ID
+            response_status: Filter by response status (on_time, warning, breached)
+            resolution_status: Filter by resolution status (on_time, warning, breached)
+            escalated: Filter by escalated status
+            
+        Returns:
+            List of SLA logs or None if failed
+        """
+        try:
+            params = {
+                "page": page,
+                "page_size": page_size
+            }
+            if ticket_id:
+                params["ticket_id"] = ticket_id
+            if sla_rule_id:
+                params["sla_rule_id"] = sla_rule_id
+            if response_status:
+                params["response_status"] = response_status
+            if resolution_status:
+                params["resolution_status"] = resolution_status
+            if escalated is not None:
+                params["escalated"] = escalated
+            
+            response = await self.client.get(
+                f"{self.base_url}/api/sla/logs",
+                headers={"Authorization": f"Bearer {token}"},
+                params=params
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get SLA logs: {e}")
+            return None
+
+    async def get_sla_compliance_report(
+        self,
+        token: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get SLA compliance report
+        
+        Args:
+            token: Access token
+            
+        Returns:
+            SLA compliance report data or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/reports/sla-compliance",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get SLA compliance report: {e}")
+            return None
+
+    async def get_sla_by_priority_report(
+        self,
+        token: str
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Get SLA report by priority
+        
+        Args:
+            token: Access token
+            
+        Returns:
+            List of SLA reports by priority or None if failed
+        """
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/reports/sla-by-priority",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if response.status_code == 200:
+                return response.json()
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get SLA by priority report: {e}")
+            return None
+

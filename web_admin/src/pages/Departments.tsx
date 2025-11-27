@@ -25,7 +25,7 @@ export default function Departments() {
     name_en: "",
     code: "",
     description: "",
-    is_active: true
+    is_active: true,
   });
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function Departments() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiGet("/api/departments?page_size=100") as Department[];
+      const res = (await apiGet("/api/departments?page_size=100")) as Department[];
       setItems(res);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "خطا در دریافت دپارتمان‌ها";
@@ -59,7 +59,7 @@ export default function Departments() {
       name_en: dept.name_en || "",
       code: dept.code,
       description: dept.description || "",
-      is_active: dept.is_active
+      is_active: dept.is_active,
     });
   };
 
@@ -124,17 +124,24 @@ export default function Departments() {
   // Animate departments list when data changes
   useEffect(() => {
     if (items.length > 0 && listRef.current) {
-      stagger(
-        "tbody tr",
-        (el) => slideIn(el, "left", { duration: 0.4, distance: 20 }),
-        { stagger: 0.05, delay: 0.3 }
-      );
+      stagger("tbody tr", (el) => slideIn(el, "left", { duration: 0.4, distance: 20 }), {
+        stagger: 0.05,
+        delay: 0.3,
+      });
     }
   }, [items.length]);
 
   return (
     <div className="fade-in">
-      <div ref={titleRef} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div
+        ref={titleRef}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}
+      >
         <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700 }}>🏢 دپارتمان‌ها</h1>
         {items.length > 0 && (
           <div style={{ color: "var(--fg-secondary)", fontSize: 14 }}>
@@ -151,7 +158,9 @@ export default function Departments() {
 
       <div ref={formCardRef} className="card" style={{ marginBottom: 24 }}>
         <div className="card-header">
-          <h2 className="card-title">{editingId ? "✏️ ویرایش دپارتمان" : "➕ افزودن دپارتمان جدید"}</h2>
+          <h2 className="card-title">
+            {editingId ? "✏️ ویرایش دپارتمان" : "➕ افزودن دپارتمان جدید"}
+          </h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
           <div>
@@ -262,12 +271,14 @@ export default function Departments() {
                     )}
                   </td>
                   <td>
-                    <code style={{
-                      background: "var(--bg-secondary)",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: 12
-                    }}>
+                    <code
+                      style={{
+                        background: "var(--bg-secondary)",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        fontSize: 12,
+                      }}
+                    >
                       {item.code}
                     </code>
                   </td>
@@ -312,4 +323,3 @@ export default function Departments() {
     </div>
   );
 }
-

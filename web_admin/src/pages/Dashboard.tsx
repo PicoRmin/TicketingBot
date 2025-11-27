@@ -9,6 +9,10 @@ import type { CallbackDataParams, TopLevelFormatterParams } from "echarts/types/
 import { useNotificationsQuery, type NotificationItem } from "../hooks/useNotificationsQuery";
 import { useChartTheme } from "../hooks/useChartTheme";
 import { EChart } from "../components/charts/EChart";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableCard } from "../components/dashboard/SortableCard";
+import { useDashboardLayout, type DashboardCardId } from "../hooks/useDashboardLayout";
 import {
   useDashboardReports,
   type OverviewReport,
@@ -28,6 +32,7 @@ import {
   buildValueXAxis,
   buildToolbox,
   buildHorizontalZoom,
+  buildAnimationConfig,
 } from "../lib/echartsConfig";
 
 type Branch = { id: number; name: string; code: string };
@@ -45,6 +50,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const chartTheme = useChartTheme();
   const authed = isAuthenticated();
+  const { cardOrder, saveOrder } = useDashboardLayout();
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [branchFilter, setBranchFilter] = useState<string>("");
@@ -60,6 +66,29 @@ export default function Dashboard() {
     in_progress: 0,
     resolved: 0,
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = cardOrder.indexOf(active.id as DashboardCardId);
+      const newIndex = cardOrder.indexOf(over.id as DashboardCardId);
+      const newOrder = [...cardOrder];
+      newOrder.splice(oldIndex, 1);
+      newOrder.splice(newIndex, 0, active.id as DashboardCardId);
+      saveOrder(newOrder);
+    }
+  };
   const dashboardFilters = useMemo(
     () => ({
       dateFrom: dateFrom || undefined,
@@ -158,8 +187,6 @@ export default function Dashboard() {
     previousOverviewRef.current = overview;
   }, [overview]);
 
-  // Animate charts when they load - moved after byStatusData definition
-
   const getPriorityLabel = useCallback(
     (priority: string) => t(`dashboard.priority.${priority}`, { defaultValue: priority }),
     [t]
@@ -252,6 +279,20 @@ export default function Dashboard() {
     [byStatus, formatValue, statusTotal, t]
   );
 
+  // Animate charts when they load with GSAP fade-in + scale
+  useEffect(() => {
+    if (chartsGridRef.current && (byStatusData.length > 0 || byDate.length > 0)) {
+      const chartCards = chartsGridRef.current.querySelectorAll(".card");
+      if (chartCards.length > 0) {
+        stagger(
+          chartCards,
+          (el) => scaleIn(el, { from: 0.85, to: 1, duration: 0.65 }),
+          { stagger: 0.12, delay: 0.3 }
+        );
+      }
+    }
+  }, [byStatusData.length, byDate.length]);
+
   const byPriorityData = useMemo(
     () =>
       Object.entries(byPriority).map(([priority, count]) => ({
@@ -294,6 +335,7 @@ export default function Dashboard() {
     const categories = byStatusData.map((d) => d.status);
     const values = byStatusData.map((d) => d.value);
     return {
+      ...buildAnimationConfig(),
       grid: buildGrid(),
       tooltip: buildTooltip(chartTheme, {
         formatter: (params: TopLevelFormatterParams) => {
@@ -326,6 +368,7 @@ export default function Dashboard() {
   }, [byStatusData, chartTheme, isPercentMode, singleTooltipParam]);
 
   const statusPieOption = useMemo<EChartsOption>(() => ({
+    ...buildAnimationConfig(),
     tooltip: buildTooltip(chartTheme, {
       trigger: "item",
       formatter: (params: TopLevelFormatterParams) => {
@@ -377,6 +420,7 @@ export default function Dashboard() {
   }), [byStatusData, chartTheme, singleTooltipParam, t]);
 
   const dateTrendOption = useMemo<EChartsOption>(() => ({
+    ...buildAnimationConfig(),
     grid: buildGrid({ bottom: 70 }),
     tooltip: buildTooltip(chartTheme),
     toolbox: buildToolbox(chartTheme),
@@ -417,6 +461,7 @@ export default function Dashboard() {
   }), [byDate, chartTheme]);
 
   const priorityBarOption = useMemo<EChartsOption>(() => ({
+    ...buildAnimationConfig(),
     grid: buildGrid(),
     tooltip: buildTooltip(chartTheme, {
       formatter: (params: TopLevelFormatterParams) => {
@@ -453,6 +498,7 @@ export default function Dashboard() {
     }
     const maxValue = Math.max(...byPriorityData.map((d) => d.value), 10);
     return {
+      ...buildAnimationConfig(),
       tooltip: buildTooltip(chartTheme, {
         trigger: "item",
         formatter: (params: TopLevelFormatterParams) => {
@@ -493,6 +539,7 @@ export default function Dashboard() {
   }, [byPriorityData, chartTheme, isPercentMode, singleTooltipParam, t]);
 
   const departmentBarOption = useMemo<EChartsOption>(() => ({
+    ...buildAnimationConfig(),
     grid: buildGrid({ left: 150, bottom: 20 }),
     tooltip: buildTooltip(chartTheme),
     toolbox: buildToolbox(chartTheme),
@@ -518,6 +565,7 @@ export default function Dashboard() {
   }), [byDepartment, chartTheme]);
 
   const branchBarOption = useMemo<EChartsOption>(() => ({
+    ...buildAnimationConfig(),
     grid: buildGrid({ bottom: 80 }),
     tooltip: buildTooltip(chartTheme),
     toolbox: buildToolbox(chartTheme),
@@ -551,7 +599,8 @@ export default function Dashboard() {
       { name: t("dashboard.slaPie.breached"), value: (slaCompliance.response_breached || 0) + (slaCompliance.resolution_breached || 0), color: chartTheme.danger },
     ];
     return {
-    tooltip: buildTooltip(chartTheme, { trigger: "item", formatter: "{b}: {c} ({d}%)" }),
+      ...buildAnimationConfig(),
+      tooltip: buildTooltip(chartTheme, { trigger: "item", formatter: "{b}: {c} ({d}%)" }),
       legend: buildLegend(chartTheme, { bottom: 0 }),
     toolbox: buildToolbox(chartTheme),
       series: [
@@ -571,13 +620,14 @@ export default function Dashboard() {
   }, [slaCompliance, chartTheme, t]);
 
   const slaByPriorityOption = useMemo<EChartsOption>(() => ({
-    grid: buildGrid(),
-    tooltip: buildTooltip(chartTheme),
+    ...buildAnimationConfig(),
+      grid: buildGrid(),
+      tooltip: buildTooltip(chartTheme),
     toolbox: buildToolbox(chartTheme),
     legend: buildLegend(chartTheme, { top: 0 }),
     xAxis: buildCategoryAxis(
-      slaByPriority.map((item) => getPriorityLabel(item.priority)),
-      chartTheme
+    slaByPriority.map((item) => getPriorityLabel(item.priority)),
+    chartTheme
     ),
     yAxis: buildValueAxis(chartTheme, { max: 100 }),
     series: [
@@ -600,8 +650,257 @@ export default function Dashboard() {
     return null;
   }
 
+  // Helper function to render card content by ID
+  const renderCardContent = (cardId: DashboardCardId) => {
+    switch (cardId) {
+      case "kpi-cards":
+        return (
+          <div ref={statsGridRef} className="dashboard-grid dashboard-grid--stats" style={{ marginBottom: 24 }}>
+            {kpiCards.map((card) => {
+              const classes = ["stat-card"];
+              if (card.alert) classes.push("stat-card--alert");
+              if (card.tone === "success") classes.push("stat-card--success");
+              return (
+                <motion.div
+                  key={card.id}
+                  className={classes.join(" ")}
+                  style={{ background: card.gradient }}
+                  whileHover={{ translateY: -6, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                >
+                  <div className="stat-card__icon" aria-hidden="true">
+                    {card.icon}
+                  </div>
+                  <div className="stat-label">{card.label}</div>
+                  <div className="stat-value">{card.value.toLocaleString()}</div>
+                  <div className="stat-card__meta">
+                    {renderTrendBadge(card.trend)}
+                    <span className="stat-card__hint">{card.secondary}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        );
+      case "response-time":
+        return (
+          <div className="card" style={{ minHeight: 180 }}>
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.cards.responseTime")}</h2>
+            </div>
+            <div style={{ fontSize: 48, fontWeight: 700, color: "var(--primary)", textAlign: "center", padding: "20px 0" }}>
+              {responseHours !== null ? (
+                <>
+                  {responseHours.toFixed(2)} <span style={{ fontSize: 24, color: "var(--fg-secondary)" }}>{t("dashboard.cards.hours")}</span>
+                </>
+              ) : (
+                <span style={{ fontSize: 18, color: "var(--fg-secondary)" }}>داده‌ای موجود نیست</span>
+              )}
+            </div>
+          </div>
+        );
+      case "notifications":
+        return (
+          <div className="card notifications-card">
+            <div className="card-header">
+              <h2 className="card-title">اعلان‌ها</h2>
+              <button
+                className="secondary"
+                style={{ padding: "6px 12px" }}
+                onClick={() => void refreshNotifications()}
+                disabled={notificationsLoading}
+              >
+                {notificationsLoading ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
+              </button>
+            </div>
+            <div className="notifications-panel">
+              {notificationsLoading && (
+                <div className="notification-bell__loading">
+                  <div className="loading" />
+                </div>
+              )}
+              {!notificationsLoading && latestNotifications.length === 0 && (
+                <p className="notification-bell__empty">اعلان فعالی وجود ندارد.</p>
+              )}
+              {latestNotifications.slice(0, 4).map((notif: NotificationItem) => (
+                <div key={notif.id} className={`notification-item notification-item--${notif.severity || "info"}`}>
+                  <div className="notification-item__title">
+                    {notif.title}
+                    {!notif.read && <span className="notification-item__dot" />}
+                  </div>
+                  <div className="notification-item__body">{notif.body}</div>
+                  <div className="notification-item__time">
+                    {new Date(notif.created_at).toLocaleString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                </div>
+              ))}
+              {unreadCount > 0 && (
+                <div className="notification-panel__footer">
+                  <span>{unreadCount} اعلان خوانده‌نشده</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case "status-bar":
+        return (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.statusTitle")}</h2>
+              <a 
+                href={`${API_BASE_URL}/api/reports/export?kind=by-status`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: 14 }}
+              >
+                {t("dashboard.actions.exportCsv")}
+              </a>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              {byStatusData.length > 0 ? (
+                <EChart option={statusBarOption} height={300} ariaLabel={t("dashboard.charts.statusTitle")} />
+              ) : (
+                renderNoData(300)
+              )}
+            </div>
+          </div>
+        );
+      case "status-pie":
+        return (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.statusPie")}</h2>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              {byStatusData.length > 0 ? (
+                <EChart option={statusPieOption} height={300} ariaLabel={t("dashboard.charts.statusPie")} />
+              ) : (
+                renderNoData(300)
+              )}
+            </div>
+          </div>
+        );
+      case "date-trend":
+        return (
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.dateTrend")}</h2>
+              <a 
+                href={`${API_BASE_URL}/api/reports/export?kind=by-date`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: 14 }}
+              >
+                {t("dashboard.actions.exportCsv")}
+              </a>
+            </div>
+            <div style={{ width: "100%", height: 350 }}>
+              {byDate.length > 0 ? (
+                <EChart option={dateTrendOption} height={350} ariaLabel={t("dashboard.charts.dateTrend")} />
+              ) : (
+                renderNoData(350)
+              )}
+            </div>
+          </div>
+        );
+      case "priority-bar":
+        return byPriorityData.length > 0 ? (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.priorityBar")}</h2>
+              <a 
+                href={`${API_BASE_URL}/api/reports/export?kind=by-priority`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: 14 }}
+              >
+                {t("dashboard.actions.exportCsv")}
+              </a>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              <EChart option={priorityBarOption} height={300} ariaLabel={t("dashboard.charts.priorityBar")} />
+            </div>
+          </div>
+        ) : null;
+      case "priority-radar":
+        return byPriorityData.length > 0 ? (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.priorityComparison")}</h2>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              <EChart option={priorityRadarOption} height={300} ariaLabel={t("dashboard.charts.priorityComparison")} />
+            </div>
+          </div>
+        ) : null;
+      case "department-bar":
+        return byDepartment.length > 0 ? (
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.department")}</h2>
+              <a 
+                href={`${API_BASE_URL}/api/reports/export?kind=by-department`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: 14 }}
+              >
+                {t("dashboard.actions.exportCsv")}
+              </a>
+            </div>
+            <div style={{ width: "100%", height: 350 }}>
+              <EChart option={departmentBarOption} height={350} ariaLabel={t("dashboard.charts.department")} />
+            </div>
+          </div>
+        ) : null;
+      case "sla-distribution":
+        return slaCompliance && slaCompliance.total_tickets_with_sla > 0 ? (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.slaDistribution")}</h2>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              <EChart option={slaDistributionOption} height={300} ariaLabel={t("dashboard.charts.slaDistribution")} />
+            </div>
+          </div>
+        ) : null;
+      case "sla-by-priority":
+        return slaByPriority.length > 0 ? (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.slaByPriority")}</h2>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              <EChart option={slaByPriorityOption} height={300} ariaLabel={t("dashboard.charts.slaByPriority")} />
+            </div>
+          </div>
+        ) : null;
+      case "branch-bar":
+        return byBranch.length > 0 ? (
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="card-header">
+              <h2 className="card-title">{t("dashboard.charts.branch")}</h2>
+              <a 
+                href={`${API_BASE_URL}/api/reports/export?kind=by-branch`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: 14 }}
+              >
+                {t("dashboard.actions.exportCsv")}
+              </a>
+            </div>
+            <div style={{ width: "100%", height: 350 }}>
+              <EChart option={branchBarOption} height={350} ariaLabel={t("dashboard.charts.branch")} />
+            </div>
+          </div>
+        ) : null;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="fade-in">
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700 }}>{t("dashboard.title")}</h1>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -775,403 +1074,58 @@ export default function Dashboard() {
       )}
 
       {overview && (
-        <>
-          {/* Stats Cards */}
-          <div ref={statsGridRef} className="dashboard-grid dashboard-grid--stats" style={{ marginBottom: 24 }}>
-            {kpiCards.map((card) => {
-              const classes = ["stat-card"];
-              if (card.alert) classes.push("stat-card--alert");
-              if (card.tone === "success") classes.push("stat-card--success");
-              return (
-                <motion.div
-                  key={card.id}
-                  className={classes.join(" ")}
-                  style={{ background: card.gradient }}
-                  whileHover={{ translateY: -6, scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                >
-                  <div className="stat-card__icon" aria-hidden="true">
-                    {card.icon}
+        <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
+          <div ref={chartsGridRef}>
+            {cardOrder.map((cardId) => {
+              const content = renderCardContent(cardId);
+              if (!content) return null;
+              
+              // Special handling for cards that should be in a grid
+              if (cardId === "response-time" || cardId === "notifications") {
+                return (
+                  <div key={cardId} className="dashboard-grid dashboard-grid--two" style={{ marginBottom: 24 }}>
+                    {cardId === "response-time" && (
+                      <SortableCard id={cardId}>{renderCardContent("response-time")}</SortableCard>
+                    )}
+                    {cardId === "notifications" && (
+                      <SortableCard id={cardId}>{renderCardContent("notifications")}</SortableCard>
+                    )}
                   </div>
-                  <div className="stat-label">{card.label}</div>
-                  <div className="stat-value">{card.value.toLocaleString()}</div>
-                  <div className="stat-card__meta">
-                    {renderTrendBadge(card.trend)}
-                    <span className="stat-card__hint">{card.secondary}</span>
+                );
+              }
+              
+              if (cardId === "status-bar" || cardId === "status-pie") {
+                return (
+                  <div key={`grid-${cardId}`} className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>
+                    {cardId === "status-bar" && (
+                      <SortableCard id={cardId}>{renderCardContent("status-bar")}</SortableCard>
+                    )}
+                    {cardId === "status-pie" && (
+                      <SortableCard id={cardId}>{renderCardContent("status-pie")}</SortableCard>
+                    )}
                   </div>
-                </motion.div>
-              );
+                );
+              }
+              
+              if (cardId === "priority-bar" || cardId === "priority-radar") {
+                return byPriorityData.length > 0 ? (
+                  <div key={`grid-${cardId}`} className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>
+                    {cardId === "priority-bar" && (
+                      <SortableCard id={cardId}>{renderCardContent("priority-bar")}</SortableCard>
+                    )}
+                    {cardId === "priority-radar" && (
+                      <SortableCard id={cardId}>{renderCardContent("priority-radar")}</SortableCard>
+                    )}
+                  </div>
+                ) : null;
+              }
+              
+              return <SortableCard key={cardId} id={cardId}>{content}</SortableCard>;
             })}
           </div>
-
-          <div className="dashboard-grid dashboard-grid--two" style={{ marginBottom: 24 }}>
-            <div className="card" style={{ minHeight: 180 }}>
-              <div className="card-header">
-                <h2 className="card-title">{t("dashboard.cards.responseTime")}</h2>
-              </div>
-              <div style={{ fontSize: 48, fontWeight: 700, color: "var(--primary)", textAlign: "center", padding: "20px 0" }}>
-                {responseHours !== null ? (
-                  <>
-                    {responseHours.toFixed(2)} <span style={{ fontSize: 24, color: "var(--fg-secondary)" }}>{t("dashboard.cards.hours")}</span>
-                  </>
-                ) : (
-                  <span style={{ fontSize: 18, color: "var(--fg-secondary)" }}>داده‌ای موجود نیست</span>
-                )}
-              </div>
-            </div>
-            <div className="card notifications-card">
-              <div className="card-header">
-                <h2 className="card-title">اعلان‌ها</h2>
-                <button
-                  className="secondary"
-                  style={{ padding: "6px 12px" }}
-                  onClick={() => void refreshNotifications()}
-                  disabled={notificationsLoading}
-                >
-                  {notificationsLoading ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
-                </button>
-              </div>
-              <div className="notifications-panel">
-                {notificationsLoading && (
-                  <div className="notification-bell__loading">
-                    <div className="loading" />
-                  </div>
-                )}
-                {!notificationsLoading && latestNotifications.length === 0 && (
-                  <p className="notification-bell__empty">اعلان فعالی وجود ندارد.</p>
-                )}
-                {latestNotifications.slice(0, 4).map((notif: NotificationItem) => (
-                  <div key={notif.id} className={`notification-item notification-item--${notif.severity || "info"}`}>
-                    <div className="notification-item__title">
-                      {notif.title}
-                      {!notif.read && <span className="notification-item__dot" />}
-                    </div>
-                    <div className="notification-item__body">{notif.body}</div>
-                    <div className="notification-item__time">
-                      {new Date(notif.created_at).toLocaleString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                  </div>
-                ))}
-                {unreadCount > 0 && (
-                  <div className="notification-panel__footer">
-                    <span>{unreadCount} اعلان خوانده‌نشده</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Status Charts - Bar and Pie */}
-          <div ref={chartsGridRef} className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>
-            {/* Bar Chart */}
-            <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.charts.statusTitle")}</h2>
-              <a 
-                href={`${API_BASE_URL}/api/reports/export?kind=by-status`} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: 14 }}
-              >
-                {t("dashboard.actions.exportCsv")}
-              </a>
-            </div>
-            <div style={{ width: "100%", height: 300 }}>
-              {byStatusData.length > 0 ? (
-                <EChart option={statusBarOption} height={300} ariaLabel={t("dashboard.charts.statusTitle")} />
-              ) : (
-                renderNoData(300)
-              )}
-            </div>
-          </div>
-
-            {/* Pie Chart */}
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">{t("dashboard.charts.statusPie")}</h2>
-              </div>
-              <div style={{ width: "100%", height: 300 }}>
-                {byStatusData.length > 0 ? (
-                  <EChart option={statusPieOption} height={300} ariaLabel={t("dashboard.charts.statusPie")} />
-                ) : (
-                  renderNoData(300)
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Date Chart - Area and Line */}
-          <div className="card" style={{ marginBottom: 24 }}>
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.charts.dateTrend")}</h2>
-              <a 
-                href={`${API_BASE_URL}/api/reports/export?kind=by-date`} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: 14 }}
-              >
-                {t("dashboard.actions.exportCsv")}
-              </a>
-            </div>
-            <div style={{ width: "100%", height: 350 }}>
-              {byDate.length > 0 ? (
-                <EChart option={dateTrendOption} height={350} ariaLabel={t("dashboard.charts.dateTrend")} />
-              ) : (
-                renderNoData(350)
-              )}
-            </div>
-          </div>
-
-          {/* Priority Charts - Bar and Radar */}
-          {byPriorityData.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>
-              {/* Bar Chart */}
-              <div className="card">
-                <div className="card-header">
-                  <h2 className="card-title">{t("dashboard.charts.priorityBar")}</h2>
-                  <a 
-                    href={`${API_BASE_URL}/api/reports/export?kind=by-priority`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    style={{ fontSize: 14 }}
-                  >
-                    {t("dashboard.actions.exportCsv")}
-                  </a>
-                </div>
-                <div style={{ width: "100%", height: 300 }}>
-                {byPriorityData.length > 0 ? (
-                  <EChart option={priorityBarOption} height={300} ariaLabel={t("dashboard.charts.priorityBar")} />
-                ) : (
-                  renderNoData(300)
-                )}
-                </div>
-              </div>
-
-              {/* Radar Chart */}
-              <div className="card">
-                <div className="card-header">
-                  <h2 className="card-title">{t("dashboard.charts.priorityComparison")}</h2>
-                </div>
-                <div style={{ width: "100%", height: 300 }}>
-                  {byPriorityData.length > 0 ? (
-                    <EChart option={priorityRadarOption} height={300} ariaLabel={t("dashboard.charts.priorityComparison")} />
-                  ) : (
-                    renderNoData(300)
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Department Chart */}
-          {byDepartment.length > 0 && (
-            <div className="card" style={{ marginBottom: 24 }}>
-              <div className="card-header">
-                <h2 className="card-title">{t("dashboard.charts.department")}</h2>
-                <a 
-                  href={`${API_BASE_URL}/api/reports/export?kind=by-department`} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{ fontSize: 14 }}
-                >
-                  {t("dashboard.actions.exportCsv")}
-                </a>
-              </div>
-              <div style={{ width: "100%", height: 350 }}>
-                {byDepartment.length > 0 ? (
-                  <EChart option={departmentBarOption} height={350} ariaLabel={t("dashboard.charts.department")} />
-                ) : (
-                  renderNoData(350)
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* SLA Compliance Card with Charts */}
-          {slaCompliance && slaCompliance.total_tickets_with_sla > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>
-              {/* SLA Stats */}
-              <div className="card">
-                <div className="card-header">
-                  <h2 className="card-title">{t("dashboard.charts.slaCompliance")}</h2>
-                  <a 
-                    href={`${API_BASE_URL}/api/reports/export?kind=sla-compliance`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    style={{ fontSize: 14 }}
-                  >
-                    {t("dashboard.actions.exportCsv")}
-                  </a>
-                </div>
-                <div className="grid grid-cols-2" style={{ gap: 16, marginBottom: 16 }}>
-                  <div style={{ 
-                    padding: 16, 
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    borderRadius: "var(--radius)",
-                    color: "white"
-                  }}>
-                    <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 4 }}>{t("dashboard.slaCards.totalSla")}</div>
-                    <div style={{ fontSize: 28, fontWeight: 700 }}>{slaCompliance.total_tickets_with_sla}</div>
-                  </div>
-                  <div style={{ 
-                    padding: 16, 
-                    background: slaCompliance.escalated_count > 0 
-                      ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                      : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                    borderRadius: "var(--radius)",
-                    color: "white"
-                  }}>
-                    <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 4 }}>{t("dashboard.slaCards.escalated")}</div>
-                    <div style={{ fontSize: 28, fontWeight: 700 }}>
-                      {slaCompliance.escalated_count}
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2" style={{ gap: 16 }}>
-                  <div style={{ 
-                    padding: 12, 
-                    background: "var(--bg-secondary)", 
-                    borderRadius: "var(--radius)",
-                    border: "2px solid",
-                    borderColor: slaCompliance.response_compliance_rate >= 80 ? "var(--success)" : "var(--warning)"
-                  }}>
-                    <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>{t("dashboard.slaCards.responseRate")}</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: slaCompliance.response_compliance_rate >= 80 ? "var(--success)" : "var(--warning)" }}>
-                      {slaCompliance.response_compliance_rate}%
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--fg-secondary)", marginTop: 4 }}>
-                      ✅ {slaCompliance.response_on_time || 0} | ⚠️ {slaCompliance.response_warning || 0} | ❌ {slaCompliance.response_breached || 0}
-                    </div>
-                  </div>
-                  <div style={{ 
-                    padding: 12, 
-                    background: "var(--bg-secondary)", 
-                    borderRadius: "var(--radius)",
-                    border: "2px solid",
-                    borderColor: slaCompliance.resolution_compliance_rate >= 80 ? "var(--success)" : "var(--warning)"
-                  }}>
-                    <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>{t("dashboard.slaCards.resolutionRate")}</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: slaCompliance.resolution_compliance_rate >= 80 ? "var(--success)" : "var(--warning)" }}>
-                      {slaCompliance.resolution_compliance_rate}%
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--fg-secondary)", marginTop: 4 }}>
-                      ✅ {slaCompliance.resolution_on_time || 0} | ⚠️ {slaCompliance.resolution_warning || 0} | ❌ {slaCompliance.resolution_breached || 0}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SLA Pie Chart */}
-              <div className="card">
-                <div className="card-header">
-                  <h2 className="card-title">{t("dashboard.charts.slaDistribution")}</h2>
-                </div>
-                <div style={{ width: "100%", height: 300 }}>
-                  {slaCompliance ? (
-                    <EChart option={slaDistributionOption} height={300} ariaLabel={t("dashboard.charts.slaDistribution")} />
-                  ) : (
-                    renderNoData(300)
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SLA by Priority - Chart and Table */}
-          {slaByPriority.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 24, marginBottom: 24 }}>
-              {/* Chart */}
-              <div className="card">
-                <div className="card-header">
-                  <h2 className="card-title">{t("dashboard.charts.slaByPriority")}</h2>
-                </div>
-                <div style={{ width: "100%", height: 300 }}>
-                {slaByPriority.length > 0 ? (
-                  <EChart option={slaByPriorityOption} height={300} ariaLabel={t("dashboard.charts.slaByPriority")} />
-                ) : (
-                  renderNoData(300)
-                )}
-            </div>
-          </div>
-
-              {/* Table */}
-              <div className="card">
-                <div className="card-header">
-                  <h2 className="card-title">{t("dashboard.charts.slaTable")}</h2>
-                </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%" }}>
-                    <thead>
-                      <tr>
-                        <th>{t("dashboard.table.priority")}</th>
-                        <th>{t("dashboard.table.count")}</th>
-                        <th>{t("dashboard.table.responseRate")}</th>
-                        <th>{t("dashboard.table.resolutionRate")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {slaByPriority.map((item, idx) => (
-                        <tr key={idx}>
-                          <td>
-                            {getPriorityLabel(item.priority)}
-                          </td>
-                          <td style={{ fontWeight: 600 }}>{item.total_tickets}</td>
-                          <td>
-                            <span style={{ 
-                              color: item.response_compliance_rate >= 80 ? "var(--success)" : "var(--warning)",
-                              fontWeight: 600
-                            }}>
-                              {item.response_compliance_rate}%
-                            </span>
-                            <div style={{ fontSize: 10, color: "var(--fg-secondary)", marginTop: 2 }}>
-                              ✅{item.response_on_time} ⚠️{item.response_warning || 0} ❌{item.response_breached}
-                            </div>
-                          </td>
-                          <td>
-                            <span style={{ 
-                              color: item.resolution_compliance_rate >= 80 ? "var(--success)" : "var(--warning)",
-                              fontWeight: 600
-                            }}>
-                              {item.resolution_compliance_rate}%
-                            </span>
-                            <div style={{ fontSize: 10, color: "var(--fg-secondary)", marginTop: 2 }}>
-                              ✅{item.resolution_on_time} ⚠️{item.resolution_warning || 0} ❌{item.resolution_breached}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Branch Chart */}
-          {byBranch.length > 0 && (
-            <div className="card" style={{ marginBottom: 24 }}>
-              <div className="card-header">
-                <h2 className="card-title">{t("dashboard.charts.branch")}</h2>
-                <a 
-                  href={`${API_BASE_URL}/api/reports/export?kind=by-branch`} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{ fontSize: 14 }}
-                >
-                  {t("dashboard.actions.exportCsv")}
-                </a>
-              </div>
-              <div style={{ width: "100%", height: 350 }}>
-                {byBranch.length > 0 ? (
-                  <EChart option={branchBarOption} height={350} ariaLabel={t("dashboard.charts.branch")} />
-                ) : (
-                  renderNoData(350)
-                )}
-              </div>
-            </div>
-          )}
-        </>
+        </SortableContext>
       )}
-    </div>
+      </div>
+    </DndContext>
   );
 }

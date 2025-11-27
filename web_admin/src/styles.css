@@ -1032,6 +1032,57 @@ tbody tr:last-child td {
   }
 }
 
+/* Dashboard Drag & Drop Styles */
+.dashboard-card {
+  position: relative;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-card:active {
+  cursor: grabbing;
+}
+
+.dashboard-card--dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
+  z-index: 1000;
+}
+
+.dashboard-card:hover:not(.dashboard-card--dragging) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
+}
+
+.dashboard-card[data-dragging="true"] {
+  opacity: 0.4;
+}
+
+/* Drag handle indicator */
+.dashboard-card::before {
+  content: "⋮⋮";
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 18px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  line-height: 1;
+  letter-spacing: -4px;
+}
+
+.dashboard-card:hover::before {
+  opacity: 0.6;
+}
+
+.dashboard-card--dragging::before {
+  opacity: 1;
+  color: var(--primary);
+}
+
 .notification-bell {
   position: relative;
 }

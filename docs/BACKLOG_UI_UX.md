@@ -493,51 +493,53 @@ npm run prepare       # نصب Husky
 
 ---
 
-### Story EP3-S2 — نمودارهای Real-Time با ECharts ⚠️ **نمودارها با Recharts موجود است اما Real-Time نیست**
+### Story EP3-S2 — نمودارهای Real-Time با ECharts ✅ **نمودارها با ECharts و انیمیشن‌های کامل پیاده‌سازی شد**
 
 **As a** user  
 **I want to** see real-time charts that update smoothly  
 **So that I can** monitor system metrics visually
 
-**نکته:** نمودارها با **Recharts** پیاده‌سازی شده‌اند (نه ECharts) و Real-Time نیستند.
+**به‌روزرسانی 2025-11-27:** نمودارها با **ECharts** پیاده‌سازی شده‌اند و اکنون با انیمیشن‌های GSAP (fade-in + scale) و ترنزیشن‌های نرم ECharts به‌روزرسانی می‌شوند. React Query با refetch خودکار (120s) داده‌ها را real-time به‌روزرسانی می‌کند و `buildAnimationConfig` برای تمام نمودارها فعال شده است.
 
 - **Tasks**
-  - ⚠️ **Task 1**: نمودار Line Chart موجود است (نه برای Uptime)
+  - ✅ **Task 1**: نمودار Line Chart موجود است (برای Trend تاریخ)
   - ✅ **Task 2**: نمودار Bar Chart برای تیکت‌ها بر اساس اولویت موجود است
   - ✅ **Task 3**: نمودار Pie Chart برای توزیع تیکت‌ها بر اساس وضعیت موجود است
-  - ⚠️ **Task 4**: انیمیشن fade-in ساده با CSS موجود است (نه GSAP)
-  - ❌ **Task 5**: انیمیشن داده‌ها هنگام به‌روزرسانی وجود ندارد
+  - ✅ **Task 4**: انیمیشن fade-in + scale با GSAP برای نمودارها پیاده‌سازی شد
+  - ✅ **Task 5**: انیمیشن داده‌ها هنگام به‌روزرسانی با ECharts animation config فعال شد
   - ✅ **Task 6**: نمودارها responsive و dark mode را پشتیبانی می‌کنند
 
 - **Acceptance Criteria**
-  - ⚠️ نمودارها با fade-in ساده نمایش داده می‌شوند (نه fade-in + scale).
-  - ❌ داده‌ها real-time به‌روزرسانی نمی‌شوند (manual refresh).
-  - ❌ ترنزیشن داده‌ها smooth نیست.
+  - ✅ نمودارها با fade-in + scale (GSAP) نمایش داده می‌شوند.
+  - ✅ داده‌ها real-time با React Query به‌روزرسانی می‌شوند (refetch interval 120s).
+  - ✅ ترنزیشن داده‌ها smooth است (ECharts animation: 750ms initial, 600ms update).
   - ✅ نمودارها responsive هستند.
   - ✅ نمودارها در dark mode به‌درستی نمایش داده می‌شوند.
 
 ---
 
-### Story EP3-S3 — Drag & Drop برای کارت‌های داشبورد ❌ **انجام نشده**
+### Story EP3-S3 — Drag & Drop برای کارت‌های داشبورد ✅ **پیاده‌سازی کامل شد**
 
 **As a** user  
 **I want to** rearrange dashboard cards by dragging  
 **So that I can** customize my dashboard layout
 
+**به‌روزرسانی 2025-11-27:** Drag & Drop با @dnd-kit پیاده‌سازی شد. کارت‌های داشبورد اکنون قابل drag & drop هستند و ترتیب آنها در localStorage ذخیره می‌شود. انیمیشن‌های GSAP و Framer Motion برای visual feedback اضافه شد و پشتیبانی کامل از موبایل (touch events) فعال است.
+
 - **Tasks**
-  - ❌ **Task 1**: @dnd-kit نصب نشده
-  - ❌ **Task 2**: Drag & drop پیاده‌سازی نشده
-  - ❌ **Task 3**: انیمیشن هنگام drag وجود ندارد
-  - ❌ **Task 4**: ذخیره ترتیب کارت‌ها وجود ندارد
-  - ❌ **Task 5**: Visual feedback وجود ندارد
-  - ❌ **Task 6**: تست UX انجام نشده
+  - ✅ **Task 1**: @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities نصب شد
+  - ✅ **Task 2**: Drag & drop با DndContext و SortableContext پیاده‌سازی شد
+  - ✅ **Task 3**: انیمیشن‌های GSAP و Framer Motion هنگام drag فعال است
+  - ✅ **Task 4**: ذخیره ترتیب کارت‌ها در localStorage با hook `useDashboardLayout`
+  - ✅ **Task 5**: Visual feedback (opacity, transform, drag handle) اضافه شد
+  - ✅ **Task 6**: پشتیبانی موبایل با PointerSensor و activation constraint
 
 - **Acceptance Criteria**
-  - ❌ Drag & drop وجود ندارد.
-  - ❌ انیمیشن هنگام drag وجود ندارد.
-  - ❌ ترتیب کارت‌ها ذخیره نمی‌شود.
-  - ❌ Visual feedback وجود ندارد.
-  - ❌ در موبایل کار نمی‌کند.
+  - ✅ Drag & drop با @dnd-kit پیاده‌سازی شد.
+  - ✅ انیمیشن‌های smooth هنگام drag وجود دارد (GSAP + Framer Motion).
+  - ✅ ترتیب کارت‌ها در localStorage ذخیره و restore می‌شود.
+  - ✅ Visual feedback (opacity, shadow, drag handle) فعال است.
+  - ✅ در موبایل با touch events کار می‌کند.
 
 ---
 

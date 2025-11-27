@@ -68,12 +68,15 @@ function EChartComponent({ option, height = 320, loading = false, testId, ariaLa
         role="img"
         echarts={echarts}
         option={option}
-        notMerge
-        lazyUpdate
+        notMerge={false}
+        lazyUpdate={false}
         style={{ width: "100%", height: "100%" }}
         showLoading={loading}
         loadingOption={baseLoadingOption}
         data-testid={testId}
+        opts={{
+          renderer: "canvas",
+        }}
       />
     </div>
   );

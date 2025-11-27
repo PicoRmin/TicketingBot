@@ -28,7 +28,8 @@
 - ✅ Bulk Actions (عملیات گروهی)
 - ✅ Quick Actions (عملیات سریع)
 - ✅ Headless UI Header & Navigation (جستجوی سراسری، انتخاب زبان و منوی پروفایل دسترس‌پذیر)
-- ⚙️ **ثبت‌نام چندمرحله‌ای در دست توسعه** — Flow چهاربخشی، State Machine و قرارداد API + i18n کامل مستندسازی شده (پیاده‌سازی UI در حال انجام است)
+- ✅ **ثبت‌نام چندمرحله‌ای با GSAP + OTP** — فرم چهاربخشی با Progress Tracker، ارسال OTP و Refactor کامل State Machine
+- ✅ **Dashboard KPI انیمیشن‌دار** — کارت‌های KPI با GSAP Stagger، Counter Animation، Pulse هشدار و React Query Data Source
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب

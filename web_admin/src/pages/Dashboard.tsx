@@ -3,11 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { apiGet, API_BASE_URL, isAuthenticated } from "../services/api";
 import { useTranslation } from "react-i18next";
 import { stagger, scaleIn } from "../lib/gsap";
+import { motion } from "framer-motion";
 import type { EChartsOption } from "echarts";
 import type { CallbackDataParams, TopLevelFormatterParams } from "echarts/types/dist/shared";
 import { useNotificationsQuery, type NotificationItem } from "../hooks/useNotificationsQuery";
 import { useChartTheme } from "../hooks/useChartTheme";
 import { EChart } from "../components/charts/EChart";
+import {
+  useDashboardReports,
+  type OverviewReport,
+  type BranchCount,
+  type DepartmentCount,
+  type TrendPoint,
+  type SlaPriorityItem,
+} from "../hooks/useDashboardReports";
+import { useAnimatedNumber } from "../hooks/useAnimatedNumber";
 import {
   buildCategoryAxis,
   buildGrid,
@@ -20,60 +30,21 @@ import {
   buildHorizontalZoom,
 } from "../lib/echartsConfig";
 
-type OverviewReport = {
-  total: number;
-  pending: number;
-  in_progress: number;
-  resolved: number;
-};
-
-type BranchCount = { branch_name: string; count: number };
-type DepartmentCount = { department_name: string; count: number };
 type Branch = { id: number; name: string; code: string };
 type Department = { id: number; name: string; code?: string };
-type TrendPoint = { date: string; count: number };
-
-type SlaCompliance = {
-  total_tickets_with_sla: number;
-  escalated_count: number;
-  response_compliance_rate: number;
-  resolution_compliance_rate: number;
-  response_on_time: number;
-  response_warning: number;
-  response_breached: number;
-  resolution_on_time: number;
-  resolution_warning: number;
-  resolution_breached: number;
-};
-
-type SlaPriorityItem = {
-  priority: string;
-  total_tickets: number;
-  response_compliance_rate: number;
-  resolution_compliance_rate: number;
-  response_on_time: number;
-  response_warning: number;
-  response_breached: number;
-  resolution_on_time: number;
-  resolution_warning: number;
-  resolution_breached: number;
-};
-
 type ChartMode = "count" | "percent";
+const EMPTY_STATUS: Record<string, number> = {};
+const EMPTY_PRIORITY: Record<string, number> = {};
+const EMPTY_TRENDS: TrendPoint[] = [];
+const EMPTY_BRANCH_COUNTS: BranchCount[] = [];
+const EMPTY_DEPARTMENT_COUNTS: DepartmentCount[] = [];
+const EMPTY_SLA_PRIORITY: SlaPriorityItem[] = [];
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const chartTheme = useChartTheme();
-  const [overview, setOverview] = useState<OverviewReport | null>(null);
-  const [byStatus, setByStatus] = useState<Record<string, number>>({});
-  const [byDate, setByDate] = useState<TrendPoint[]>([]);
-  const [byBranch, setByBranch] = useState<BranchCount[]>([]);
-  const [byPriority, setByPriority] = useState<Record<string, number>>({});
-  const [byDepartment, setByDepartment] = useState<DepartmentCount[]>([]);
-  const [slaCompliance, setSlaCompliance] = useState<SlaCompliance | null>(null);
-  const [slaByPriority, setSlaByPriority] = useState<SlaPriorityItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const authed = isAuthenticated();
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [branchFilter, setBranchFilter] = useState<string>("");
@@ -81,10 +52,33 @@ export default function Dashboard() {
   const [priorityFilter, setPriorityFilter] = useState<string>("");
   const [branches, setBranches] = useState<Branch[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [responseHours, setResponseHours] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [chartMode, setChartMode] = useState<ChartMode>("count");
+  const [overviewTrend, setOverviewTrend] = useState({
+    total: 0,
+    pending: 0,
+    in_progress: 0,
+    resolved: 0,
+  });
+  const dashboardFilters = useMemo(
+    () => ({
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      branchId: branchFilter || undefined,
+      departmentId: departmentFilter || undefined,
+      priority: priorityFilter || undefined,
+    }),
+    [branchFilter, dateFrom, dateTo, departmentFilter, priorityFilter]
+  );
+
+  const {
+    data: reports,
+    isLoading: reportsLoading,
+    isFetching: reportsFetching,
+    error: reportsError,
+    refetch: refetchReports,
+  } = useDashboardReports(dashboardFilters, authed);
+
   const {
     notifications: latestNotifications,
     unreadCount,
@@ -92,67 +86,24 @@ export default function Dashboard() {
     refresh: refreshNotifications,
   } = useNotificationsQuery(120000);
 
+  const overview = reports?.overview ?? null;
+  const byStatus = reports?.byStatus ?? EMPTY_STATUS;
+  const byDate = reports?.byDate ?? EMPTY_TRENDS;
+  const byBranch = reports?.byBranch ?? EMPTY_BRANCH_COUNTS;
+  const byPriority = reports?.byPriority ?? EMPTY_PRIORITY;
+  const byDepartment = reports?.byDepartment ?? EMPTY_DEPARTMENT_COUNTS;
+  const slaCompliance = reports?.slaCompliance ?? null;
+  const slaByPriority = reports?.slaByPriority ?? EMPTY_SLA_PRIORITY;
+  const responseHours = reports?.responseHours ?? null;
+  const error = reportsError instanceof Error ? reportsError.message : null;
+  const isInitialLoading = reportsLoading && !overview;
+  const isRefreshing = reportsFetching && !!overview;
+
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (!authed) {
       navigate("/login");
-      return;
     }
-  }, [navigate]);
-
-  const loadReports = useCallback(async () => {
-    if (!isAuthenticated()) {
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const df = new URLSearchParams();
-      if (dateFrom) df.set("date_from", dateFrom);
-      if (dateTo) df.set("date_to", dateTo);
-      if (branchFilter) df.set("branch_id", branchFilter);
-      if (departmentFilter) df.set("department_id", departmentFilter);
-      if (priorityFilter) df.set("priority", priorityFilter);
-      const query = df.toString();
-      const filterSuffix = query ? `?${query}` : "";
-
-      const [
-        ov,
-        bs,
-        bd,
-        bb,
-        bp,
-        bdpt,
-        sla,
-        slaP,
-        rt,
-      ] = await Promise.all([
-        apiGet("/api/reports/overview") as Promise<OverviewReport>,
-        apiGet("/api/reports/by-status") as Promise<Record<string, number>>,
-        apiGet(`/api/reports/by-date${filterSuffix}`) as Promise<TrendPoint[]>,
-        apiGet(`/api/reports/by-branch${filterSuffix}`) as Promise<BranchCount[]>,
-        apiGet(`/api/reports/by-priority${filterSuffix}`) as Promise<Record<string, number>>,
-        apiGet(`/api/reports/by-department${filterSuffix}`) as Promise<DepartmentCount[]>,
-        apiGet(`/api/reports/sla-compliance`) as Promise<SlaCompliance>,
-        apiGet(`/api/reports/sla-by-priority`) as Promise<SlaPriorityItem[]>,
-        apiGet(`/api/reports/response-time`) as Promise<{ average_response_time_hours?: number }>,
-      ]);
-
-      setOverview(ov);
-      setByStatus(bs);
-      setByDate(bd);
-      setByBranch(bb);
-      setByPriority(bp);
-      setByDepartment(bdpt);
-      setSlaCompliance(sla);
-      setSlaByPriority(slaP);
-      setResponseHours(rt?.average_response_time_hours ?? null);
-    } catch (e) {
-      console.error("Dashboard error:", e);
-      setError(e instanceof Error ? e.message : t("dashboard.errors.fetch"));
-    } finally {
-      setLoading(false);
-    }
-  }, [branchFilter, dateFrom, dateTo, departmentFilter, priorityFilter, t]);
+  }, [navigate, authed]);
 
   const loadBranchesAndDepartments = useCallback(async () => {
     try {
@@ -169,18 +120,13 @@ export default function Dashboard() {
 
   const statsGridRef = useRef<HTMLDivElement>(null);
   const chartsGridRef = useRef<HTMLDivElement>(null);
+  const previousOverviewRef = useRef<OverviewReport | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (authed) {
       loadBranchesAndDepartments();
     }
-  }, [loadBranchesAndDepartments]);
-
-  useEffect(() => {
-    if (isAuthenticated()) {
-      loadReports();
-    }
-  }, [loadReports]);
+  }, [authed, loadBranchesAndDepartments]);
 
   // Animate stats cards when data loads
   useEffect(() => {
@@ -193,12 +139,86 @@ export default function Dashboard() {
     }
   }, [overview]);
 
+  useEffect(() => {
+    if (!overview) {
+      return;
+    }
+    const previous = previousOverviewRef.current;
+    if (!previous) {
+      previousOverviewRef.current = overview;
+      setOverviewTrend({ total: 0, pending: 0, in_progress: 0, resolved: 0 });
+      return;
+    }
+    setOverviewTrend({
+      total: overview.total - previous.total,
+      pending: overview.pending - previous.pending,
+      in_progress: overview.in_progress - previous.in_progress,
+      resolved: overview.resolved - previous.resolved,
+    });
+    previousOverviewRef.current = overview;
+  }, [overview]);
+
   // Animate charts when they load - moved after byStatusData definition
 
   const getPriorityLabel = useCallback(
     (priority: string) => t(`dashboard.priority.${priority}`, { defaultValue: priority }),
     [t]
   );
+
+  const animatedTotal = useAnimatedNumber(overview?.total ?? 0, { duration: 700 });
+  const animatedPending = useAnimatedNumber(overview?.pending ?? 0, { duration: 700 });
+  const animatedInProgress = useAnimatedNumber(overview?.in_progress ?? 0, { duration: 700 });
+  const animatedResolved = useAnimatedNumber(overview?.resolved ?? 0, { duration: 700 });
+  const totalTickets = overview?.total ?? 0;
+  const shareLabel = (raw: number) =>
+    totalTickets > 0 ? `${((raw / totalTickets) * 100).toFixed(1)}% ${t("dashboard.labels.percent")}` : t("dashboard.labels.count");
+  const pendingRatio = totalTickets > 0 ? (overview?.pending ?? 0) / totalTickets : 0;
+  const kpiCards = [
+    {
+      id: "total",
+      label: t("dashboard.stats.total"),
+      value: animatedTotal,
+      raw: overview?.total ?? 0,
+      trend: overviewTrend.total,
+      gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      icon: "📈",
+      secondary: totalTickets
+        ? `${totalTickets.toLocaleString()} ${t("dashboard.labels.count")}`
+        : t("dashboard.noData"),
+    },
+    {
+      id: "pending",
+      label: t("dashboard.status.pending"),
+      value: animatedPending,
+      raw: overview?.pending ?? 0,
+      trend: overviewTrend.pending,
+      gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      icon: "⏳",
+      secondary: shareLabel(overview?.pending ?? 0),
+      alert: pendingRatio >= 0.35,
+    },
+    {
+      id: "in_progress",
+      label: t("dashboard.status.in_progress"),
+      value: animatedInProgress,
+      raw: overview?.in_progress ?? 0,
+      trend: overviewTrend.in_progress,
+      gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      icon: "⚙️",
+      secondary: shareLabel(overview?.in_progress ?? 0),
+    },
+    {
+      id: "resolved",
+      label: t("dashboard.status.resolved"),
+      value: animatedResolved,
+      raw: overview?.resolved ?? 0,
+      trend: overviewTrend.resolved,
+      gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      icon: "✅",
+      secondary: shareLabel(overview?.resolved ?? 0),
+      tone: "success",
+    },
+  ];
 
   const isPercentMode = chartMode === "percent";
 
@@ -257,6 +277,18 @@ export default function Dashboard() {
       {t("dashboard.noData")}
     </div>
   );
+
+  const renderTrendBadge = (diff: number) => {
+    if (diff === 0) {
+      return <span className="stat-trend neutral">= 0</span>;
+    }
+    const positive = diff > 0;
+    return (
+      <span className={`stat-trend ${positive ? "up" : "down"}`}>
+        {positive ? "▲" : "▼"} {Math.abs(diff)}
+      </span>
+    );
+  };
 
   const statusBarOption = useMemo<EChartsOption>(() => {
     const categories = byStatusData.map((d) => d.status);
@@ -564,7 +596,7 @@ export default function Dashboard() {
     ],
   }), [slaByPriority, chartTheme, t, getPriorityLabel]);
 
-  if (!isAuthenticated()) {
+  if (!authed) {
     return null;
   }
 
@@ -589,8 +621,12 @@ export default function Dashboard() {
           >
             {showFilters ? t("dashboard.buttons.closeFilters") : t("dashboard.buttons.openFilters")}
           </button>
-        <button onClick={loadReports} disabled={loading} className="secondary">
-          {loading ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
+        <button
+          onClick={() => void refetchReports()}
+          disabled={isInitialLoading || isRefreshing}
+          className="secondary"
+        >
+          {isInitialLoading || isRefreshing ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
         </button>
           <button 
             onClick={async () => {
@@ -725,7 +761,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {loading && !overview && (
+      {isInitialLoading && (
         <div style={{ textAlign: "center", padding: 40 }}>
           <div className="loading" style={{ margin: "0 auto" }}></div>
           <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>{t("dashboard.loading")}</p>
@@ -742,22 +778,30 @@ export default function Dashboard() {
         <>
           {/* Stats Cards */}
           <div ref={statsGridRef} className="dashboard-grid dashboard-grid--stats" style={{ marginBottom: 24 }}>
-            <div className="stat-card" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
-              <div className="stat-label">{t("dashboard.stats.total")}</div>
-              <div className="stat-value">{overview.total || 0}</div>
-            </div>
-            <div className="stat-card" style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" }}>
-              <div className="stat-label">{t("dashboard.status.pending")}</div>
-              <div className="stat-value">{overview.pending || 0}</div>
-            </div>
-            <div className="stat-card" style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}>
-              <div className="stat-label">{t("dashboard.status.in_progress")}</div>
-              <div className="stat-value">{overview.in_progress || 0}</div>
-            </div>
-            <div className="stat-card" style={{ background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" }}>
-              <div className="stat-label">{t("dashboard.status.resolved")}</div>
-              <div className="stat-value">{overview.resolved || 0}</div>
-            </div>
+            {kpiCards.map((card) => {
+              const classes = ["stat-card"];
+              if (card.alert) classes.push("stat-card--alert");
+              if (card.tone === "success") classes.push("stat-card--success");
+              return (
+                <motion.div
+                  key={card.id}
+                  className={classes.join(" ")}
+                  style={{ background: card.gradient }}
+                  whileHover={{ translateY: -6, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                >
+                  <div className="stat-card__icon" aria-hidden="true">
+                    {card.icon}
+                  </div>
+                  <div className="stat-label">{card.label}</div>
+                  <div className="stat-value">{card.value.toLocaleString()}</div>
+                  <div className="stat-card__meta">
+                    {renderTrendBadge(card.trend)}
+                    <span className="stat-card__hint">{card.secondary}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
           <div className="dashboard-grid dashboard-grid--two" style={{ marginBottom: 24 }}>

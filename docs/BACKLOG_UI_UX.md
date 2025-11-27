@@ -468,27 +468,28 @@ npm run prepare       # نصب Husky
 
 هدف: ساخت داشبورد پویا و تعاملی با انیمیشن‌های حرفه‌ای و نمایش real-time data.
 
-### Story EP3-S1 — داشبورد با کارت‌های KPI انیمیشن‌دار ⚠️ **کارت‌های KPI موجود است اما انیمیشن‌های پیشرفته نیست**
+### Story EP3-S1 — داشبورد با کارت‌های KPI انیمیشن‌دار ✅ **کارت‌های KPI با انیمیشن کامل شد**
 
 **As a** user  
 **I want to** see animated KPI cards on the dashboard  
 **So that I can** quickly understand system status
 
+**به‌روزرسانی 2025-11-27:** کارت‌های KPI اکنون با ترکیب GSAP (stagger ورود)، GSAP pulse برای کارت Pending، و Hover سه‌بعدی مبتنی بر Framer Motion رندر می‌شوند. اعداد به کمک `useAnimatedNumber` به‌صورت Counter animation افزایش می‌یابند و Trend Badge (▲/▼) تغییر نسبت به داده قبلی را نمایش می‌دهد. همچنین منبع داده به `useDashboardReports` (React Query + Refetch Interval 120s) مهاجرت کرد تا Requestهای دستی حذف و State به‌صورت type-safe مدیریت شود.
+
 - **Tasks**
   - ✅ **Task 1**: کارت‌های KPI موجود است (Total Tickets, Open Tickets, SLA Status)
-  - ❌ **Task 2**: انیمیشن stagger با GSAP وجود ندارد
-  - ❌ **Task 3**: Counter animation برای اعداد وجود ندارد
-  - ❌ **Task 4**: Pulse animation برای کارت‌های هشدار وجود ندارد
-  - ⚠️ **Task 5**: Hover effect ساده با CSS موجود است (نه Framer Motion)
-  - ⚠️ **Task 6**: اتصال به API موجود است اما React Query نیست (fetch مستقیم)
+  - ✅ **Task 2**: ورود کارت‌ها با GSAP stagger و scale-in انجام می‌شود
+  - ✅ **Task 3**: Counter animation با هوک `useAnimatedNumber` پیاده‌سازی شد
+  - ✅ **Task 4**: Pulse animation برای کارت Pending (نسبت > 35%) اضافه شد
+  - ✅ **Task 5**: Hover effect داینامیک با Framer Motion جایگزین CSS ساده شد
+  - ✅ **Task 6**: منبع داده به React Query (`useDashboardReports`) منتقل شد
 
 - **Acceptance Criteria**
-  - ✅ کارت‌های KPI نمایش داده می‌شوند.
-  - ❌ انیمیشن stagger وجود ندارد.
-  - ❌ Counter animation وجود ندارد.
-  - ❌ Pulse animation وجود ندارد.
-  - ⚠️ Hover effect ساده موجود است.
-  - ⚠️ داده‌ها به‌روزرسانی می‌شوند اما real-time نیست (manual refresh).
+  - ✅ کارت‌های KPI با GSAP stagger و انیمیشن شمارنده نمایش داده می‌شوند.
+  - ✅ کارت Pending در صورت افزایش صف با pulse هشداردهنده مشخص می‌شود.
+  - ✅ Trend badge تغییرات مثبت/منفی را نشان می‌دهد.
+  - ✅ Hover سه‌بعدی با Framer Motion پیاده‌سازی شده است.
+  - ✅ داده‌ها با React Query و refetch خودکار به‌روز می‌شوند.
 
 ---
 

@@ -5,7 +5,7 @@ import { apiPost } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
 import { PriorityBadge } from "@/components/tickets/PriorityBadge";
 import { motion, AnimatePresence } from "framer-motion";
-import { fadeIn } from "../lib/gsap";
+// GSAP animations handled by Framer Motion
 
 type Ticket = {
   id: number;
@@ -191,7 +191,6 @@ export default function TicketDetail() {
   // Refs for animations and auto-scroll
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const historyContainerRef = useRef<HTMLDivElement>(null);
-  const attachmentsContainerRef = useRef<HTMLDivElement>(null);
   const [prevCommentsLength, setPrevCommentsLength] = useState(0);
   const [prevAttachmentsLength, setPrevAttachmentsLength] = useState(0);
 

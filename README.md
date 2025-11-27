@@ -35,6 +35,7 @@
 - ✅ **Live Status Bar برای شعب** — نمایش وضعیت زنده شعب با Tooltip، Pulse animation و به‌روزرسانی خودکار (60s)
 - ✅ **انیمیشن اولویت‌بندی تیکت‌ها** — Shake animation برای Critical، Pulse برای High، Border pulse برای SLA و Tooltip برای زمان باقی‌مانده
 - ✅ **Timeline انیمیشن‌دار** — انیمیشن slide برای پیام‌های جدید، Auto-scroll به آخرین پیام و fade-in + scale برای فایل‌های attach
+- ✅ **فرم ایجاد تیکت Multi-Step** — Progress Indicator، انیمیشن slide بین مراحل، Validation در هر مرحله و Preview کامل
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب

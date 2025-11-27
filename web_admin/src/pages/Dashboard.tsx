@@ -601,7 +601,7 @@ export default function Dashboard() {
     ];
     return {
       ...buildAnimationConfig(),
-      tooltip: buildTooltip(chartTheme, { trigger: "item", formatter: "{b}: {c} ({d}%)" }),
+    tooltip: buildTooltip(chartTheme, { trigger: "item", formatter: "{b}: {c} ({d}%)" }),
       legend: buildLegend(chartTheme, { bottom: 0 }),
     toolbox: buildToolbox(chartTheme),
       series: [
@@ -622,13 +622,13 @@ export default function Dashboard() {
 
   const slaByPriorityOption = useMemo<EChartsOption>(() => ({
     ...buildAnimationConfig(),
-      grid: buildGrid(),
-      tooltip: buildTooltip(chartTheme),
+    grid: buildGrid(),
+    tooltip: buildTooltip(chartTheme),
     toolbox: buildToolbox(chartTheme),
     legend: buildLegend(chartTheme, { top: 0 }),
     xAxis: buildCategoryAxis(
-    slaByPriority.map((item) => getPriorityLabel(item.priority)),
-    chartTheme
+      slaByPriority.map((item) => getPriorityLabel(item.priority)),
+      chartTheme
     ),
     yAxis: buildValueAxis(chartTheme, { max: 100 }),
     series: [
@@ -655,7 +655,7 @@ export default function Dashboard() {
   const renderCardContent = (cardId: DashboardCardId) => {
     switch (cardId) {
       case "kpi-cards":
-        return (
+  return (
           <div ref={statsGridRef} className="dashboard-grid dashboard-grid--stats" style={{ marginBottom: 24 }}>
             {kpiCards.map((card) => {
               const classes = ["stat-card"];
@@ -671,13 +671,13 @@ export default function Dashboard() {
                 >
                   <div className="stat-card__icon" aria-hidden="true">
                     {card.icon}
-                  </div>
+        </div>
                   <div className="stat-label">{card.label}</div>
                   <div className="stat-value">{card.value.toLocaleString()}</div>
                   <div className="stat-card__meta">
                     {renderTrendBadge(card.trend)}
                     <span className="stat-card__hint">{card.secondary}</span>
-                  </div>
+      </div>
                 </motion.div>
               );
             })}
@@ -685,67 +685,67 @@ export default function Dashboard() {
         );
       case "response-time":
         return (
-          <div className="card" style={{ minHeight: 180 }}>
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.cards.responseTime")}</h2>
+            <div className="card" style={{ minHeight: 180 }}>
+              <div className="card-header">
+                <h2 className="card-title">{t("dashboard.cards.responseTime")}</h2>
+              </div>
+              <div style={{ fontSize: 48, fontWeight: 700, color: "var(--primary)", textAlign: "center", padding: "20px 0" }}>
+                {responseHours !== null ? (
+                  <>
+                    {responseHours.toFixed(2)} <span style={{ fontSize: 24, color: "var(--fg-secondary)" }}>{t("dashboard.cards.hours")}</span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: 18, color: "var(--fg-secondary)" }}>داده‌ای موجود نیست</span>
+                )}
+              </div>
             </div>
-            <div style={{ fontSize: 48, fontWeight: 700, color: "var(--primary)", textAlign: "center", padding: "20px 0" }}>
-              {responseHours !== null ? (
-                <>
-                  {responseHours.toFixed(2)} <span style={{ fontSize: 24, color: "var(--fg-secondary)" }}>{t("dashboard.cards.hours")}</span>
-                </>
-              ) : (
-                <span style={{ fontSize: 18, color: "var(--fg-secondary)" }}>داده‌ای موجود نیست</span>
-              )}
-            </div>
-          </div>
         );
       case "notifications":
         return (
-          <div className="card notifications-card">
-            <div className="card-header">
-              <h2 className="card-title">اعلان‌ها</h2>
-              <button
-                className="secondary"
-                style={{ padding: "6px 12px" }}
-                onClick={() => void refreshNotifications()}
-                disabled={notificationsLoading}
-              >
-                {notificationsLoading ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
-              </button>
-            </div>
-            <div className="notifications-panel">
-              {notificationsLoading && (
-                <div className="notification-bell__loading">
-                  <div className="loading" />
-                </div>
-              )}
-              {!notificationsLoading && latestNotifications.length === 0 && (
-                <p className="notification-bell__empty">اعلان فعالی وجود ندارد.</p>
-              )}
-              {latestNotifications.slice(0, 4).map((notif: NotificationItem) => (
-                <div key={notif.id} className={`notification-item notification-item--${notif.severity || "info"}`}>
-                  <div className="notification-item__title">
-                    {notif.title}
-                    {!notif.read && <span className="notification-item__dot" />}
+            <div className="card notifications-card">
+              <div className="card-header">
+                <h2 className="card-title">اعلان‌ها</h2>
+                <button
+                  className="secondary"
+                  style={{ padding: "6px 12px" }}
+                  onClick={() => void refreshNotifications()}
+                  disabled={notificationsLoading}
+                >
+                  {notificationsLoading ? t("dashboard.buttons.loading") : t("dashboard.buttons.refresh")}
+                </button>
+              </div>
+              <div className="notifications-panel">
+                {notificationsLoading && (
+                  <div className="notification-bell__loading">
+                    <div className="loading" />
                   </div>
-                  <div className="notification-item__body">{notif.body}</div>
-                  <div className="notification-item__time">
-                    {new Date(notif.created_at).toLocaleString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
+                )}
+                {!notificationsLoading && latestNotifications.length === 0 && (
+                  <p className="notification-bell__empty">اعلان فعالی وجود ندارد.</p>
+                )}
+                {latestNotifications.slice(0, 4).map((notif: NotificationItem) => (
+                  <div key={notif.id} className={`notification-item notification-item--${notif.severity || "info"}`}>
+                    <div className="notification-item__title">
+                      {notif.title}
+                      {!notif.read && <span className="notification-item__dot" />}
+                    </div>
+                    <div className="notification-item__body">{notif.body}</div>
+                    <div className="notification-item__time">
+                      {new Date(notif.created_at).toLocaleString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {unreadCount > 0 && (
-                <div className="notification-panel__footer">
-                  <span>{unreadCount} اعلان خوانده‌نشده</span>
-                </div>
-              )}
+                ))}
+                {unreadCount > 0 && (
+                  <div className="notification-panel__footer">
+                    <span>{unreadCount} اعلان خوانده‌نشده</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
         );
       case "status-bar":
         return (
-          <div className="card">
+            <div className="card">
             <div className="card-header">
               <h2 className="card-title">{t("dashboard.charts.statusTitle")}</h2>
               <a 
@@ -768,18 +768,18 @@ export default function Dashboard() {
         );
       case "status-pie":
         return (
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.charts.statusPie")}</h2>
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title">{t("dashboard.charts.statusPie")}</h2>
+              </div>
+              <div style={{ width: "100%", height: 300 }}>
+                {byStatusData.length > 0 ? (
+                  <EChart option={statusPieOption} height={300} ariaLabel={t("dashboard.charts.statusPie")} />
+                ) : (
+                  renderNoData(300)
+                )}
+              </div>
             </div>
-            <div style={{ width: "100%", height: 300 }}>
-              {byStatusData.length > 0 ? (
-                <EChart option={statusPieOption} height={300} ariaLabel={t("dashboard.charts.statusPie")} />
-              ) : (
-                renderNoData(300)
-              )}
-            </div>
-          </div>
         );
       case "date-trend":
         return (
@@ -806,57 +806,57 @@ export default function Dashboard() {
         );
       case "priority-bar":
         return byPriorityData.length > 0 ? (
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.charts.priorityBar")}</h2>
-              <a 
-                href={`${API_BASE_URL}/api/reports/export?kind=by-priority`} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: 14 }}
-              >
-                {t("dashboard.actions.exportCsv")}
-              </a>
-            </div>
-            <div style={{ width: "100%", height: 300 }}>
-              <EChart option={priorityBarOption} height={300} ariaLabel={t("dashboard.charts.priorityBar")} />
-            </div>
-          </div>
+              <div className="card">
+                <div className="card-header">
+                  <h2 className="card-title">{t("dashboard.charts.priorityBar")}</h2>
+                  <a 
+                    href={`${API_BASE_URL}/api/reports/export?kind=by-priority`} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    style={{ fontSize: 14 }}
+                  >
+                    {t("dashboard.actions.exportCsv")}
+                  </a>
+                </div>
+                <div style={{ width: "100%", height: 300 }}>
+                  <EChart option={priorityBarOption} height={300} ariaLabel={t("dashboard.charts.priorityBar")} />
+                </div>
+              </div>
         ) : null;
       case "priority-radar":
         return byPriorityData.length > 0 ? (
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.charts.priorityComparison")}</h2>
-            </div>
-            <div style={{ width: "100%", height: 300 }}>
-              <EChart option={priorityRadarOption} height={300} ariaLabel={t("dashboard.charts.priorityComparison")} />
-            </div>
-          </div>
+              <div className="card">
+                <div className="card-header">
+                  <h2 className="card-title">{t("dashboard.charts.priorityComparison")}</h2>
+                </div>
+                <div style={{ width: "100%", height: 300 }}>
+                    <EChart option={priorityRadarOption} height={300} ariaLabel={t("dashboard.charts.priorityComparison")} />
+                </div>
+              </div>
         ) : null;
       case "department-bar":
         return byDepartment.length > 0 ? (
-          <div className="card" style={{ marginBottom: 24 }}>
-            <div className="card-header">
-              <h2 className="card-title">{t("dashboard.charts.department")}</h2>
-              <a 
-                href={`${API_BASE_URL}/api/reports/export?kind=by-department`} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: 14 }}
-              >
-                {t("dashboard.actions.exportCsv")}
-              </a>
+            <div className="card" style={{ marginBottom: 24 }}>
+              <div className="card-header">
+                <h2 className="card-title">{t("dashboard.charts.department")}</h2>
+                <a 
+                  href={`${API_BASE_URL}/api/reports/export?kind=by-department`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  style={{ fontSize: 14 }}
+                >
+                  {t("dashboard.actions.exportCsv")}
+                </a>
+              </div>
+              <div style={{ width: "100%", height: 350 }}>
+                  <EChart option={departmentBarOption} height={350} ariaLabel={t("dashboard.charts.department")} />
+              </div>
             </div>
-            <div style={{ width: "100%", height: 350 }}>
-              <EChart option={departmentBarOption} height={350} ariaLabel={t("dashboard.charts.department")} />
-            </div>
-          </div>
         ) : null;
       case "sla-distribution":
         return slaCompliance && slaCompliance.total_tickets_with_sla > 0 ? (
-          <div className="card">
-            <div className="card-header">
+              <div className="card">
+                <div className="card-header">
               <h2 className="card-title">{t("dashboard.charts.slaDistribution")}</h2>
             </div>
             <div style={{ width: "100%", height: 300 }}>
@@ -880,19 +880,19 @@ export default function Dashboard() {
           <div className="card" style={{ marginBottom: 24 }}>
             <div className="card-header">
               <h2 className="card-title">{t("dashboard.charts.branch")}</h2>
-              <a 
+                  <a 
                 href={`${API_BASE_URL}/api/reports/export?kind=by-branch`} 
-                target="_blank" 
-                rel="noreferrer"
-                style={{ fontSize: 14 }}
-              >
-                {t("dashboard.actions.exportCsv")}
-              </a>
-            </div>
+                    target="_blank" 
+                    rel="noreferrer"
+                    style={{ fontSize: 14 }}
+                  >
+                    {t("dashboard.actions.exportCsv")}
+                  </a>
+                </div>
             <div style={{ width: "100%", height: 350 }}>
               <EChart option={branchBarOption} height={350} ariaLabel={t("dashboard.charts.branch")} />
-            </div>
-          </div>
+                  </div>
+                    </div>
         ) : null;
       default:
         return null;
@@ -966,15 +966,15 @@ export default function Dashboard() {
           >
             {t("dashboard.buttons.exportPdf")}
           </button>
-        </div>
-      </div>
+                  </div>
+                </div>
 
       {/* Advanced Filters */}
       {showFilters && (
         <div className="card" style={{ marginBottom: 24, background: "var(--bg-secondary)" }}>
           <div className="card-header">
             <h2 className="card-title" style={{ fontSize: 18 }}>{t("dashboard.filters.title")}</h2>
-          </div>
+                    </div>
           <div className="filters" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
             <div>
               <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>{t("dashboard.filters.dateFrom")}</label>
@@ -984,7 +984,7 @@ export default function Dashboard() {
                 onChange={(e) => setDateFrom(e.target.value)}
                 style={{ width: "100%" }}
               />
-            </div>
+                    </div>
             <div>
               <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>{t("dashboard.filters.dateTo")}</label>
               <input 
@@ -993,7 +993,7 @@ export default function Dashboard() {
                 onChange={(e) => setDateTo(e.target.value)}
                 style={{ width: "100%" }}
               />
-            </div>
+                  </div>
             {branches.length > 0 && (
               <div>
                 <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>{t("dashboard.filters.branch")}</label>
@@ -1009,7 +1009,7 @@ export default function Dashboard() {
                     </option>
                   ))}
                 </select>
-              </div>
+                    </div>
             )}
             {departments.length > 0 && (
               <div>
@@ -1026,7 +1026,7 @@ export default function Dashboard() {
                     </option>
                   ))}
                 </select>
-              </div>
+                    </div>
             )}
             <div>
               <label style={{ display: "block", marginBottom: 4, fontSize: 12, fontWeight: 500 }}>{t("dashboard.filters.priority")}</label>
@@ -1041,7 +1041,7 @@ export default function Dashboard() {
                 <option value="medium">{t("dashboard.priority.medium")}</option>
                 <option value="low">{t("dashboard.priority.low")}</option>
               </select>
-            </div>
+                  </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
               <button
                 onClick={() => {
@@ -1056,22 +1056,22 @@ export default function Dashboard() {
               >
                 {t("dashboard.filters.clear")}
               </button>
-            </div>
-          </div>
-        </div>
+                </div>
+              </div>
+                </div>
       )}
 
       {isInitialLoading && (
         <div style={{ textAlign: "center", padding: 40 }}>
           <div className="loading" style={{ margin: "0 auto" }}></div>
           <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>{t("dashboard.loading")}</p>
-        </div>
-      )}
+            </div>
+          )}
 
       {error && (
         <div className="alert error fade-in">
           <strong>{t("dashboard.errorLabel")} </strong> {error}
-        </div>
+                </div>
       )}
 
       {overview && (
@@ -1091,7 +1091,7 @@ export default function Dashboard() {
                     {cardId === "notifications" && (
                       <SortableCard id={cardId}>{renderCardContent("notifications")}</SortableCard>
                     )}
-                  </div>
+            </div>
                 );
               }
               
@@ -1104,7 +1104,7 @@ export default function Dashboard() {
                     {cardId === "status-pie" && (
                       <SortableCard id={cardId}>{renderCardContent("status-pie")}</SortableCard>
                     )}
-                  </div>
+              </div>
                 );
               }
               
@@ -1116,19 +1116,19 @@ export default function Dashboard() {
                     )}
                     {cardId === "priority-radar" && (
                       <SortableCard id={cardId}>{renderCardContent("priority-radar")}</SortableCard>
-                    )}
-                  </div>
+                )}
+              </div>
                 ) : null;
               }
               
               return <SortableCard key={cardId} id={cardId}>{content}</SortableCard>;
             })}
-          </div>
+            </div>
         </SortableContext>
-      )}
+          )}
         {/* Live Branch Status Bar */}
         <BranchStatusBar enabled={authed} />
-      </div>
+    </div>
     </DndContext>
   );
 }

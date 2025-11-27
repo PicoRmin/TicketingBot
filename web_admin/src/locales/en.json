@@ -196,6 +196,49 @@
       "minutes": "minutes",
       "lessThanMinute": "Less than a minute",
       "breached": "Breached"
+    },
+    "create": {
+      "title": "Create New Ticket",
+      "steps": {
+        "basic": "Basic Information",
+        "category": "Category",
+        "customFields": "Custom Fields",
+        "review": "Review"
+      },
+      "fields": {
+        "title": "Ticket Title",
+        "titlePlaceholder": "Example: Internet connection issue",
+        "description": "Description",
+        "descriptionPlaceholder": "Please provide a detailed description of your issue or request...",
+        "category": "Category",
+        "priority": "Priority",
+        "branch": "Branch (Optional)",
+        "branchNotSelected": "Not selected"
+      },
+      "validation": {
+        "titleRequired": "Ticket title must be at least 5 characters",
+        "descriptionRequired": "Description must be at least 10 characters",
+        "categoryRequired": "Please select category and priority",
+        "customFieldRequired": "Field \"{{field}}\" is required"
+      },
+      "buttons": {
+        "next": "Next ➡️",
+        "previous": "⬅️ Previous",
+        "submit": "💾 Create Ticket",
+        "submitting": "⏳ Creating...",
+        "cancel": "Cancel"
+      },
+      "preview": {
+        "title": "Review & Confirm",
+        "labels": {
+          "title": "Title:",
+          "description": "Description:",
+          "category": "Category:",
+          "priority": "Priority:",
+          "branch": "Branch:",
+          "customFields": "Custom Fields:"
+        }
+      }
     }
   },
   "auth": {

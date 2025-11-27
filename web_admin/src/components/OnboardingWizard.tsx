@@ -246,15 +246,15 @@ export function OnboardingWizard({ onComplete }: Props) {
               placeholder="مثال: پیگیری مشکلات شبکه شعب غرب، هماهنگی با تیم VOIP..."
             />
           </label>
-        <label>
+          <label>
           یادداشت‌های تکمیلی:
-          <textarea
-            rows={3}
-            value={profile.notes}
-            onChange={(e) => updateProfile({ notes: e.target.value })}
-            placeholder="هر نکته‌ای که به تیم پشتیبانی کمک می‌کند را وارد کنید."
-          />
-        </label>
+            <textarea
+              rows={3}
+              value={profile.notes}
+              onChange={(e) => updateProfile({ notes: e.target.value })}
+              placeholder="هر نکته‌ای که به تیم پشتیبانی کمک می‌کند را وارد کنید."
+            />
+          </label>
         </div>
       )}
 
@@ -275,9 +275,9 @@ export function OnboardingWizard({ onComplete }: Props) {
               <strong>مسئولیت‌ها:</strong> {profile.responsibilities || "-"}
             </li>
             {profile.notes && (
-              <li>
+            <li>
                 <strong>توضیحات:</strong> {profile.notes}
-              </li>
+            </li>
             )}
           </ul>
         </div>

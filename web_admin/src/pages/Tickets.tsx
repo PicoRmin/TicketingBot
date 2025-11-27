@@ -3,6 +3,7 @@ import { apiGet, apiPost, apiPatch, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { stagger, slideIn } from "../lib/gsap";
+import { PriorityBadge } from "../components/tickets/PriorityBadge";
 
 type TicketItem = {
   id: number;
@@ -62,16 +63,7 @@ const getCategoryText = (category: string) => {
   return catMap[category] || category;
 };
 
-const getPriorityBadge = (priority: string) => {
-  const priorityMap: Record<string, { text: string; class: string; emoji: string }> = {
-    critical: { text: "بحرانی", class: "priority-critical", emoji: "🔴" },
-    high: { text: "بالا", class: "priority-high", emoji: "🟠" },
-    medium: { text: "متوسط", class: "priority-medium", emoji: "🟡" },
-    low: { text: "پایین", class: "priority-low", emoji: "🟢" },
-  };
-  const p = priorityMap[priority] || { text: priority, class: "priority-medium", emoji: "🟡" };
-  return <span className={`badge ${p.class}`} title={p.text}>{p.emoji} {p.text}</span>;
-};
+// getPriorityBadge removed - using PriorityBadge component instead
 
 export default function Tickets() {
   const navigate = useNavigate();
@@ -546,7 +538,9 @@ export default function Tickets() {
                         </code>
                       </td>
                       <td style={{ fontWeight: 500 }}>{t.title}</td>
-                      <td>{getPriorityBadge(t.priority || "medium")}</td>
+                      <td>
+                        <PriorityBadge priority={t.priority || "medium"} />
+                      </td>
                       <td>{getStatusBadge(t.status)}</td>
                       <td>{getCategoryText(t.category)}</td>
                       <td style={{ color: "var(--fg-secondary)", fontSize: 13 }}>

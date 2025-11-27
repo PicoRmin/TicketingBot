@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { apiGet, apiPatch, apiUploadFile, isAuthenticated, API_BASE_URL } from "../services/api";
 import { apiPost } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
+import { PriorityBadge } from "@/components/tickets/PriorityBadge";
 
 type Ticket = {
   id: number;
@@ -116,16 +117,7 @@ const getCategoryText = (category: string) => {
   return catMap[category] || category;
 };
 
-const getPriorityBadge = (priority: string) => {
-  const priorityMap: Record<string, { text: string; class: string; emoji: string }> = {
-    critical: { text: "بحرانی", class: "priority-critical", emoji: "🔴" },
-    high: { text: "بالا", class: "priority-high", emoji: "🟠" },
-    medium: { text: "متوسط", class: "priority-medium", emoji: "🟡" },
-    low: { text: "پایین", class: "priority-low", emoji: "🟢" },
-  };
-  const p = priorityMap[priority] || { text: priority, class: "priority-medium", emoji: "🟡" };
-  return <span className={`badge ${p.class}`} title={p.text}>{p.emoji} {p.text}</span>;
-};
+// getPriorityBadge removed - using PriorityBadge component instead
 
 const getSLAStatusBadge = (status: string | null | undefined) => {
   if (!status) return null;
@@ -555,7 +547,7 @@ export default function TicketDetail() {
               <div>
                 <div style={{ fontSize: 12, color: "var(--fg-secondary)", marginBottom: 4 }}>اولویت</div>
                 <div style={{ fontSize: 18, fontWeight: 600 }}>
-                  {getPriorityBadge(ticket.priority || "medium")}
+                  <PriorityBadge priority={ticket.priority || "medium"} />
                 </div>
               </div>
               <div>

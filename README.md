@@ -33,6 +33,7 @@
 - ✅ **نمودارهای Real-Time با ECharts** — نمودارها با GSAP fade-in + scale، ترنزیشن‌های نرم ECharts و به‌روزرسانی خودکار (120s)
 - ✅ **Drag & Drop برای کارت‌های داشبورد** — قابلیت تغییر ترتیب کارت‌ها با @dnd-kit، ذخیره در localStorage و پشتیبانی موبایل
 - ✅ **Live Status Bar برای شعب** — نمایش وضعیت زنده شعب با Tooltip، Pulse animation و به‌روزرسانی خودکار (60s)
+- ✅ **انیمیشن اولویت‌بندی تیکت‌ها** — Shake animation برای Critical، Pulse برای High، Border pulse برای SLA و Tooltip برای زمان باقی‌مانده
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب

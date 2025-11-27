@@ -183,6 +183,21 @@
       "total": "مجموع"
     }
   },
+  "tickets": {
+    "priority": {
+      "critical": "بحرانی",
+      "high": "بالا",
+      "medium": "متوسط",
+      "low": "پایین"
+    },
+    "sla": {
+      "timeRemaining": "زمان باقی‌مانده SLA",
+      "hours": "ساعت",
+      "minutes": "دقیقه",
+      "lessThanMinute": "کمتر از یک دقیقه",
+      "breached": "نقض شده"
+    }
+  },
   "auth": {
     "register": {
       "eyebrow": "ثبت‌نام چندمرحله‌ای",

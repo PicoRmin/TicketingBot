@@ -183,6 +183,21 @@
       "total": "Total"
     }
   },
+  "tickets": {
+    "priority": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "sla": {
+      "timeRemaining": "SLA Time Remaining",
+      "hours": "hours",
+      "minutes": "minutes",
+      "lessThanMinute": "Less than a minute",
+      "breached": "Breached"
+    }
+  },
   "auth": {
     "register": {
       "eyebrow": "Multi-step signup",

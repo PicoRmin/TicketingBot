@@ -866,6 +866,89 @@ tbody tr:last-child td {
   background: #22c55e;
 }
 
+/* Priority Animations */
+.badge.priority-critical {
+  position: relative;
+}
+
+.badge.priority-high {
+  position: relative;
+}
+
+.badge.priority-sla-alert {
+  position: relative;
+  animation: borderPulse 2s ease-in-out infinite;
+}
+
+@keyframes borderPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+}
+
+.badge.priority-sla-alert.priority-high {
+  animation: borderPulse 2s ease-in-out infinite, pulseGlow 2s ease-in-out infinite;
+}
+
+.badge.priority-sla-alert.priority-critical {
+  animation: borderPulse 1.5s ease-in-out infinite, shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+/* Priority Tooltip */
+.priority-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px var(--shadow-lg);
+  z-index: 100;
+  min-width: 150px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.priority-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--bg);
+}
+
+.priority-tooltip__title {
+  font-size: 11px;
+  color: var(--fg-secondary);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.priority-tooltip__time {
+  font-size: 13px;
+  color: var(--fg);
+  font-weight: 600;
+}
+
 /* Loading */
 .loading {
   display: inline-block;

@@ -4,12 +4,10 @@
  * این hook برای استفاده از GSAP در کامپوننت‌های React طراحی شده است.
  */
 
-import { useEffect, useRef, RefObject } from "react";
+import { useEffect, useRef, RefObject, useCallback } from "react";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   fadeIn,
-  fadeOut,
   slideIn,
   scaleIn,
   scrollAnimation,
@@ -18,6 +16,9 @@ import {
   refreshScrollTriggers,
   type EASING,
 } from "../lib/gsap";
+
+// تایپ برای تابع انیمیشن
+type AnimationFunction = (el: gsap.TweenTarget, opts?: Record<string, unknown>) => gsap.core.Tween;
 
 /**
  * Hook for fade in animation
@@ -34,11 +35,15 @@ export function useFadeIn(options: {
 } = {}) {
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  const animate = useCallback(() => {
     if (ref.current) {
       fadeIn(ref.current, options);
     }
-  }, []);
+  }, [options]);
+
+  useEffect(() => {
+    animate();
+  }, [animate]);
 
   return ref as RefObject<HTMLElement>;
 }
@@ -61,11 +66,15 @@ export function useSlideIn(
 ) {
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  const animate = useCallback(() => {
     if (ref.current) {
       slideIn(ref.current, direction, options);
     }
-  }, [direction]);
+  }, [direction, options]);
+
+  useEffect(() => {
+    animate();
+  }, [animate]);
 
   return ref as RefObject<HTMLElement>;
 }
@@ -86,11 +95,15 @@ export function useScaleIn(options: {
 } = {}) {
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  const animate = useCallback(() => {
     if (ref.current) {
       scaleIn(ref.current, options);
     }
-  }, []);
+  }, [options]);
+
+  useEffect(() => {
+    animate();
+  }, [animate]);
 
   return ref as RefObject<HTMLElement>;
 }
@@ -103,7 +116,7 @@ export function useScaleIn(options: {
  * return <div ref={ref}>Content</div>
  */
 export function useScrollAnimation(
-  animationFn: (el: gsap.TweenTarget, opts?: any) => gsap.core.Tween,
+  animationFn: AnimationFunction,
   options: {
     start?: string;
     end?: string;
@@ -114,15 +127,19 @@ export function useScrollAnimation(
 ) {
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  const animate = useCallback(() => {
     if (ref.current) {
       scrollAnimation(ref.current, animationFn, options);
     }
+  }, [animationFn, options]);
+
+  useEffect(() => {
+    animate();
 
     return () => {
       cleanupScrollTriggers();
     };
-  }, []);
+  }, [animate]);
 
   return ref as RefObject<HTMLElement>;
 }
@@ -143,15 +160,19 @@ export function useParallax(
 ) {
   const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  const animate = useCallback(() => {
     if (ref.current) {
       parallax(ref.current, speed, options);
     }
+  }, [speed, options]);
+
+  useEffect(() => {
+    animate();
 
     return () => {
       cleanupScrollTriggers();
     };
-  }, [speed]);
+  }, [animate]);
 
   return ref as RefObject<HTMLElement>;
 }

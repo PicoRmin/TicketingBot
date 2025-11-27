@@ -6,7 +6,22 @@
  * This component renders custom fields based on their type.
  */
 
-import React from "react";
+// نوع داده گزینه‌های فیلد انتخابی
+type FieldOption = {
+  value: string;
+  label: string;
+};
+
+// نوع داده پیکربندی فیلد
+type FieldConfig = {
+  options?: FieldOption[];
+  min?: number;
+  max?: number;
+  step?: number;
+  maxLength?: number;
+  pattern?: string;
+  accept?: string;
+};
 
 // نوع داده فیلد سفارشی با مقدار
 type CustomFieldWithValue = {
@@ -16,7 +31,7 @@ type CustomFieldWithValue = {
   label_en?: string | null;
   field_type: string;
   description?: string | null;
-  config?: any;
+  config?: FieldConfig | null;
   is_required: boolean;
   is_visible_to_user: boolean;
   is_editable_by_user: boolean;
@@ -152,7 +167,7 @@ function renderFieldInput(
         />
       );
 
-    case "number":
+    case "number": {
       const config = field.config || {};
       return (
         <input
@@ -174,6 +189,7 @@ function renderFieldInput(
           }}
         />
       );
+    }
 
     case "date":
       return (
@@ -225,7 +241,7 @@ function renderFieldInput(
         </label>
       );
 
-    case "select":
+    case "select": {
       const options = field.config?.options || [];
       return (
         <select
@@ -242,20 +258,21 @@ function renderFieldInput(
           }}
         >
           <option value="">-- انتخاب کنید --</option>
-          {options.map((opt: any, index: number) => (
+          {options.map((opt, index) => (
             <option key={index} value={opt.value}>
               {opt.label}
             </option>
           ))}
         </select>
       );
+    }
 
-    case "multiselect":
+    case "multiselect": {
       const multiOptions = field.config?.options || [];
       const selectedValues = currentValue ? currentValue.split(",") : [];
       return (
         <div>
-          {multiOptions.map((opt: any, index: number) => (
+          {multiOptions.map((opt, index) => (
             <label
               key={index}
               style={{
@@ -288,6 +305,7 @@ function renderFieldInput(
           ))}
         </div>
       );
+    }
 
     default:
       return (
@@ -320,18 +338,20 @@ function renderReadOnlyValue(field: CustomFieldWithValue, value: string | null |
     case "boolean":
       return <span>{displayValue === "true" || displayValue === "1" ? "✅ بله" : "❌ خیر"}</span>;
 
-    case "multiselect":
+    case "multiselect": {
       const options = field.config?.options || [];
       const selectedValues = displayValue ? displayValue.split(",") : [];
       const selectedLabels = selectedValues
-        .map((val) => options.find((opt: any) => opt.value === val)?.label)
+        .map((val) => options.find((opt) => opt.value === val)?.label)
         .filter(Boolean);
       return <span>{selectedLabels.length > 0 ? selectedLabels.join(", ") : "-"}</span>;
+    }
 
-    case "select":
+    case "select": {
       const selectOptions = field.config?.options || [];
-      const selectedOption = selectOptions.find((opt: any) => opt.value === displayValue);
+      const selectedOption = selectOptions.find((opt) => opt.value === displayValue);
       return <span>{selectedOption ? selectedOption.label : displayValue}</span>;
+    }
 
     case "date":
       return <span>{displayValue ? new Date(displayValue).toLocaleDateString("fa-IR") : "-"}</span>;

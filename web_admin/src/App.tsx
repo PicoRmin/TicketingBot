@@ -1,8 +1,17 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState, ChangeEvent } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FormEvent, Fragment, useEffect, useState } from "react";
+import { Listbox, Menu, Transition } from "@headlessui/react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { getToken, logout, getStoredProfile, fetchProfile, setProfile, clearProfile } from "./services/api";
+import {
+  getToken,
+  logout,
+  getStoredProfile,
+  fetchProfile,
+  setProfile,
+  clearProfile,
+} from "./services/api";
+import type { AuthProfile } from "./services/api";
 import logoUrl from "./assets/brand-logo.svg";
 import { MobileNavigation } from "./components/MobileNavigation";
 import { NotificationBell } from "./components/NotificationBell";
@@ -12,8 +21,9 @@ import { useMotionPreferences } from "./hooks/useMotionPreferences";
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = getToken();
-  const [profile, setProfileState] = useState<any | null>(() => getStoredProfile());
+  const [profile, setProfileState] = useState<AuthProfile | null>(() => getStoredProfile());
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return false;
@@ -25,6 +35,7 @@ export default function App() {
   });
   const { t, i18n } = useTranslation();
   const { shouldReduceMotion } = useMotionPreferences();
+  const [searchValue, setSearchValue] = useState<string>("");
 
   useEffect(() => {
     if (!token) {
@@ -49,7 +60,7 @@ export default function App() {
     }
 
     fetchProfile()
-      .then((p: any) => {
+      .then((p: AuthProfile) => {
         setProfile(p);
         setProfileState(p);
         // Redirect regular users to user dashboard
@@ -103,81 +114,239 @@ export default function App() {
   };
   
   const roleLabel = profile ? getRoleLabel(profile.role) : "";
-  const handleLangChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    i18n.changeLanguage(e.target.value);
+  const handleLanguageChange = (value: string) => {
+    i18n.changeLanguage(value);
+  };
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = searchValue.trim();
+    if (!value) return;
+    const basePath = profile?.role === "user" ? "/user-tickets" : "/tickets";
+    navigate(`${basePath}?q=${encodeURIComponent(value)}`);
   };
   const versionLabel = t("layout.version", { version: "0.1.0" });
   const headerVariants = shouldReduceMotion ? reducedMotionVariants : headerRevealVariants;
+  const avatarLetter = displayName ? displayName.trim().charAt(0).toUpperCase() : "؟";
+
+  const adminNavItems = [
+    { to: "/", label: t("nav.dashboard"), visible: true },
+    { to: "/tickets", label: t("nav.tickets"), visible: !isReportManager },
+    { to: "/branches", label: t("nav.branches"), visible: !isReportManager },
+    { to: "/departments", label: t("nav.departments"), visible: isAdmin },
+    { to: "/users", label: t("nav.users"), visible: isAdmin },
+    { to: "/automation", label: t("nav.automation"), visible: isAdmin },
+    { to: "/sla", label: t("nav.sla"), visible: isAdmin },
+    { to: "/custom-fields", label: t("nav.customFields"), visible: isAdmin },
+    { to: "/settings", label: t("nav.settings"), visible: isCentralAdmin },
+    { to: "/infrastructure", label: t("nav.infrastructure"), visible: isCentralAdmin },
+  ].filter((item) => item.visible);
+
+  const userNavItems = [
+    { to: "/user-dashboard", label: t("nav.dashboard") },
+    { to: "/user-portal", label: t("nav.userPortal") },
+  ];
+
+  const navItems = profile?.role === "user" ? userNavItems : adminNavItems;
+  const isActivePath = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const quickActions = profile?.role === "user"
+    ? [
+        {
+          id: "user-new",
+          icon: "✨",
+          label: t("layout.quickActions.userNew.title"),
+          subLabel: t("layout.quickActions.userNew.subtitle"),
+          to: "/user-portal",
+        },
+        {
+          id: "user-history",
+          icon: "📋",
+          label: t("layout.quickActions.userHistory.title"),
+          subLabel: t("layout.quickActions.userHistory.subtitle"),
+          to: "/user-tickets",
+        },
+      ]
+    : [
+        {
+          id: "admin-new",
+          icon: "➕",
+          label: t("layout.quickActions.adminNew.title"),
+          subLabel: t("layout.quickActions.adminNew.subtitle"),
+          to: "/tickets",
+        },
+        {
+          id: "admin-reports",
+          icon: "📈",
+          label: t("layout.quickActions.reports.title"),
+          subLabel: t("layout.quickActions.reports.subtitle"),
+          to: "/",
+        },
+        {
+          id: "admin-sla",
+          icon: "⏱️",
+          label: t("layout.quickActions.sla.title"),
+          subLabel: t("layout.quickActions.sla.subtitle"),
+          to: "/sla",
+        },
+      ];
 
   return (
     <div className="container">
-      <motion.header variants={headerVariants} initial="hidden" animate="visible">
-        <div className="header-left">
-          <Link to="/" className="brand">
-            <img src={logoUrl} alt="لوگوی ایرانمهر" />
-            <div className="brand-text">
-              <span className="brand-title">{t("brandTitle")}</span>
-              <span className="brand-subtitle">{t("brandSubtitle")}</span>
-            </div>
-          </Link>
-          <nav>
-            {profile?.role === "user" ? (
-              // Navigation for regular users
-              <>
-                <Link to="/user-dashboard">{t("nav.dashboard")}</Link>
-                <Link to="/user-portal">{t("nav.userPortal")}</Link>
-              </>
-            ) : (
-              // Navigation for admins
-              <>
-                <Link to="/">{t("nav.dashboard")}</Link>
-                {!isReportManager && <Link to="/tickets">{t("nav.tickets")}</Link>}
-                {!isReportManager && <Link to="/branches">{t("nav.branches")}</Link>}
-                {isAdmin && <Link to="/departments">{t("nav.departments")}</Link>}
-                {isAdmin && <Link to="/users">{t("nav.users")}</Link>}
-                {isAdmin && <Link to="/automation">{t("nav.automation")}</Link>}
-                {isAdmin && <Link to="/sla">{t("nav.sla")}</Link>}
-                {isAdmin && <Link to="/custom-fields">{t("nav.customFields")}</Link>}
-                {isCentralAdmin && <Link to="/settings">{t("nav.settings")}</Link>}
-                {isCentralAdmin && <Link to="/infrastructure">{t("nav.infrastructure")}</Link>}
-              </>
-            )}
-          </nav>
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <button
-            onClick={() => setDark((d) => !d)}
-            className="secondary"
-            style={{ padding: "8px 16px", fontSize: 14 }}
-          >
-            {dark ? t("actions.light") : t("actions.dark")}
-          </button>
-          {token && <NotificationBell />}
-          <select
-            value={i18n.language}
-            onChange={handleLangChange}
-            className="secondary"
-            style={{ padding: "8px 12px", fontSize: 14, borderRadius: "var(--radius)" }}
-          >
-            <option value="fa">{t("actions.langFa")}</option>
-            <option value="en">{t("actions.langEn")}</option>
-          </select>
-          {displayName && (
-            <span style={{ fontSize: 14, color: "var(--fg-secondary)" }}>
-              👤 {displayName} {roleLabel && `(${roleLabel})`}
-            </span>
-          )}
-          {token ? (
-            <button onClick={handleLogout} className="danger" style={{ padding: "8px 16px", fontSize: 14 }}>
-              {t("actions.logout")}
-            </button>
-          ) : (
-            <Link to="/login">
-              <button className="secondary" style={{ padding: "8px 16px", fontSize: 14 }}>
-                {t("actions.login")}
-              </button>
+      <motion.header className="app-header" variants={headerVariants} initial="hidden" animate="visible">
+        <div className="header-main">
+          <div className="brand-block">
+            <Link to="/" className="brand">
+              <img src={logoUrl} alt="لوگوی ایرانمهر" />
+              <div className="brand-text">
+                <span className="brand-title">{t("brandTitle")}</span>
+                <span className="brand-subtitle">{t("brandSubtitle")}</span>
+              </div>
             </Link>
-          )}
+            <span className="version-chip">{versionLabel}</span>
+          </div>
+
+          <div className="header-utilities">
+            <form className="header-search" onSubmit={handleSearchSubmit}>
+              <input
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder={t("layout.searchPlaceholder")}
+                aria-label={t("layout.searchPlaceholder")}
+              />
+              <button type="submit" className="ghost">
+                {t("layout.searchCta")}
+              </button>
+            </form>
+            <div className="utility-buttons">
+              <button
+                onClick={() => setDark((d) => !d)}
+                className="icon-button"
+                type="button"
+                aria-label={dark ? t("actions.light") : t("actions.dark")}
+                title={dark ? t("actions.light") : t("actions.dark")}
+              >
+                {dark ? "☀️" : "🌙"}
+              </button>
+              {token && <NotificationBell />}
+              <Listbox value={i18n.language} onChange={handleLanguageChange}>
+                <div className="language-select">
+                  <Listbox.Button className="language-select__button">
+                    <span>{i18n.language === "fa" ? t("actions.langFa") : t("actions.langEn")}</span>
+                    <span aria-hidden="true">▾</span>
+                  </Listbox.Button>
+                  <Transition
+                    as={Fragment}
+                    leave="headless-transition-leave"
+                    leaveFrom="headless-transition-from"
+                    leaveTo="headless-transition-to"
+                  >
+                    <Listbox.Options className="language-select__options">
+                      {["fa", "en"].map((lang) => (
+                        <Listbox.Option
+                          key={lang}
+                          value={lang}
+                          className={({ active }) =>
+                            `language-select__option${active ? " active" : ""}`
+                          }
+                        >
+                          {lang === "fa" ? t("actions.langFa") : t("actions.langEn")}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </Transition>
+                </div>
+              </Listbox>
+              {token ? (
+                <Menu as="div" className="user-menu">
+                  <Menu.Button className="user-card">
+                    <div className="avatar-ring" aria-hidden="true">
+                      {avatarLetter}
+                    </div>
+                    <div className="user-meta">
+                      <span className="user-name">{displayName}</span>
+                      {roleLabel && <span className="user-role-pill">{roleLabel}</span>}
+                    </div>
+                    <span className="user-menu__chevron" aria-hidden="true">
+                      ▾
+                    </span>
+                  </Menu.Button>
+                  <Transition
+                    as={Fragment}
+                    enter="headless-transition-enter"
+                    enterFrom="headless-transition-enter-from"
+                    enterTo="headless-transition-enter-to"
+                    leave="headless-transition-leave"
+                    leaveFrom="headless-transition-from"
+                    leaveTo="headless-transition-to"
+                  >
+                    <Menu.Items className="user-menu__items">
+                      <div className="user-menu__title">{t("layout.userMenu.title")}</div>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            to={profile?.role === "user" ? "/user-dashboard" : "/"}
+                            className={`user-menu__item${active ? " active" : ""}`}
+                          >
+                            {t("layout.userMenu.overview")}
+                          </Link>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className={`user-menu__item danger${active ? " active" : ""}`}
+                          >
+                            {t("layout.userMenu.logout")}
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </Menu.Items>
+                  </Transition>
+                </Menu>
+              ) : (
+                <Link to="/login">
+                  <button className="ghost" type="button">
+                    {t("actions.login")}
+                  </button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="header-bottom">
+          <div className="nav-scroll">
+            <nav className="primary-nav">
+              {navItems.map((item) => (
+                <Link key={item.to} to={item.to} className={`nav-pill${isActivePath(item.to) ? " active" : ""}`}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="quick-actions">
+            <div className="quick-actions-title">{t("layout.quickActions.title")}</div>
+            <div className="quick-actions-grid">
+              {quickActions.map((action) => (
+                <Link key={action.id} to={action.to} className="quick-action-card">
+                  <span className="quick-action-icon" aria-hidden="true">
+                    {action.icon}
+                  </span>
+                  <div>
+                    <div className="quick-action-label">{action.label}</div>
+                    <div className="quick-action-sub">{action.subLabel}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </motion.header>
       <main>

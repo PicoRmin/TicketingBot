@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
+import type { AuthProfile } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
 
 type Ticket = {
@@ -30,6 +31,19 @@ type Attachment = {
   original_filename: string;
   file_size: number;
   file_type: string;
+};
+
+type TicketCustomFieldValue = {
+  id: number;
+  name: string;
+  label: string;
+  field_type: string;
+  value?: string | null;
+  is_visible_to_user: boolean;
+  is_required: boolean;
+  is_editable_by_user: boolean;
+  display_order?: number | null;
+  config?: Record<string, unknown> | null;
 };
 
 const getStatusBadge = (status: string) => {
@@ -64,12 +78,12 @@ const getPriorityBadge = (priority: string) => {
   return <span className={`badge ${p.class}`} title={p.text}>{p.emoji} {p.text}</span>;
 };
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 export default function UserTicketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [profile] = useState<any | null>(() => getStoredProfile());
+  const [profile] = useState<AuthProfile | null>(() => getStoredProfile());
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -79,25 +93,9 @@ export default function UserTicketDetail() {
   const [submitting, setSubmitting] = useState(false);
   
   // Custom Fields states (فقط برای نمایش)
-  const [customFields, setCustomFields] = useState<any[]>([]);
+  const [customFields, setCustomFields] = useState<TicketCustomFieldValue[]>([]);
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-      return;
-    }
-    
-    // Check if user is regular user
-    if (profile && !["user"].includes(profile.role)) {
-      // Redirect admins to admin ticket detail
-      navigate(`/tickets/${id}`);
-      return;
-    }
-    
-    loadData();
-  }, [id, navigate, profile]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     setError(null);
@@ -124,19 +122,38 @@ export default function UserTicketDetail() {
       
       // Load custom fields (فقط برای نمایش)
       try {
-        const fields = await apiGet(`/api/custom-fields/ticket/${id}`) as any[];
-        // فیلتر فیلدهای قابل مشاهده برای کاربر
+        const fields = (await apiGet(`/api/custom-fields/ticket/${id}`)) as TicketCustomFieldValue[];
         const visibleFields = fields.filter((f) => f.is_visible_to_user);
-        setCustomFields(visibleFields);
+        const normalizedFields = visibleFields.map((field) => ({
+          ...field,
+          label: field.label ?? field.name,
+          is_required: field.is_required ?? false,
+          is_editable_by_user: field.is_editable_by_user ?? false,
+        }));
+        setCustomFields(normalizedFields);
       } catch {
         setCustomFields([]);
       }
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت تیکت");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت تیکت");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
+    if (profile && profile.role !== "user") {
+      navigate(`/tickets/${id}`);
+      return;
+    }
+
+    loadData();
+  }, [id, navigate, profile, loadData]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,8 +169,8 @@ export default function UserTicketDetail() {
       });
       setNewComment("");
       await loadData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ارسال پیام");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ارسال پیام");
     } finally {
       setSubmitting(false);
     }

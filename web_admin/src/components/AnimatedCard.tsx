@@ -26,8 +26,8 @@ interface AnimatedCardProps {
  */
 export function AnimatedCard({
   children,
-  animation = "fade",
-  direction = "left",
+  animation: _animation = "fade",
+  direction: _direction = "left",
   scrollTrigger = false,
   className = "",
 }: AnimatedCardProps) {

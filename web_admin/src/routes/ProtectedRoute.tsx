@@ -7,11 +7,12 @@ import {
   setProfile,
   logout,
 } from "../services/api";
+import type { UserRole } from "../services/api";
 import { emitError } from "../services/errorBus";
 
 type Props = {
   children: ReactNode;
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
   fallbackPath?: string;
 };
 
@@ -23,7 +24,7 @@ export default function ProtectedRoute({
   fallbackPath = "/login",
 }: Props): ReactElement {
   const [status, setStatus] = useState<Status>("loading");
-  const [role, setRole] = useState<string | null>(getStoredProfile()?.role || null);
+  const [role, setRole] = useState<UserRole | null>(getStoredProfile()?.role || null);
   const location = useLocation();
 
   const roleAllowed = useMemo(() => {

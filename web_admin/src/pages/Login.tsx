@@ -44,8 +44,9 @@ export default function Login() {
       } else {
         setError("نام کاربری یا رمز عبور نادرست است.");
       }
-    } catch (err: any) {
-      setError(err?.message || "خطا در ورود به سیستم");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "خطا در ورود به سیستم";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

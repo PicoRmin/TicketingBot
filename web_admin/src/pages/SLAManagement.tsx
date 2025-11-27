@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete, isAuthenticated, getStoredProfile } from "../services/api";
+import type { AuthProfile } from "../services/api";
 import type { EChartsOption } from "echarts";
 import { useChartTheme } from "../hooks/useChartTheme";
 import { EChart } from "../components/charts/EChart";
@@ -110,7 +111,7 @@ const CATEGORIES = [
 export default function SLAManagement() {
   const navigate = useNavigate();
   const chartTheme = useChartTheme();
-  const profile = useMemo(() => getStoredProfile(), []);
+  const profile = useMemo<AuthProfile | null>(() => getStoredProfile(), []);
   const [rules, setRules] = useState<SLARule[]>([]);
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);

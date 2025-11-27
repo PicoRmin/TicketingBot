@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, isAuthenticated, getStoredProfile } from "../services/api";
+import type { AuthProfile } from "../services/api";
 import CustomFieldRenderer from "../components/CustomFieldRenderer";
 import { Link } from "react-router-dom";
 import { KnowledgeSuggestions } from "../components/KnowledgeSuggestions";
-import { stagger, fadeIn, slideIn } from "../lib/gsap";
+import { stagger, slideIn, scaleIn } from "../lib/gsap";
 
 type TicketItem = {
   id: number;
@@ -24,6 +25,29 @@ type TicketListResponse = {
   page: number;
   page_size: number;
   total_pages: number;
+};
+
+type BranchSummary = { id: number; name: string; code: string };
+
+type CustomFieldDefinition = {
+  id: number;
+  name: string;
+  label: string;
+  label_en?: string | null;
+  field_type: string;
+  default_value?: string | null;
+  is_visible_to_user: boolean;
+  is_required: boolean;
+  is_editable_by_user: boolean;
+  display_order?: number | null;
+  config?: Record<string, unknown> | null;
+  placeholder?: string | null;
+  description?: string | null;
+};
+
+type CustomFieldValuePayload = {
+  custom_field_id: number;
+  value: string | null;
 };
 
 const getStatusBadge = (status: string) => {
@@ -60,7 +84,7 @@ const getPriorityBadge = (priority: string) => {
 
 export default function UserPortal() {
   const navigate = useNavigate();
-  const [profile] = useState<any | null>(() => getStoredProfile());
+  const [profile] = useState<AuthProfile | null>(() => getStoredProfile());
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,43 +101,62 @@ export default function UserPortal() {
     priority: "medium",
     branch_id: "",
   });
-  const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [branches, setBranches] = useState<BranchSummary[]>([]);
   const [submitting, setSubmitting] = useState(false);
   
   // Custom Fields states
-  const [customFields, setCustomFields] = useState<any[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>([]);
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string | null>>({});
+
+  const loadBranches = useCallback(async () => {
+    try {
+      const brs = (await apiGet("/api/branches")) as BranchSummary[];
+      setBranches(brs);
+    } catch (err) {
+      console.error("Error loading branches:", err);
+    }
+  }, []);
+
+  const loadTickets = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("page_size", "10");
+      if (statusFilter) {
+        params.set("status", statusFilter);
+      }
+
+      const response = (await apiGet(`/api/tickets?${params.toString()}`)) as TicketListResponse;
+      setTickets(response.items || []);
+      setTotalPages(response.total_pages || 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت تیکت‌ها");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, statusFilter]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate("/login");
       return;
     }
-    
-    // Check if user is regular user (not admin)
-    if (profile && !["user"].includes(profile.role)) {
-      // Redirect admins to admin panel
+
+    if (profile && profile.role !== "user") {
       navigate("/");
       return;
     }
-    
+
     loadBranches();
-  }, [navigate, profile]);
+  }, [navigate, profile, loadBranches]);
 
   useEffect(() => {
-    if (isAuthenticated() && profile && ["user"].includes(profile.role)) {
+    if (isAuthenticated() && profile?.role === "user") {
       loadTickets();
     }
-  }, [page, statusFilter]);
-
-  const loadBranches = async () => {
-    try {
-      const brs = await apiGet("/api/branches") as { id: number; name: string; code: string }[];
-      setBranches(brs);
-    } catch (e: any) {
-      console.error("Error loading branches:", e);
-    }
-  };
+  }, [profile, loadTickets]);
 
   /**
    * بارگذاری فیلدهای سفارشی بر اساس دسته‌بندی انتخاب شده
@@ -129,10 +172,19 @@ export default function UserPortal() {
       
       try {
         // بارگذاری فیلدهای سفارشی برای دسته‌بندی انتخاب شده
-        const fields = await apiGet(`/api/custom-fields?category=${newTicket.category}&is_active=true`) as any[];
+        const fields = (await apiGet(
+          `/api/custom-fields?category=${newTicket.category}&is_active=true`
+        )) as CustomFieldDefinition[];
         
-        // فیلتر فیلدهای قابل مشاهده برای کاربر
-        const visibleFields = fields.filter((f) => f.is_visible_to_user);
+        // فیلتر فیلدهای قابل مشاهده برای کاربر و نرمال‌سازی
+        const visibleFields = fields
+          .filter((f) => f.is_visible_to_user)
+          .map((field) => ({
+            ...field,
+            label: field.label ?? field.name,
+            is_required: field.is_required ?? false,
+            is_editable_by_user: field.is_editable_by_user ?? false,
+          }));
         setCustomFields(visibleFields);
         
         // مقداردهی اولیه با مقادیر پیش‌فرض
@@ -145,8 +197,8 @@ export default function UserPortal() {
           }
         });
         setCustomFieldValues(values);
-      } catch (e: any) {
-        console.error("Error loading custom fields:", e);
+      } catch (err) {
+        console.error("Error loading custom fields:", err);
         setCustomFields([]);
         setCustomFieldValues({});
       }
@@ -154,27 +206,6 @@ export default function UserPortal() {
     
     loadCustomFields();
   }, [newTicket.category]);
-
-  const loadTickets = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("page_size", "10");
-      if (statusFilter) {
-        params.set("status", statusFilter);
-      }
-      
-      const data = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
-      setTickets(data.items || []);
-      setTotalPages(data.total_pages || 1);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت تیکت‌ها");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,34 +217,40 @@ export default function UserPortal() {
     setSubmitting(true);
     setError(null);
     try {
-      const payload: any = {
+      const payload: {
+        title: string;
+        description: string;
+        category: string;
+        priority: string;
+        branch_id?: number;
+      } = {
         title: newTicket.title,
         description: newTicket.description,
         category: newTicket.category,
         priority: newTicket.priority,
       };
-      
+
       if (newTicket.branch_id) {
         payload.branch_id = Number(newTicket.branch_id);
       }
 
-      const ticket = await apiPost("/api/tickets", payload) as TicketItem;
+      const ticket = (await apiPost("/api/tickets", payload)) as TicketItem;
       
       // ذخیره فیلدهای سفارشی (اگر وجود داشته باشند)
       if (Object.keys(customFieldValues).length > 0) {
         try {
-          const valuesToSave = Object.entries(customFieldValues)
-            .filter(([_, value]) => value !== null && value !== "")
+          const valuesToSave: CustomFieldValuePayload[] = Object.entries(customFieldValues)
+            .filter(([, value]) => value !== null && value !== "")
             .map(([fieldId, value]) => ({
-              custom_field_id: parseInt(fieldId),
-              value: value,
+              custom_field_id: parseInt(fieldId, 10),
+              value: value ?? null,
             }));
 
           if (valuesToSave.length > 0) {
             await apiPost(`/api/custom-fields/ticket/${ticket.id}/values`, { values: valuesToSave });
           }
-        } catch (e: any) {
-          console.error("Error saving custom fields:", e);
+        } catch (err) {
+          console.error("Error saving custom fields:", err);
           // خطا را نادیده می‌گیریم چون تیکت قبلاً ایجاد شده
         }
       }
@@ -225,8 +262,8 @@ export default function UserPortal() {
       await loadTickets();
       // Navigate to ticket detail
       navigate(`/user-tickets/${ticket.id}`);
-    } catch (e: any) {
-      setError(e?.message || "خطا در ایجاد تیکت");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ایجاد تیکت");
     } finally {
       setSubmitting(false);
     }

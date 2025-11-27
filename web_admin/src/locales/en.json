@@ -22,6 +22,15 @@
     "langFa": "فا",
     "langEn": "En"
   },
+  "development": {
+    "lintStatus": "Lint Status",
+    "greenLint": "🟢 Green Lint",
+    "codeQuality": "Code Quality",
+    "typesSafety": "Types Safety",
+    "refactoringComplete": "Refactoring Complete",
+    "noErrors": "No Errors",
+    "noWarnings": "No Warnings"
+  },
   "role": {
     "central_admin": "👑 Head Admin",
     "admin": "🛡️ System Admin",
@@ -32,7 +41,37 @@
   },
   "layout": {
     "footer": "Iranmehr Ticketing © 2025",
-    "version": "Version {{version}} | Crafted with ❤️"
+    "version": "Version {{version}} | Crafted with ❤️",
+    "searchPlaceholder": "Search tickets, people or IDs...",
+    "searchCta": "Search",
+    "quickActions": {
+      "title": "Quick actions",
+      "adminNew": {
+        "title": "Create ticket fast",
+        "subtitle": "Start a new request workflow"
+      },
+      "reports": {
+        "title": "Live reports",
+        "subtitle": "Jump back to the main dashboard"
+      },
+      "sla": {
+        "title": "SLA health",
+        "subtitle": "Monitor compliance & logs"
+      },
+      "userNew": {
+        "title": "New request",
+        "subtitle": "Open a ticket instantly"
+      },
+      "userHistory": {
+        "title": "My follow-ups",
+        "subtitle": "See your latest ticket statuses"
+      }
+    },
+    "userMenu": {
+      "title": "Your profile",
+      "overview": "Go to dashboard",
+      "logout": "Sign out"
+    }
   },
   "notifications": {
     "ariaLabel": "Notifications",

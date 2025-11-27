@@ -91,7 +91,7 @@ export function useNotificationsQuery(pollInterval: number | false = 60000) {
       if (Array.isArray(notificationsData)) {
         return notificationsData;
       } else if (notificationsData && typeof notificationsData === "object" && "items" in notificationsData) {
-        return (notificationsData as any).items || [];
+        return (notificationsData as { items?: NotificationItem[] }).items || [];
       }
     }
     return buildFallbackNotifications();
@@ -111,24 +111,19 @@ export function useNotificationsQuery(pollInterval: number | false = 60000) {
   });
 
   const markAllAsRead = async () => {
-    try {
-      await markAllAsReadMutation.mutateAsync(undefined);
-      // Optimistic update: همه notifications را به عنوان خوانده شده علامت بزن
-      queryClient.setQueryData<NotificationItem[]>(["notifications"], (old) => {
-        if (!old) return old;
-        return old.map((item) => ({ ...item, read: true }));
-      });
-    } catch (err: any) {
-      // Error handling در mutation انجام می‌شود
-      throw err;
-    }
+    await markAllAsReadMutation.mutateAsync(undefined);
+    // Optimistic update: همه notifications را به عنوان خوانده شده علامت بزن
+    queryClient.setQueryData<NotificationItem[]>(["notifications"], (old) => {
+      if (!old) return old;
+      return old.map((item) => ({ ...item, read: true }));
+    });
   };
 
   return {
     notifications,
     unreadCount,
     loading: isLoading,
-    error: error ? (error as any)?.message || "خطا در دریافت اعلان‌ها" : null,
+    error: error ? (error instanceof Error ? error.message : "خطا در دریافت اعلان‌ها") : null,
     refresh: refetch,
     markAllAsRead,
     isMarkingAsRead: markAllAsReadMutation.isPending,

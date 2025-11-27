@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiGet, apiPost, apiPatch, isAuthenticated } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { stagger, fadeIn, slideIn, scrollAnimation } from "../lib/gsap";
+import { stagger, slideIn } from "../lib/gsap";
 
 type TicketItem = {
   id: number;
@@ -23,6 +23,22 @@ type TicketListResponse = {
   page: number;
   page_size: number;
   total_pages: number;
+};
+
+type BranchSummary = { id: number; name: string; code: string };
+type DepartmentSummary = { id: number; name: string; code: string };
+type UserSummary = { id: number; full_name: string; username: string; role?: string };
+
+type BulkActionPayload = {
+  ticket_ids: number[];
+  action: string;
+  status?: string;
+  assigned_to_id?: number;
+};
+
+type BulkActionResponse = {
+  success_count: number;
+  failed_count: number;
 };
 
 const getStatusBadge = (status: string) => {
@@ -73,13 +89,11 @@ export default function Tickets() {
       navigate("/login");
       return;
     }
-    // Redirect report_manager to dashboard (they can only see reports)
-    const profile = JSON.parse(localStorage.getItem("imehr_profile") || "{}");
-    if (profile.role === "report_manager") {
+    const profileRaw = localStorage.getItem("imehr_profile");
+    const profile = profileRaw ? (JSON.parse(profileRaw) as { role?: string }) : null;
+    if (profile?.role === "report_manager") {
       navigate("/");
-      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   // Animate header on mount
@@ -103,9 +117,9 @@ export default function Tickets() {
   const [priority, setPriority] = useState<string>("");
   const [departmentId, setDepartmentId] = useState<string>("");
   const [query, setQuery] = useState<string>("");
-  const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
-  const [departments, setDepartments] = useState<{ id: number; name: string; code: string }[]>([]);
-  const [users, setUsers] = useState<{ id: number; full_name: string; username: string }[]>([]);
+  const [branches, setBranches] = useState<BranchSummary[]>([]);
+  const [departments, setDepartments] = useState<DepartmentSummary[]>([]);
+  const [users, setUsers] = useState<UserSummary[]>([]);
   const [branchId, setBranchId] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [selectedTickets, setSelectedTickets] = useState<Set<number>>(new Set());
@@ -122,62 +136,78 @@ export default function Tickets() {
   const [userId, setUserId] = useState<string>("");
   const [ticketNumber, setTicketNumber] = useState<string>("");
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-    }
+  const applyQueryFilter = useCallback((items: TicketItem[], search: string) => {
+    if (!search.trim()) return items;
+    const lower = search.toLowerCase();
+    return items.filter((it) => it.title?.toLowerCase().includes(lower));
   }, []);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams();
-        params.set("page", String(page));
-        params.set("page_size", "10");
-        if (status) params.set("status", status);
-        if (category) params.set("category", category);
-        if (priority) params.set("priority", priority);
-        if (departmentId) params.set("department_id", departmentId);
-        if (branchId) params.set("branch_id", branchId);
-        if (assignedToId) params.set("assigned_to_id", assignedToId);
-        if (userId) params.set("user_id", userId);
-        if (dateFrom) params.set("date_from", dateFrom);
-        if (dateTo) params.set("date_to", dateTo);
-        if (ticketNumber) params.set("ticket_number", ticketNumber);
-        const res = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
-        if (query) {
-          res.items = res.items.filter((it: any) =>
-            it.title?.toLowerCase().includes(query.toLowerCase())
-          );
-        }
-        setData(res);
-      } catch (e: any) {
-        setError(e?.message || "خطا در دریافت لیست تیکت‌ها");
-      } finally {
-        setLoading(false);
-      }
-    };
-      load();
-    }, [page, status, category, priority, departmentId, branchId, query, assignedToId, userId, dateFrom, dateTo, ticketNumber]);
+  const refreshTickets = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("page_size", "10");
+      if (status) params.set("status", status);
+      if (category) params.set("category", category);
+      if (priority) params.set("priority", priority);
+      if (departmentId) params.set("department_id", departmentId);
+      if (branchId) params.set("branch_id", branchId);
+      if (assignedToId) params.set("assigned_to_id", assignedToId);
+      if (userId) params.set("user_id", userId);
+      if (dateFrom) params.set("date_from", dateFrom);
+      if (dateTo) params.set("date_to", dateTo);
+      if (ticketNumber) params.set("ticket_number", ticketNumber);
+      const res = (await apiGet(`/api/tickets?${params.toString()}`)) as TicketListResponse;
+      const filteredItems = applyQueryFilter(res.items, query);
+      setData({ ...res, items: filteredItems });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت لیست تیکت‌ها");
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    page,
+    status,
+    category,
+    priority,
+    departmentId,
+    branchId,
+    assignedToId,
+    userId,
+    dateFrom,
+    dateTo,
+    ticketNumber,
+    query,
+    applyQueryFilter,
+  ]);
 
   useEffect(() => {
-    const loadBranches = async () => {
+    refreshTickets();
+  }, [refreshTickets]);
+
+  useEffect(() => {
+    const loadLookups = async () => {
       try {
-        const me = await apiGet(`/api/auth/me`) as { role?: string };
+        const me = (await apiGet("/api/auth/me")) as { role?: string };
         setIsAdmin(me?.role === "admin" || me?.role === "central_admin");
-        const b = await apiGet(`/api/branches`) as any[];
-        setBranches(b.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
-        const d = await apiGet(`/api/departments?page_size=100`) as any[];
-        setDepartments(d.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
-        const u = await apiGet(`/api/users?page_size=100`) as any;
-        setUsers(u.items?.map((x: any) => ({ id: x.id, full_name: x.full_name, username: x.username })) || []);
+
+        const branchesData = (await apiGet("/api/branches")) as BranchSummary[];
+        setBranches(branchesData);
+
+        const departmentsData = (await apiGet("/api/departments?page_size=100")) as DepartmentSummary[];
+        setDepartments(departmentsData);
+
+        const usersRes = (await apiGet("/api/users?page_size=100")) as {
+          items?: UserSummary[];
+        };
+        setUsers(usersRes.items || []);
       } catch {
         // ignore
       }
     };
-    loadBranches();
+    loadLookups();
   }, []);
 
   const toggleSelectTicket = (ticketId: number) => {
@@ -202,56 +232,41 @@ export default function Tickets() {
 
   const handleBulkAction = async () => {
     if (selectedTickets.size === 0 || !bulkAction) return;
-    
+
     setBulkProcessing(true);
     setError(null);
-    
+
     try {
-      const payload: any = {
+      const payload: BulkActionPayload = {
         ticket_ids: Array.from(selectedTickets),
-        action: bulkAction
+        action: bulkAction,
       };
-      
+
       if (bulkAction === "status" && bulkStatus) {
         payload.status = bulkStatus;
       } else if (bulkAction === "assign" && bulkAssignee) {
         payload.assigned_to_id = Number(bulkAssignee);
       }
-      
-      const result = await apiPost("/api/tickets/bulk-action", payload) as any;
-      
+
+      const result = (await apiPost("/api/tickets/bulk-action", payload)) as BulkActionResponse;
+
       if (result.failed_count > 0) {
-        setError(`عملیات روی ${result.success_count} تیکت موفق بود، اما ${result.failed_count} تیکت ناموفق بود.`);
+        setError(
+          `عملیات روی ${result.success_count} تیکت موفق بود، اما ${result.failed_count} تیکت ناموفق بود.`
+        );
       } else {
         setError(null);
       }
-      
-      // Clear selections and reload
+
       setSelectedTickets(new Set());
       setShowBulkActions(false);
       setBulkAction("");
       setBulkStatus("");
       setBulkAssignee("");
-      
-      // Reload tickets
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("page_size", "10");
-      if (status) params.set("status", status);
-      if (category) params.set("category", category);
-      if (priority) params.set("priority", priority);
-      if (departmentId) params.set("department_id", departmentId);
-      if (branchId) params.set("branch_id", branchId);
-      const res = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
-      if (query) {
-        res.items = res.items.filter((it: any) =>
-          it.title?.toLowerCase().includes(query.toLowerCase())
-        );
-      }
-      setData(res);
-      
-    } catch (e: any) {
-      setError(e?.message || "خطا در انجام عملیات گروهی");
+
+      await refreshTickets();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در انجام عملیات گروهی");
     } finally {
       setBulkProcessing(false);
     }
@@ -427,7 +442,9 @@ export default function Tickets() {
                   style={{ width: "100%" }}
                 >
                   <option value="">همه کارشناسان</option>
-                  {users.filter((u: any) => u.role === "it_specialist" || u.role === "admin" || u.role === "central_admin").map((u) => (
+                  {users
+                    .filter((u) => ["it_specialist", "admin", "central_admin"].includes(u.role ?? ""))
+                    .map((u) => (
                     <option key={u.id} value={String(u.id)}>
                       {u.full_name} ({u.username})
                     </option>
@@ -559,24 +576,9 @@ export default function Tickets() {
                                   onClick={async () => {
                                     try {
                                       await apiPatch(`/api/tickets/${t.id}/status`, { status: "in_progress" });
-                                      // Reload
-                                      const params = new URLSearchParams();
-                                      params.set("page", String(page));
-                                      params.set("page_size", "10");
-                                      if (status) params.set("status", status);
-                                      if (category) params.set("category", category);
-                                      if (priority) params.set("priority", priority);
-                                      if (departmentId) params.set("department_id", departmentId);
-                                      if (branchId) params.set("branch_id", branchId);
-                                      const res = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
-                                      if (query) {
-                                        res.items = res.items.filter((it: any) =>
-                                          it.title?.toLowerCase().includes(query.toLowerCase())
-                                        );
-                                      }
-                                      setData(res);
-                                    } catch (e: any) {
-                                      setError(e?.message || "خطا در تغییر وضعیت");
+                                      await refreshTickets();
+                                    } catch (err) {
+                                      setError(err instanceof Error ? err.message : "خطا در تغییر وضعیت");
                                     }
                                   }}
                                   title="شروع کار"
@@ -591,24 +593,9 @@ export default function Tickets() {
                                   onClick={async () => {
                                     try {
                                       await apiPatch(`/api/tickets/${t.id}/status`, { status: "resolved" });
-                                      // Reload
-                                      const params = new URLSearchParams();
-                                      params.set("page", String(page));
-                                      params.set("page_size", "10");
-                                      if (status) params.set("status", status);
-                                      if (category) params.set("category", category);
-                                      if (priority) params.set("priority", priority);
-                                      if (departmentId) params.set("department_id", departmentId);
-                                      if (branchId) params.set("branch_id", branchId);
-                                      const res = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
-                                      if (query) {
-                                        res.items = res.items.filter((it: any) =>
-                                          it.title?.toLowerCase().includes(query.toLowerCase())
-                                        );
-                                      }
-                                      setData(res);
-                                    } catch (e: any) {
-                                      setError(e?.message || "خطا در تغییر وضعیت");
+                                      await refreshTickets();
+                                    } catch (err) {
+                                      setError(err instanceof Error ? err.message : "خطا در تغییر وضعیت");
                                     }
                                   }}
                                   title="حل شده"
@@ -623,24 +610,9 @@ export default function Tickets() {
                                   onClick={async () => {
                                     try {
                                       await apiPatch(`/api/tickets/${t.id}/status`, { status: "closed" });
-                                      // Reload
-                                      const params = new URLSearchParams();
-                                      params.set("page", String(page));
-                                      params.set("page_size", "10");
-                                      if (status) params.set("status", status);
-                                      if (category) params.set("category", category);
-                                      if (priority) params.set("priority", priority);
-                                      if (departmentId) params.set("department_id", departmentId);
-                                      if (branchId) params.set("branch_id", branchId);
-                                      const res = await apiGet(`/api/tickets?${params.toString()}`) as TicketListResponse;
-                                      if (query) {
-                                        res.items = res.items.filter((it: any) =>
-                                          it.title?.toLowerCase().includes(query.toLowerCase())
-                                        );
-                                      }
-                                      setData(res);
-                                    } catch (e: any) {
-                                      setError(e?.message || "خطا در تغییر وضعیت");
+                                      await refreshTickets();
+                                    } catch (err) {
+                                      setError(err instanceof Error ? err.message : "خطا در تغییر وضعیت");
                                     }
                                   }}
                                   title="بستن"

@@ -33,16 +33,17 @@ export default function Branches() {
     if (!isAuthenticated()) {
       navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiGet("/api/branches");
+      const res = await apiGet("/api/branches") as Branch[];
       setItems(res);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت شعب");
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "خطا در دریافت شعب";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -101,8 +102,9 @@ export default function Branches() {
       setForm({ name: "", name_en: "", code: "", address: "", phone: "", is_active: true });
       await load();
       setError(null);
-    } catch (e: any) {
-      setError(e?.message || (editingId ? "خطا در ویرایش شعبه" : "خطا در ثبت شعبه"));
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : (editingId ? "خطا در ویرایش شعبه" : "خطا در ثبت شعبه");
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

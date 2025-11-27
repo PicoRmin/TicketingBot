@@ -27,6 +27,8 @@
 - ✅ Time Tracker (زمان‌سنج کار)
 - ✅ Bulk Actions (عملیات گروهی)
 - ✅ Quick Actions (عملیات سریع)
+- ✅ Headless UI Header & Navigation (جستجوی سراسری، انتخاب زبان و منوی پروفایل دسترس‌پذیر)
+- ⚙️ **ثبت‌نام چندمرحله‌ای در دست توسعه** — Flow چهاربخشی، State Machine و قرارداد API + i18n کامل مستندسازی شده (پیاده‌سازی UI در حال انجام است)
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب
@@ -144,7 +146,9 @@ scripts\check_production.bat  # Windows
 
 ### 📚 مستندات فنی:
 - [Roadmap](./roadmap.md) - راهنمای کامل توسعه پروژه
+- [Backend Backlog](./docs/BACKEND_BACKLOG.md) - بک‌لاگ کامل توسعه Backend
 - [Custom Fields Guide](./docs/CUSTOM_FIELDS.md) - راهنمای فیلدهای سفارشی
+- [Lint Refactoring Report](./docs/LINT_REFACTORING.md) - گزارش بازنویسی برای Green Lint
 - [Email Notifications Guide](./docs/EMAIL_NOTIFICATIONS.md) - راهنمای اعلان‌رسانی ایمیل
 - [SLA Management Guide](./docs/SLA_MANAGEMENT.md) - راهنمای مدیریت SLA
 - [Testing Guide](./docs/TESTING.md) - راهنمای کامل تست‌ها
@@ -154,6 +158,7 @@ scripts\check_production.bat  # Windows
 - [Production Setup Guide](./docs/PRODUCTION_SETUP.md) - راهنمای کامل استقرار Production (عمومی)
 - [Monitoring Guide](./docs/MONITORING.md) - راهنمای Monitoring و Logging
 - [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) - معماری کلان و روابط دیتابیس
+- [Backend Backlog](./docs/BACKEND_BACKLOG.md) - وضعیت اپیک‌ها و برنامه توسعه Backend
 
 ### 📋 راهنماهای نصب و راه‌اندازی:
 - [Quick Start](./QUICK_START.md) - راهنمای سریع

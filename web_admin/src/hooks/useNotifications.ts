@@ -69,9 +69,10 @@ export function useNotifications(pollInterval = 60000) {
         setNotifications([]);
       }
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       setNotifications(buildFallbackNotifications());
-      setError(err?.message || "عدم دسترسی به سرویس اعلان‌ها");
+      const errorMessage = err instanceof Error ? err.message : "عدم دسترسی به سرویس اعلان‌ها";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -92,8 +93,9 @@ export function useNotifications(pollInterval = 60000) {
     try {
       await apiPost("/api/notifications/mark-read", {});
       setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
-    } catch (err: any) {
-      setError(err?.message || "خطا در به‌روزرسانی اعلان‌ها");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "خطا در به‌روزرسانی اعلان‌ها";
+      setError(errorMessage);
     }
   }, []);
 

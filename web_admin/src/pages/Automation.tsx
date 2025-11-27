@@ -1,21 +1,78 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiPost, apiPut, apiDelete, isAuthenticated, getStoredProfile } from "../services/api";
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  apiDelete,
+  isAuthenticated,
+  getStoredProfile,
+  fetchProfile,
+} from "../services/api";
+import type { AuthProfile } from "../services/api";
+
+type RuleType = "auto_assign" | "auto_close" | "auto_notify";
+
+type AutomationConditionValue = string | number | boolean | undefined;
+
+type AutomationConditions = {
+  priority?: string;
+  category?: string;
+  branch_id?: number;
+  department_id?: number;
+  ticket_status?: string;
+  time_since_creation_minutes?: number;
+  time_since_last_update_minutes?: number;
+  [key: string]: AutomationConditionValue;
+};
+
+type AutomationActionValue = string | number | boolean | number[] | string[] | undefined;
+
+type AutomationActions = {
+  assign_to_user_id?: number;
+  assign_to_department_id?: number;
+  assign_to_role?: string;
+  notify_user_id?: number;
+  notify_users?: number[];
+  notify_role?: string;
+  notify_roles?: string[];
+  auto_close_status?: string;
+  message_template?: string;
+  message?: string;
+  close_after_hours?: number;
+  round_robin?: boolean;
+  only_if_resolved?: boolean;
+  set_status?: string;
+  send_notification_to_user_id?: number;
+  send_notification_to_role?: string;
+  notification_message?: string;
+  [key: string]: AutomationActionValue;
+};
 
 type AutomationRule = {
   id: number;
   name: string;
   description?: string | null;
-  rule_type: string;
-  conditions?: Record<string, any> | null;
-  actions: Record<string, any>;
+  rule_type: RuleType;
+  conditions?: AutomationConditions | null;
+  actions: AutomationActions;
   priority: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
 };
 
-const EMPTY_FORM = {
+type AutomationFormState = {
+  name: string;
+  description: string;
+  rule_type: RuleType;
+  conditions: AutomationConditions | null;
+  actions: AutomationActions;
+  priority: number;
+  is_active: boolean;
+};
+
+const EMPTY_FORM: AutomationFormState = {
   name: "",
   description: "",
   rule_type: "auto_assign",
@@ -33,29 +90,44 @@ const RULE_TYPES = [
 
 export default function Automation() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any | null>(() => getStoredProfile());
+  const [profile, setProfileState] = useState<AuthProfile | null>(() => getStoredProfile());
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ ...EMPTY_FORM });
-  const [filterType, setFilterType] = useState<string>("");
-  const [filterActive, setFilterActive] = useState<string>("");
+  const [form, setForm] = useState<AutomationFormState>({ ...EMPTY_FORM });
+  const [filterType, setFilterType] = useState<RuleType | "">("");
+  const [filterActive, setFilterActive] = useState<"" | "true" | "false">("");
 
-  useEffect(() => {
+  const ensureProfile = useCallback(async () => {
     if (!isAuthenticated()) {
       navigate("/login");
-      return;
+      return null;
     }
-    if (!profile || !["admin", "central_admin"].includes(profile.role)) {
-      navigate("/");
-      return;
-    }
-    loadRules();
-  }, [navigate, profile, filterType, filterActive]);
 
-  const loadRules = async () => {
+    if (profile) {
+      return profile;
+    }
+
+    const stored = getStoredProfile();
+    if (stored) {
+      setProfileState(stored);
+      return stored;
+    }
+
+    try {
+      const fetched = await fetchProfile();
+      setProfileState(fetched);
+      return fetched;
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+      navigate("/login");
+      return null;
+    }
+  }, [navigate, profile]);
+
+  const loadRules = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -63,14 +135,28 @@ export default function Automation() {
       if (filterType) params.set("rule_type", filterType);
       if (filterActive) params.set("is_active", filterActive);
       const query = params.toString() ? `?${params.toString()}` : "";
-      const res = await apiGet(`/api/automation${query}`) as AutomationRule[];
+      const res = (await apiGet(`/api/automation${query}`)) as AutomationRule[];
       setRules(res);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت قوانین");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت قوانین");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterType, filterActive]);
+
+  useEffect(() => {
+    (async () => {
+      const currentProfile = await ensureProfile();
+      if (!currentProfile) {
+        return;
+      }
+      if (!["admin", "central_admin"].includes(currentProfile.role)) {
+        navigate("/");
+        return;
+      }
+      loadRules();
+    })();
+  }, [ensureProfile, navigate, loadRules]);
 
   const startEdit = (rule: AutomationRule) => {
     setEditingId(rule.id);
@@ -121,8 +207,8 @@ export default function Automation() {
       }
       cancelEdit();
       await loadRules();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره قانون.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ذخیره قانون.");
     } finally {
       setLoading(false);
     }
@@ -139,8 +225,8 @@ export default function Automation() {
       await apiDelete(`/api/automation/${id}`);
       setSuccess("قانون با موفقیت حذف شد.");
       await loadRules();
-    } catch (e: any) {
-      setError(e?.message || "خطا در حذف قانون.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در حذف قانون.");
     } finally {
       setLoading(false);
     }
@@ -152,21 +238,21 @@ export default function Automation() {
     try {
       await apiPut(`/api/automation/${rule.id}`, { is_active: !rule.is_active });
       await loadRules();
-    } catch (e: any) {
-      setError(e?.message || "خطا در تغییر وضعیت قانون.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در تغییر وضعیت قانون.");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateActionsField = (key: string, value: any) => {
+  const updateActionsField = (key: string, value: AutomationActionValue) => {
     setForm((f) => ({
       ...f,
       actions: { ...f.actions, [key]: value },
     }));
   };
 
-  const updateConditionsField = (key: string, value: any) => {
+  const updateConditionsField = (key: string, value: AutomationConditionValue) => {
     setForm((f) => ({
       ...f,
       conditions: { ...(f.conditions || {}), [key]: value || undefined },
@@ -233,7 +319,7 @@ export default function Automation() {
             <select
               value={form.rule_type}
               onChange={(e) => {
-                setForm((f) => ({ ...f, rule_type: e.target.value, actions: {} }));
+                setForm((f) => ({ ...f, rule_type: e.target.value as RuleType, actions: {} }));
               }}
               required
             >
@@ -284,7 +370,7 @@ export default function Automation() {
                   <span style={{ minWidth: 100 }}>{key}:</span>
                   {key === "priority" ? (
                     <select
-                      value={value || ""}
+                      value={String(value || "")}
                       onChange={(e) => updateConditionsField(key, e.target.value)}
                       style={{ flex: 1 }}
                     >
@@ -296,7 +382,7 @@ export default function Automation() {
                     </select>
                   ) : key === "category" ? (
                     <select
-                      value={value || ""}
+                      value={String(value || "")}
                       onChange={(e) => updateConditionsField(key, e.target.value)}
                       style={{ flex: 1 }}
                     >
@@ -308,7 +394,7 @@ export default function Automation() {
                     </select>
                   ) : key === "status" ? (
                     <select
-                      value={value || ""}
+                      value={String(value || "")}
                       onChange={(e) => updateConditionsField(key, e.target.value)}
                       style={{ flex: 1 }}
                     >
@@ -321,7 +407,7 @@ export default function Automation() {
                   ) : (
                     <input
                       type={key.includes("_id") ? "number" : "text"}
-                      value={value || ""}
+                      value={String(value || "")}
                       onChange={(e) => updateConditionsField(key, key.includes("_id") ? Number(e.target.value) : e.target.value)}
                       style={{ flex: 1 }}
                       placeholder={key.includes("_id") ? "شناسه" : "مقدار"}
@@ -430,7 +516,7 @@ export default function Automation() {
                   <span style={{ minWidth: 200 }}>بستن بعد از (ساعت):</span>
                   <input
                     type="number"
-                    value={form.actions.close_after_hours || ""}
+                    value={form.actions.close_after_hours ?? ""}
                     onChange={(e) => updateActionsField("close_after_hours", e.target.value ? Number(e.target.value) : undefined)}
                     style={{ flex: 1 }}
                     placeholder="مثال: 48"
@@ -481,7 +567,7 @@ export default function Automation() {
                 <label>
                   پیام:
                   <textarea
-                    value={form.actions.message || ""}
+                    value={typeof form.actions.message === "string" ? form.actions.message : ""}
                     onChange={(e) => updateActionsField("message", e.target.value || undefined)}
                     rows={3}
                     placeholder="پیام اعلان"
@@ -519,7 +605,7 @@ export default function Automation() {
         <div className="filters" style={{ marginBottom: 16 }}>
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => setFilterType(e.target.value as RuleType | "")}
             style={{ flex: 1 }}
           >
             <option value="">همه انواع</option>
@@ -531,7 +617,7 @@ export default function Automation() {
           </select>
           <select
             value={filterActive}
-            onChange={(e) => setFilterActive(e.target.value)}
+            onChange={(e) => setFilterActive(e.target.value as "" | "true" | "false")}
             style={{ flex: 1 }}
           >
             <option value="">همه وضعیت‌ها</option>

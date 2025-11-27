@@ -6,12 +6,23 @@
  * This page provides the ability to create, edit, delete and manage custom fields.
  */
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, apiPatch, apiDelete, isAuthenticated, getStoredProfile } from "../services/api";
-import { stagger, fadeIn, slideIn, scaleIn } from "../lib/gsap";
+import type { AuthProfile } from "../services/api";
+import { stagger, slideIn, scaleIn } from "../lib/gsap";
 
 // نوع داده‌های فیلد سفارشی
+type SelectOption = { value: string; label: string };
+
+type CustomFieldConfig = {
+  options?: SelectOption[];
+  min?: number;
+  max?: number;
+  step?: number;
+  [key: string]: unknown;
+};
+
 type CustomField = {
   id: number;
   name: string;
@@ -19,7 +30,7 @@ type CustomField = {
   label_en?: string | null;
   field_type: string;
   description?: string | null;
-  config?: any;
+  config?: CustomFieldConfig | null;
   category?: string | null;
   department_id?: number | null;
   branch_id?: number | null;
@@ -55,7 +66,7 @@ const EMPTY_FORM = {
   label_en: "",
   field_type: "text",
   description: "",
-  config: null,
+  config: null as CustomFieldConfig | null,
   category: "",
   department_id: "",
   branch_id: "",
@@ -95,7 +106,7 @@ const CATEGORIES = [
 
 export default function CustomFields() {
   const navigate = useNavigate();
-  const [profile] = useState<any | null>(() => getStoredProfile());
+  const [profile] = useState<AuthProfile | null>(() => getStoredProfile());
   const [fields, setFields] = useState<CustomField[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -105,7 +116,7 @@ export default function CustomFields() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [showForm, setShowForm] = useState(false);
-  const [configOptions, setConfigOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [configOptions, setConfigOptions] = useState<SelectOption[]>([]);
   const [configMin, setConfigMin] = useState("");
   const [configMax, setConfigMax] = useState("");
   const [configStep, setConfigStep] = useState("");
@@ -115,20 +126,7 @@ export default function CustomFields() {
   const [filterType, setFilterType] = useState("");
   const [filterActive, setFilterActive] = useState("");
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-      return;
-    }
-    if (!profile || !["admin", "central_admin"].includes(profile.role)) {
-      navigate("/");
-      return;
-    }
-    loadData();
-  }, [navigate, profile, filterCategory, filterType, filterActive]);
-
-  // بارگذاری داده‌ها
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -148,12 +146,24 @@ export default function CustomFields() {
       // بارگذاری شعب
       const brs = await apiGet("/api/branches") as Branch[];
       setBranches(brs);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت داده‌ها");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت داده‌ها");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterCategory, filterType, filterActive]);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+    if (!profile || !["admin", "central_admin"].includes(profile.role)) {
+      navigate("/");
+      return;
+    }
+    loadData();
+  }, [navigate, profile, loadData]);
 
   // شروع ویرایش
   const startEdit = (field: CustomField) => {
@@ -231,8 +241,7 @@ export default function CustomFields() {
     }
 
     try {
-      // ساخت config بر اساس نوع فیلد
-      let config: any = null;
+      let config: CustomFieldConfig | null = null;
       if (form.field_type === "select" || form.field_type === "multiselect") {
         if (configOptions.length === 0) {
           setError("برای فیلدهای Select/MultiSelect باید حداقل یک گزینه تعریف کنید");
@@ -249,7 +258,7 @@ export default function CustomFields() {
 
       const fieldData = {
         ...form,
-        config: config,
+        config,
         category: form.category || null,
         department_id: form.department_id ? parseInt(form.department_id) : null,
         branch_id: form.branch_id ? parseInt(form.branch_id) : null,
@@ -268,8 +277,8 @@ export default function CustomFields() {
 
       cancelEdit();
       loadData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره فیلد");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ذخیره فیلد");
     }
   };
 
@@ -283,8 +292,8 @@ export default function CustomFields() {
       await apiDelete(`/api/custom-fields/${id}`);
       setSuccess("فیلد با موفقیت حذف شد");
       loadData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در حذف فیلد");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در حذف فیلد");
     }
   };
 

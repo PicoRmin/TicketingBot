@@ -16,6 +16,7 @@ type Ticket = {
   department_id?: number | null;
   assigned_to_id?: number | null;
   assigned_to?: { id: number; full_name: string; username: string } | null;
+  user_id?: number;
   created_at?: string;
   updated_at?: string;
 };
@@ -41,6 +42,57 @@ type Attachment = {
   file_size: number;
   file_type: string;
   ticket_id: number;
+};
+
+type Comment = {
+  id: number;
+  ticket_id: number;
+  user_id: number;
+  comment: string;
+  is_internal: boolean;
+  created_at: string;
+  user?: { id: number; full_name: string; username: string } | null;
+};
+
+type HistoryItem = {
+  id: number;
+  ticket_id: number;
+  user_id: number;
+  action: string;
+  old_value?: string | null;
+  new_value?: string | null;
+  status?: string | null;
+  comment?: string;
+  changed_by?: { id: number; full_name: string; username: string } | null;
+  created_at: string;
+  user?: { id: number; full_name: string; username: string } | null;
+};
+
+type TimeLog = {
+  id: number;
+  ticket_id: number;
+  user_id: number;
+  description?: string | null;
+  start_time: string;
+  end_time?: string | null;
+  duration_minutes?: number | null;
+  is_active: boolean;
+  created_at: string;
+  user?: { id: number; full_name: string; username: string } | null;
+};
+
+type CustomField = {
+  id: number;
+  name: string;
+  label: string;
+  field_type: string;
+  config?: Record<string, unknown> | null;
+  is_required: boolean;
+  is_visible_to_user: boolean;
+  is_editable_by_user: boolean;
+  default_value?: string | null;
+  value?: string | null;
+  display_order?: number;
 };
 
 const getStatusBadge = (status: string) => {
@@ -118,27 +170,27 @@ export default function TicketDetail() {
   const [newStatus, setNewStatus] = useState<string>("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [file, setFile] = useState<File | null>(null);
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [branches, setBranches] = useState<{ id: number; name: string; code: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: number; name: string; code: string }[]>([]);
   const [users, setUsers] = useState<{ id: number; full_name: string; username: string }[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [slaLog, setSlaLog] = useState<SLALog | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [canAssign, setCanAssign] = useState(false);
   
   // Time Tracker states
-  const [activeTimer, setActiveTimer] = useState<any | null>(null);
-  const [timeLogs, setTimeLogs] = useState<any[]>([]);
+  const [activeTimer, setActiveTimer] = useState<TimeLog | null>(null);
+  const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
   const [timeSummary, setTimeSummary] = useState<{ total_minutes: number; total_hours: number; logs_count: number } | null>(null);
   const [timerDescription, setTimerDescription] = useState("");
   const [timerLoading, setTimerLoading] = useState(false);
   
   // Custom Fields states
-  const [customFields, setCustomFields] = useState<any[]>([]);
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [customFieldValues, setCustomFieldValues] = useState<Record<number, string | null>>({});
   const [savingCustomFields, setSavingCustomFields] = useState(false);
 
@@ -146,22 +198,22 @@ export default function TicketDetail() {
     if (!isAuthenticated()) {
       navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const b = await apiGet(`/api/branches`) as any[];
-        setBranches(b.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
-        const d = await apiGet(`/api/departments?page_size=100`) as any[];
-        setDepartments(d.map((x: any) => ({ id: x.id, name: x.name, code: x.code })));
-        const u = await apiGet(`/api/users?page_size=100`) as any;
-        setUsers(u.items?.map((x: any) => ({ id: x.id, full_name: x.full_name, username: x.username })) || []);
+        const b = await apiGet(`/api/branches`) as { id: number; name: string; code: string }[];
+        setBranches(b.map((x) => ({ id: x.id, name: x.name, code: x.code })));
+        const d = await apiGet(`/api/departments?page_size=100`) as { id: number; name: string; code: string }[];
+        setDepartments(d.map((x) => ({ id: x.id, name: x.name, code: x.code })));
+        const u = await apiGet(`/api/users?page_size=100`) as { items?: { id: number; full_name: string; username: string }[] };
+        setUsers(u.items?.map((x) => ({ id: x.id, full_name: x.full_name, username: x.username })) || []);
         
         // Check if user can assign tickets
-        const profile = await apiGet(`/api/auth/me`) as any;
+        const profile = await apiGet(`/api/auth/me`) as { role?: string };
         const allowedRoles = ["admin", "central_admin", "branch_admin", "it_specialist"];
-        setCanAssign(allowedRoles.includes(profile?.role));
+        setCanAssign(allowedRoles.includes(profile?.role || ""));
       } catch {
         // ignore
       }
@@ -180,9 +232,9 @@ export default function TicketDetail() {
         setNewStatus(t.status);
         const list = await apiGet(`/api/files/ticket/${id}/list`) as Attachment[];
         setAttachments(list);
-        const commentsList = await apiGet(`/api/comments/ticket/${id}`) as any[];
+        const commentsList = await apiGet(`/api/comments/ticket/${id}`) as Comment[];
         setComments(commentsList);
-        const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
+        const historyList = await apiGet(`/api/tickets/${id}/history`) as HistoryItem[];
         setHistory(historyList);
         try {
           const sla = await apiGet(`/api/sla/ticket/${id}`) as SLALog;
@@ -202,13 +254,15 @@ export default function TicketDetail() {
         
         // Load Custom Fields
         loadCustomFields();
-      } catch (e: any) {
-        setError(e?.message || "خطا در دریافت تیکت");
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "خطا در دریافت تیکت";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const changeStatus = async () => {
@@ -219,11 +273,12 @@ export default function TicketDetail() {
       const updated = await apiPatch(`/api/tickets/${id}/status`, { status: newStatus }) as Ticket;
       setTicket(updated);
       // Reload history after status change
-      const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
+      const historyList = await apiGet(`/api/tickets/${id}/history`) as HistoryItem[];
       setHistory(historyList);
       setError(null);
-    } catch (e: any) {
-      setError(e?.message || "خطا در تغییر وضعیت");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در تغییر وضعیت");
+      setError(errorMessage);
     } finally {
       setUpdating(false);
     }
@@ -247,8 +302,9 @@ export default function TicketDetail() {
       }]);
       setFile(null);
       setError(null);
-    } catch (e: any) {
-      setError(e?.message || "خطا در آپلود فایل");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در آپلود فایل");
+      setError(errorMessage);
     } finally {
       setUpdating(false);
     }
@@ -273,11 +329,12 @@ export default function TicketDetail() {
         setSelectedUserId("");
       }
       // Reload history
-      const historyList = await apiGet(`/api/tickets/${id}/history`) as any[];
+      const historyList = await apiGet(`/api/tickets/${id}/history`) as HistoryItem[];
       setHistory(historyList);
       setError(null);
-    } catch (e: any) {
-      setError(e?.message || "خطا در تخصیص تیکت");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در تخصیص تیکت");
+      setError(errorMessage);
     } finally {
       setAssigning(false);
     }
@@ -290,7 +347,7 @@ export default function TicketDetail() {
   const loadCustomFields = async () => {
     if (!id) return;
     try {
-      const fields = await apiGet(`/api/custom-fields/ticket/${id}`) as any[];
+      const fields = await apiGet(`/api/custom-fields/ticket/${id}`) as CustomField[];
       setCustomFields(fields || []);
       
       // بارگذاری مقادیر فیلدها
@@ -305,7 +362,7 @@ export default function TicketDetail() {
         }
       });
       setCustomFieldValues(values);
-    } catch (e: any) {
+    } catch (e) {
       console.error("Error loading custom fields:", e);
       // خطا را نمایش ندهیم چون فیلدهای سفارشی اختیاری هستند
     }
@@ -334,8 +391,9 @@ export default function TicketDetail() {
         await loadCustomFields();
         setError(null);
       }
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره فیلدهای سفارشی");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در ذخیره فیلدهای سفارشی");
+      setError(errorMessage);
     } finally {
       setSavingCustomFields(false);
     }
@@ -345,7 +403,7 @@ export default function TicketDetail() {
     if (!id) return;
     try {
       // Load active timer
-      const active = await apiGet(`/api/time-tracker/active`) as any;
+      const active = await apiGet(`/api/time-tracker/active`) as TimeLog | null;
       if (active && active.ticket_id === Number(id)) {
         setActiveTimer(active);
       } else {
@@ -353,13 +411,13 @@ export default function TicketDetail() {
       }
       
       // Load time logs for this ticket
-      const logs = await apiGet(`/api/time-tracker/ticket/${id}`) as any[];
+      const logs = await apiGet(`/api/time-tracker/ticket/${id}`) as TimeLog[];
       setTimeLogs(logs || []);
       
       // Load time summary
-      const summary = await apiGet(`/api/time-tracker/ticket/${id}/summary`) as any;
+      const summary = await apiGet(`/api/time-tracker/ticket/${id}/summary`) as { total_minutes: number; total_hours: number; logs_count: number } | null;
       setTimeSummary(summary);
-    } catch (e: any) {
+    } catch (e) {
       // Time tracker might not be available for all users
       console.warn("Time tracker error:", e);
     }
@@ -373,12 +431,13 @@ export default function TicketDetail() {
       const timer = await apiPost(`/api/time-tracker/start`, {
         ticket_id: Number(id),
         description: timerDescription
-      }) as any;
+      }) as TimeLog;
       setActiveTimer(timer);
       setTimerDescription("");
       await loadTimeTrackerData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در شروع تایمر");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در شروع تایمر");
+      setError(errorMessage);
     } finally {
       setTimerLoading(false);
     }
@@ -400,8 +459,9 @@ export default function TicketDetail() {
       setActiveTimer(null);
       setTimerDescription("");
       await loadTimeTrackerData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در توقف تایمر");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در توقف تایمر");
+      setError(errorMessage);
     } finally {
       setTimerLoading(false);
     }
@@ -432,13 +492,14 @@ export default function TicketDetail() {
         ticket_id: Number(id),
         comment: newComment.trim(),
         is_internal: isInternal
-      }) as any;
+      }) as Comment;
       setComments((prev) => [...prev, res]);
       setNewComment("");
       setIsInternal(false);
       setError(null);
-    } catch (e: any) {
-      setError(e?.message || "خطا در ثبت نظر");
+    } catch (e) {
+      const errorMessage = (e instanceof Error ? e.message : "خطا در ثبت نظر");
+      setError(errorMessage);
     } finally {
       setUpdating(false);
     }
@@ -821,7 +882,7 @@ export default function TicketDetail() {
                             <td>
                               {log.duration_minutes 
                                 ? formatDuration(log.duration_minutes)
-                                : log.is_active === 1 
+                                : log.is_active === true 
                                   ? <span style={{ color: "var(--success)" }}>در حال کار...</span>
                                   : "-"}
                             </td>
@@ -1015,8 +1076,8 @@ export default function TicketDetail() {
                         gap: 8,
                         marginBottom: 4
                       }}>
-                        <span className={`badge ${h.status?.toLowerCase()}`}>
-                          {getStatusBadge(h.status)}
+                        <span className={`badge ${(h.status ?? "pending").toLowerCase()}`}>
+                          {getStatusBadge(h.status ?? "pending")}
                         </span>
                         <span style={{ fontSize: 12, color: "var(--fg-secondary)" }}>
                           {h.created_at ? new Date(h.created_at).toLocaleString("fa-IR") : "-"}
@@ -1040,7 +1101,7 @@ export default function TicketDetail() {
                           fontSize: 11, 
                           color: "var(--muted)" 
                         }}>
-                          تغییر توسط: {h.changed_by.full_name || h.changed_by.username}
+                          تغییر توسط: {h.changed_by?.full_name || h.changed_by?.username}
                         </div>
                       )}
                     </div>

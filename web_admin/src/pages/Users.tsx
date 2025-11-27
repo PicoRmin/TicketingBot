@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { stagger, fadeIn, slideIn } from "../lib/gsap";
 import {
@@ -12,6 +12,7 @@ import {
   setProfile,
   updateUserApi
 } from "../services/api";
+import type { AuthProfile } from "../services/api";
 
 const ROLE_OPTIONS = [
   { value: "central_admin", label: "👑 مدیر ارشد" },
@@ -55,6 +56,26 @@ type DepartmentItem = {
   is_active: boolean;
 };
 
+type UserUpdatePayload = {
+  full_name: string;
+  language: string;
+  role: string;
+  branch_id: number | null;
+  department_id: number | null;
+  is_active: boolean;
+  password?: string;
+};
+
+type UserCreatePayload = {
+  username: string;
+  full_name: string;
+  password: string;
+  role: string;
+  language: string;
+  branch_id: number | null;
+  department_id: number | null;
+};
+
 const EMPTY_FORM = {
   username: "",
   full_name: "",
@@ -68,7 +89,7 @@ const EMPTY_FORM = {
 
 export default function Users() {
   const navigate = useNavigate();
-  const [profile, setProfileState] = useState<any | null>(() => getStoredProfile());
+  const [profile, setProfileState] = useState<AuthProfile | null>(() => getStoredProfile());
   const [users, setUsers] = useState<UserItem[]>([]);
   const [branches, setBranches] = useState<BranchItem[]>([]);
   const [departments, setDepartments] = useState<DepartmentItem[]>([]);
@@ -79,36 +100,9 @@ export default function Users() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [filterRole, setFilterRole] = useState<string>("");
   const [filterBranch, setFilterBranch] = useState<string>("");
+  const [authorized, setAuthorized] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-      return;
-    }
-
-    if (!profile) {
-      fetchProfile()
-        .then((data) => {
-          setProfile(data);
-          setProfileState(data);
-        })
-        .catch(() => {
-          // ignore
-        });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!profile) return;
-    if (!["admin", "central_admin"].includes(profile.role)) {
-      navigate("/");
-      return;
-    }
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile, filterRole, filterBranch]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -124,12 +118,50 @@ export default function Users() {
       setUsers(usersRes as UserItem[]);
       setBranches((branchesRes as BranchItem[]).filter((b) => b.is_active));
       setDepartments((departmentsRes as DepartmentItem[]).filter((d) => d.is_active));
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت کاربران");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت کاربران");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterBranch, filterRole]);
+
+  const ensureAccess = useCallback(async () => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+      return null;
+    }
+
+    let currentProfile = profile ?? getStoredProfile();
+    if (!currentProfile) {
+      try {
+        currentProfile = await fetchProfile();
+        setProfile(currentProfile);
+        setProfileState(currentProfile);
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+        navigate("/login");
+        return null;
+      }
+    }
+
+    if (!currentProfile || !["admin", "central_admin"].includes(currentProfile.role)) {
+      navigate("/");
+      return null;
+    }
+
+    setAuthorized(true);
+    return currentProfile;
+  }, [navigate, profile]);
+
+  useEffect(() => {
+    ensureAccess();
+  }, [ensureAccess]);
+
+  useEffect(() => {
+    if (authorized) {
+      loadData();
+    }
+  }, [authorized, loadData]);
 
   const roleLabel = (role: string) => {
     const opt = ROLE_OPTIONS.find((r) => r.value === role);
@@ -176,8 +208,8 @@ export default function Users() {
       if (editingId === user.id) {
         resetForm();
       }
-    } catch (e: any) {
-      setError(e?.message || "خطا در حذف کاربر");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در حذف کاربر");
     } finally {
       setLoading(false);
     }
@@ -209,16 +241,16 @@ export default function Users() {
 
     setLoading(true);
     try {
-      const branchIdValue = form.branch_id ? Number(form.branch_id) : undefined;
+      const branchIdValue = form.branch_id ? Number(form.branch_id) : null;
+      const departmentIdValue = form.department_id ? Number(form.department_id) : null;
 
       if (editingId) {
-        const departmentIdValue = form.department_id ? Number(form.department_id) : undefined;
-        const payload: any = {
+        const payload: UserUpdatePayload = {
           full_name: form.full_name,
           language: form.language,
           role: form.role,
-          branch_id: branchIdValue ?? null,
-          department_id: departmentIdValue ?? null,
+          branch_id: branchIdValue,
+          department_id: departmentIdValue,
           is_active: form.is_active,
         };
         if (form.password.trim()) {
@@ -227,22 +259,22 @@ export default function Users() {
         await updateUserApi(editingId, payload);
         setSuccess("کاربر با موفقیت به‌روزرسانی شد");
       } else {
-        const departmentIdValue = form.department_id ? Number(form.department_id) : undefined;
-        await createUserApi({
+        const createPayload: UserCreatePayload = {
           username: form.username,
           full_name: form.full_name,
           password: form.password,
           role: form.role,
           language: form.language,
-          branch_id: branchIdValue ?? null,
-          department_id: departmentIdValue ?? null,
-        });
+          branch_id: branchIdValue,
+          department_id: departmentIdValue,
+        };
+        await createUserApi(createPayload);
         setSuccess("کاربر جدید با موفقیت ایجاد شد");
       }
       resetForm();
       await loadData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره کاربر");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ذخیره کاربر");
     } finally {
       setLoading(false);
     }

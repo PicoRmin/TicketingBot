@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost, apiPut, apiDelete, isAuthenticated, fetchProfile, getStoredProfile } from "../services/api";
+import type { AuthProfile } from "../services/api";
 
 type InfrastructureItem = {
   id: number;
@@ -25,6 +26,21 @@ type BranchItem = {
   id: number;
   name: string;
   code: string;
+};
+
+type InfrastructurePayload = {
+  branch_id: number;
+  infrastructure_type: string;
+  name: string;
+  status: string;
+  description?: string;
+  ip_address?: string;
+  hostname?: string;
+  model?: string;
+  serial_number?: string;
+  service_type?: string;
+  service_url?: string;
+  notes?: string;
 };
 
 const INFRASTRUCTURE_TYPES = [
@@ -65,24 +81,7 @@ export default function Infrastructure() {
   const [filterBranch, setFilterBranch] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("");
 
-  useEffect(() => {
-    const checkAuthAndLoad = async () => {
-      if (!isAuthenticated()) {
-        navigate("/login");
-        return;
-      }
-      const profile = getStoredProfile() || await fetchProfile();
-      if (!profile || profile.role !== "central_admin") {
-        navigate("/");
-        return;
-      }
-      loadData();
-    };
-    checkAuthAndLoad();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -91,24 +90,33 @@ export default function Infrastructure() {
       if (filterType) params.set("infrastructure_type", filterType);
       
       const [infraData, branchesData] = await Promise.all([
-        apiGet(`/api/branch-infrastructure?${params.toString()}`),
-        apiGet("/api/branches?is_active=true"),
+        apiGet(`/api/branch-infrastructure?${params.toString()}`) as Promise<InfrastructureItem[]>,
+        apiGet("/api/branches?is_active=true") as Promise<BranchItem[]>,
       ]);
       setInfrastructure(infraData);
       setBranches(branchesData);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت اطلاعات");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت اطلاعات");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterBranch, filterType]);
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      loadData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterBranch, filterType]);
+    const checkAuthAndLoad = async () => {
+      if (!isAuthenticated()) {
+        navigate("/login");
+        return;
+      }
+      const profile: AuthProfile | null = getStoredProfile() || (await fetchProfile());
+      if (!profile || profile.role !== "central_admin") {
+        navigate("/");
+        return;
+      }
+      await loadData();
+    };
+    checkAuthAndLoad();
+  }, [navigate, loadData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,8 +124,8 @@ export default function Infrastructure() {
     setError(null);
     setSuccess(null);
     try {
-      const payload: any = {
-        branch_id: parseInt(form.branch_id),
+      const payload: InfrastructurePayload = {
+        branch_id: parseInt(form.branch_id, 10),
         infrastructure_type: form.infrastructure_type,
         name: form.name,
         status: form.status,
@@ -140,8 +148,8 @@ export default function Infrastructure() {
       }
       resetForm();
       await loadData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره زیرساخت");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ذخیره زیرساخت");
     } finally {
       setLoading(false);
     }
@@ -154,8 +162,8 @@ export default function Infrastructure() {
       await apiDelete(`/api/branch-infrastructure/${id}`);
       setSuccess("زیرساخت با موفقیت حذف شد");
       await loadData();
-    } catch (e: any) {
-      setError(e?.message || "خطا در حذف زیرساخت");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در حذف زیرساخت");
     } finally {
       setLoading(false);
     }

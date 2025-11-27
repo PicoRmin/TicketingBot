@@ -32,7 +32,7 @@ export default function Departments() {
     if (!isAuthenticated()) {
       navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   const load = async () => {
     setLoading(true);
@@ -40,8 +40,9 @@ export default function Departments() {
     try {
       const res = await apiGet("/api/departments?page_size=100") as Department[];
       setItems(res);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت دپارتمان‌ها");
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "خطا در دریافت دپارتمان‌ها";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -83,8 +84,9 @@ export default function Departments() {
       }
       await load();
       cancelEdit();
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره دپارتمان");
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "خطا در ذخیره دپارتمان";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -97,8 +99,9 @@ export default function Departments() {
     try {
       await apiDelete(`/api/departments/${id}`);
       await load();
-    } catch (e: any) {
-      setError(e?.message || "خطا در حذف دپارتمان");
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "خطا در حذف دپارتمان";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

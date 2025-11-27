@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { apiGet, apiPut, isAuthenticated, fetchProfile, getStoredProfile } from "../services/api";
+import type { AuthProfile } from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { fadeIn, slideIn, stagger } from "../lib/gsap";
+import { fadeIn, slideIn } from "../lib/gsap";
 
 type FileSettings = {
   max_images_per_ticket: number;
@@ -38,7 +39,22 @@ export default function Settings() {
     allowed_image_types: DEFAULT_IMAGE_TYPES,
     allowed_document_types: DEFAULT_DOCUMENT_TYPES,
   });
-  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
+  const userCardRef = useRef<HTMLDivElement>(null);
+
+  const loadSettings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiGet("/api/settings/file") as FileSettings;
+      setSettings(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت تنظیمات");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const checkAuthAndLoad = async () => {
@@ -46,8 +62,7 @@ export default function Settings() {
         navigate("/login");
         return;
       }
-      // Try to get profile from storage first, then fetch if needed
-      let profile = getStoredProfile();
+      let profile: AuthProfile | null = getStoredProfile();
       if (!profile) {
         try {
           profile = await fetchProfile();
@@ -58,28 +73,13 @@ export default function Settings() {
         }
       }
       if (!profile || profile.role !== "central_admin") {
-        navigate("/"); // Only central admin can access settings
+        navigate("/");
         return;
       }
-      setCurrentUserProfile(profile);
       loadSettings();
     };
     checkAuthAndLoad();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
-
-  const loadSettings = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await apiGet("/api/settings/file") as FileSettings;
-      setSettings(res);
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت تنظیمات");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [navigate, loadSettings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,8 +90,8 @@ export default function Settings() {
       await apiPut("/api/settings/file", settings);
       setSuccess("تنظیمات با موفقیت ذخیره شد");
       setTimeout(() => setSuccess(null), 3000);
-    } catch (e: any) {
-      setError(e?.message || "خطا در ذخیره تنظیمات");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ذخیره تنظیمات");
     } finally {
       setSaving(false);
     }
@@ -115,19 +115,6 @@ export default function Settings() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: "center", padding: 40 }}>
-        <div className="loading" style={{ margin: "0 auto" }}></div>
-        <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>در حال بارگذاری تنظیمات...</p>
-      </div>
-    );
-  }
-
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const formCardRef = useRef<HTMLDivElement>(null);
-  const userCardRef = useRef<HTMLDivElement>(null);
-
   // Animate on mount
   useEffect(() => {
     if (titleRef.current) {
@@ -140,6 +127,15 @@ export default function Settings() {
       fadeIn(userCardRef.current, { duration: 0.7, delay: 0.4 });
     }
   }, []);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: 40 }}>
+        <div className="loading" style={{ margin: "0 auto" }}></div>
+        <p style={{ marginTop: 16, color: "var(--fg-secondary)" }}>در حال بارگذاری تنظیمات...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="fade-in">

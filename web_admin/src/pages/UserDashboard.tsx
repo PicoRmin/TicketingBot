@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiGet, isAuthenticated, getStoredProfile } from "../services/api";
+import type { AuthProfile } from "../services/api";
 import { OnboardingWizard } from "../components/OnboardingWizard";
-import { stagger, fadeIn, slideIn, scaleIn } from "../lib/gsap";
 
 type TicketStats = {
   total: number;
@@ -14,7 +14,7 @@ type TicketStats = {
 
 export default function UserDashboard() {
   const navigate = useNavigate();
-  const [profile] = useState<any | null>(() => getStoredProfile());
+  const [profile] = useState<AuthProfile | null>(() => getStoredProfile());
   const [stats, setStats] = useState<TicketStats>({
     total: 0,
     pending: 0,
@@ -74,8 +74,8 @@ export default function UserDashboard() {
         resolved: resolved.total || 0,
         closed: closed.total || 0,
       });
-    } catch (e: any) {
-      setError(e?.message || "خطا در دریافت آمار");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در دریافت آمار");
     } finally {
       setLoading(false);
     }

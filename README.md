@@ -37,6 +37,7 @@
 - ✅ **Timeline انیمیشن‌دار** — انیمیشن slide برای پیام‌های جدید، Auto-scroll به آخرین پیام و fade-in + scale برای فایل‌های attach
 - ✅ **فرم ایجاد تیکت Multi-Step** — Progress Indicator، انیمیشن slide بین مراحل، Validation در هر مرحله و Preview کامل
 - ✅ **مدیریت دارایی‌ها (Asset Management)** — لیست دارایی‌ها با فیلتر پیشرفته، جستجو با debounce، انیمیشن‌های GSAP/Framer Motion، کارت‌های آماری و نمایش وضعیت گارانتی
+- ✅ **فرم ثبت دارایی Multi-Step** — فرم 4 مرحله‌ای با Progress Indicator، انیمیشن slide بین مراحل، Validation در هر مرحله، Success animation و Preview کامل
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب

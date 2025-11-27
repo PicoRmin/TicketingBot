@@ -205,7 +205,7 @@ export default function Assets() {
       if (rows.length > 0) {
         stagger(
           rows,
-          (el) => fadeIn(el, { duration: 0.4, distance: 20 }),
+          (el) => fadeIn(el, { duration: 0.4 }),
           { stagger: 0.03, delay: 0.1 }
         );
       }
@@ -448,9 +448,14 @@ export default function Assets() {
                           )}
                         </td>
                         <td>
-                          <Link to={`/assets/${asset.id}`}>
-                            <button className="secondary small">👁️ مشاهده</button>
-                          </Link>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <Link to={`/assets/${asset.id}`}>
+                              <button className="secondary small">👁️ مشاهده</button>
+                            </Link>
+                            <Link to={`/assets/${asset.id}/edit`}>
+                              <button className="secondary small">✏️ ویرایش</button>
+                            </Link>
+                          </div>
                         </td>
                       </motion.tr>
                     );

@@ -1956,6 +1956,50 @@ footer {
   }
 }
 
+/* Timeline Styles */
+.timeline-container {
+  position: relative;
+}
+
+.timeline-item {
+  position: relative;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--bg);
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover::before {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.timeline-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 20px;
+  width: 2px;
+  height: calc(100% - 4px);
+  background: var(--border);
+  z-index: 1;
+  transition: background 0.3s ease;
+}
+
+.timeline-item:hover:not(:last-child)::after {
+  background: var(--primary);
+}
+
 /* Multi-Step Form Styles */
 .multi-step-progress {
   width: 100%;

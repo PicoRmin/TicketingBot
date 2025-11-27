@@ -38,6 +38,7 @@
 - ✅ **فرم ایجاد تیکت Multi-Step** — Progress Indicator، انیمیشن slide بین مراحل، Validation در هر مرحله و Preview کامل
 - ✅ **مدیریت دارایی‌ها (Asset Management)** — لیست دارایی‌ها با فیلتر پیشرفته، جستجو با debounce، انیمیشن‌های GSAP/Framer Motion، کارت‌های آماری و نمایش وضعیت گارانتی
 - ✅ **فرم ثبت دارایی Multi-Step** — فرم 4 مرحله‌ای با Progress Indicator، انیمیشن slide بین مراحل، Validation در هر مرحله، Success animation و Preview کامل
+- ✅ **صفحه جزئیات دارایی** — Timeline پیشرفته با انیمیشن، نمودار Life Cycle با ECharts، Visual indicator برای گارانتی، تاریخچه تعمیرات و Tooltip برای جزئیات
 - ✅ Email Notifications (اعلان‌رسانی ایمیل پیشرفته)
 - ✅ Telegram Notifications (اعلان‌رسانی تلگرام)
 - ✅ Dashboard پیشرفته با نمودارهای جذاب

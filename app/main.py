@@ -349,6 +349,8 @@ from app.api import custom_fields
 from app.api import notifications
 from app.api import profile
 from app.api import knowledge_base
+from app.api import assets
+from app.api import telegram_bot
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["Tickets"])
@@ -368,6 +370,8 @@ app.include_router(custom_fields.router, prefix="/api/custom-fields", tags=["Cus
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
 app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
 app.include_router(knowledge_base.router, prefix="/api/knowledge-base", tags=["Knowledge Base"])
+app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
+app.include_router(telegram_bot.router, prefix="/api/telegram-bot", tags=["Telegram Bot"])
 
 if __name__ == "__main__":
     import uvicorn

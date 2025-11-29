@@ -852,31 +852,42 @@ npm run prepare       # نصب Husky
 
 ---
 
-## 🤖 EPIC 7 — Telegram Bot UI Integration ❌ **0% تکمیل شده**
+## 🤖 EPIC 7 — Telegram Bot UI Integration ✅ **50% تکمیل شده**
 
 هدف: ساخت رابط کاربری برای مدیریت و نمایش اطلاعات Telegram Bot در داشبورد.
 
-**نکته:** Telegram Bot UI در Frontend وجود ندارد.
+**نکته:** Telegram Bot UI در Frontend پیاده‌سازی شده است.
 
-### Story EP7-S1 — نمایش وضعیت Telegram Bot ❌ **انجام نشده**
+### Story EP7-S1 — نمایش وضعیت Telegram Bot ✅ **انجام شده**
 
 **As a** administrator  
 **I want to** see Telegram Bot status in the dashboard  
 **So that I can** monitor bot health
 
 - **Tasks**
-  - **Task 1**: طراحی کارت وضعیت Telegram Bot
-  - **Task 2**: پیاده‌سازی انیمیشن pulse برای bot online
-  - **Task 3**: اضافه کردن نمودار تعداد پیام‌های ارسال شده با ECharts
-  - **Task 4**: پیاده‌سازی real-time updates برای وضعیت bot
-  - **Task 5**: اضافه کردن tooltip برای جزئیات
-  - **Task 6**: تست UX
+  - ✅ **Task 1**: طراحی کارت وضعیت Telegram Bot
+  - ✅ **Task 2**: پیاده‌سازی انیمیشن pulse برای bot online
+  - ✅ **Task 3**: اضافه کردن نمودار تعداد پیام‌های ارسال شده با ECharts
+  - ✅ **Task 4**: پیاده‌سازی real-time updates برای وضعیت bot
+  - ✅ **Task 5**: اضافه کردن tooltip برای جزئیات
+  - ✅ **Task 6**: تست UX
 
 - **Acceptance Criteria**
-  - کارت وضعیت Telegram Bot نمایش داده شود.
-  - Pulse animation برای bot online کار کند.
-  - نمودار تعداد پیام‌ها کار کند.
-  - Real-time updates کار کنند.
+  - ✅ کارت وضعیت Telegram Bot نمایش داده می‌شود.
+  - ✅ Pulse animation برای bot online کار می‌کند.
+  - ✅ نمودار تعداد پیام‌ها کار می‌کند.
+  - ✅ Real-time updates کار می‌کنند (refetch هر 30 ثانیه).
+
+- **Implementation Notes**
+  - کامپوننت `TelegramBotStatus` در `web_admin/src/components/dashboard/TelegramBotStatus.tsx` ایجاد شد.
+  - Hook `useTelegramBotStatus` در `web_admin/src/hooks/useTelegramBotStatus.ts` برای دریافت وضعیت bot از API.
+  - انیمیشن pulse با GSAP برای نشانگر وضعیت آنلاین.
+  - نمودار Bar Chart با ECharts برای نمایش تعداد پیام‌های ارسال شده (24 ساعت، 7 روز، کل).
+  - Tooltip با AnimatePresence برای نمایش جزئیات هنگام hover.
+  - Real-time updates با React Query (refetchInterval: 30s).
+  - کارت‌های آماری برای نمایش کل پیام‌ها، پیام‌های 24 ساعت، و uptime.
+  - پشتیبانی کامل از i18n (فارسی و انگلیسی).
+  - کامپوننت در Dashboard ادغام شد.
 
 ---
 

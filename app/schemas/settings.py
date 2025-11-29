@@ -33,3 +33,38 @@ class SettingsResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class GeneralSettingsResponse(BaseModel):
+    """General settings response - includes telegram bot and other settings"""
+    telegram_bot_token: Optional[str] = None
+    telegram_bot_enabled: bool = False
+    telegram_bot_started: bool = False
+    auto_start_bot: bool = False
+    send_ticket_notifications: bool = True
+    send_status_updates: bool = True
+    send_sla_warnings: bool = True
+    send_resolution_notifications: bool = True
+    notification_language: str = "auto"
+    welcome_message_enabled: bool = True
+    welcome_message_text: Optional[str] = None
+    help_command_enabled: bool = True
+    help_command_text: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class GeneralSettingsUpdate(BaseModel):
+    """General settings update request"""
+    telegram_bot_token: Optional[str] = None
+    telegram_bot_enabled: Optional[bool] = None
+    auto_start_bot: Optional[bool] = None
+    send_ticket_notifications: Optional[bool] = None
+    send_status_updates: Optional[bool] = None
+    send_sla_warnings: Optional[bool] = None
+    send_resolution_notifications: Optional[bool] = None
+    notification_language: Optional[str] = None
+    welcome_message_enabled: Optional[bool] = None
+    welcome_message_text: Optional[str] = None
+    help_command_enabled: Optional[bool] = None
+    help_command_text: Optional[str] = None
